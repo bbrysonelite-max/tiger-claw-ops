@@ -22,6 +22,313 @@
         }
     </script>
     <style>
+        /* ===== ACCESSIBILITY STYLES (WCAG 2.1 AA) ===== */
+
+        /* Screen reader only - visually hidden but accessible */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Focus visible - keyboard focus indicator */
+        :focus-visible {
+            outline: 2px solid var(--color-primary, #f97316);
+            outline-offset: 2px;
+        }
+
+        /* Remove default focus for mouse users */
+        :focus:not(:focus-visible) {
+            outline: none;
+        }
+
+        /* Skip to main content link */
+        .skip-link {
+            position: absolute;
+            top: -100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #f97316;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0 0 0.5rem 0.5rem;
+            font-weight: 600;
+            z-index: 9999;
+            transition: top 0.2s ease;
+            text-decoration: none;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* Ensure minimum touch target size (44x44px) */
+        .touch-target {
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        /* High contrast focus for buttons and links */
+        button:focus-visible,
+        a:focus-visible,
+        [role="button"]:focus-visible {
+            outline: 2px solid #f97316;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.3);
+        }
+
+        /* ===== MOBILE NAVIGATION STYLES ===== */
+
+        /* Mobile header - hidden on desktop */
+        .mobile-header {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: #0f172a;
+            border-bottom: 1px solid #334155;
+            z-index: 35;
+            padding: 0 1rem;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Mobile menu button (hamburger) */
+        .mobile-menu-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 0.5rem;
+            background: transparent;
+            border: 1px solid #334155;
+            cursor: pointer;
+            color: white;
+            transition: all 0.2s ease;
+        }
+
+        .mobile-menu-btn:hover,
+        .mobile-menu-btn:focus-visible {
+            background: rgba(249, 115, 22, 0.1);
+            border-color: #f97316;
+        }
+
+        /* Hamburger icon animation */
+        .hamburger-icon {
+            width: 20px;
+            height: 14px;
+            position: relative;
+        }
+
+        .hamburger-icon span {
+            display: block;
+            position: absolute;
+            height: 2px;
+            width: 100%;
+            background: currentColor;
+            border-radius: 2px;
+            transition: all 0.25s ease;
+        }
+
+        .hamburger-icon span:nth-child(1) { top: 0; }
+        .hamburger-icon span:nth-child(2) { top: 6px; }
+        .hamburger-icon span:nth-child(3) { top: 12px; }
+
+        .mobile-menu-btn.active .hamburger-icon span:nth-child(1) {
+            top: 6px;
+            transform: rotate(45deg);
+        }
+
+        .mobile-menu-btn.active .hamburger-icon span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-btn.active .hamburger-icon span:nth-child(3) {
+            top: 6px;
+            transform: rotate(-45deg);
+        }
+
+        /* Sidebar overlay for mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 39;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Mobile close button for sidebar */
+        .sidebar-close-btn {
+            display: none;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 44px;
+            height: 44px;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            cursor: pointer;
+            color: white;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-close-btn:hover,
+        .sidebar-close-btn:focus-visible {
+            background: rgba(249, 115, 22, 0.2);
+        }
+
+        /* ===== RESPONSIVE BREAKPOINTS ===== */
+        /* Mobile: 320px - 767px */
+        /* Tablet: 768px - 1023px */
+        /* Desktop: 1024px+ */
+
+        @media (max-width: 767px) {
+            /* Show mobile header */
+            .mobile-header {
+                display: flex !important;
+            }
+
+            /* Show sidebar close button */
+            .sidebar-close-btn {
+                display: flex;
+            }
+
+            /* Sidebar as overlay */
+            .sidebar {
+                position: fixed !important;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                z-index: 40;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                width: 280px;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            /* Main content adjustments */
+            .main-content {
+                margin-left: 0 !important;
+                padding: 1rem !important;
+                padding-top: 76px !important; /* Account for mobile header */
+                width: 100% !important;
+            }
+
+            /* Overview cards: 1 column */
+            .overview-cards-grid,
+            .grid-cols-4 {
+                grid-template-columns: 1fr !important;
+            }
+
+            /* Tables: horizontal scroll */
+            .table-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .table-container table {
+                min-width: 600px;
+            }
+
+            /* Modals: full screen */
+            .modal-content,
+            #prospect-modal > div:not(.modal-backdrop) {
+                width: 100% !important;
+                height: 100% !important;
+                max-width: 100% !important;
+                max-height: 100% !important;
+                border-radius: 0 !important;
+                margin: 0 !important;
+            }
+
+            /* Responsive typography */
+            .text-4xl { font-size: 1.75rem !important; }
+            .text-3xl { font-size: 1.5rem !important; }
+            .text-2xl { font-size: 1.25rem !important; }
+            .text-xl { font-size: 1.125rem !important; }
+        }
+
+        /* Tablet: 768px - 1023px */
+        @media (min-width: 768px) and (max-width: 1023px) {
+            /* Overview cards: 2 columns */
+            .overview-cards-grid,
+            .grid-cols-4 {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+
+            .main-content {
+                padding: 1.5rem !important;
+            }
+        }
+
+        /* Desktop: 1024px+ */
+        @media (min-width: 1024px) {
+            /* Overview cards: 4 columns */
+            .overview-cards-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .mobile-header {
+                display: none !important;
+            }
+        }
+
+        /* ===== ARIA LIVE REGION STYLES ===== */
+        [aria-live] {
+            position: relative;
+        }
+
+        /* Loading state indicator */
+        .loading-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Reduced motion preference */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* ===== ENHANCED COLOR CONTRAST (WCAG AA 4.5:1) ===== */
+        /* Ensure muted text meets contrast requirements */
+        .text-slate-400 {
+            color: #94a3b8 !important; /* 4.6:1 on dark bg */
+        }
+
+        :root.light .text-slate-400 {
+            color: #64748b !important; /* 4.5:1 on light bg */
+        }
+
+
 
         /* ===== DARK MODE CSS VARIABLES ===== */
         :root {
@@ -292,18 +599,47 @@
 </style>
 </head>
 <body class="bg-slate-950 text-white font-sans">
+    <!-- Skip Link for Accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- Sidebar Overlay (for mobile) -->
+    <div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
+
+    <!-- Mobile Header -->
+    <header class="mobile-header" role="banner">
+        <button 
+            type="button"
+            class="mobile-menu-btn touch-target" 
+            id="mobile-menu-btn"
+            aria-label="Open navigation menu"
+            aria-expanded="false"
+            aria-controls="sidebar"
+        >
+            <div class="hamburger-icon" aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </button>
+        <div class="flex items-center gap-2">
+            <span class="text-2xl">🐯</span>
+            <span class="font-bold text-tiger-500">Tiger Bot</span>
+        </div>
+        <div class="w-11"></div> <!-- Spacer for centering -->
+    </header>
+
     <!-- Toast Container -->
-    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2" role="status" aria-live="polite" aria-atomic="true"></div>
 
     <!-- Prospect Detail Modal -->
-    <div id="prospect-modal" class="fixed inset-0 modal-backdrop z-50 hidden flex items-center justify-center p-4">
+    <div id="prospect-modal" class="fixed inset-0 modal-backdrop z-50 hidden flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-prospect-name">
         <div class="bg-slate-900 rounded-2xl border border-slate-700 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
             <div class="flex items-center justify-between p-6 border-b border-slate-700">
                 <div>
                     <h2 class="text-xl font-bold" id="modal-prospect-name">Loading...</h2>
                     <p class="text-slate-400 text-sm" id="modal-prospect-source"></p>
                 </div>
-                <button onclick="closeProspectModal()" class="text-slate-400 hover:text-white p-2">
+                <button onclick="closeProspectModal()" class="text-slate-400 hover:text-white p-2 touch-target" aria-label="Close modal">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
@@ -315,7 +651,7 @@
                             <h3 class="font-semibold mb-3 flex items-center gap-2"><span>📊</span> Score & Status</h3>
                             <div class="flex items-center gap-4">
                                 <div class="text-4xl font-bold" id="modal-score">--</div>
-                                <select id="modal-status-select" onchange="updateProspectStatus()" class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm">
+                                <select id="modal-status-select" onchange="updateProspectStatus()" class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm" aria-label="Modal Status Select">
                                     <option value="new">New</option>
                                     <option value="contacted">Contacted</option>
                                     <option value="qualified">Qualified</option>
@@ -437,7 +773,23 @@
     </div>
 
     <!-- Sidebar -->
-    <aside class="fixed left-0 top-0 h-full w-64 bg-slate-900 border-r border-slate-800 p-6 flex flex-col z-40">
+    <aside 
+        id="sidebar"
+        class="sidebar fixed left-0 top-0 h-full w-64 bg-slate-900 border-r border-slate-800 p-6 flex flex-col z-40"
+        role="navigation" 
+        aria-label="Main navigation"
+    >
+        <!-- Mobile Close Button -->
+        <button 
+            type="button"
+            class="sidebar-close-btn touch-target" 
+            id="sidebar-close-btn"
+            aria-label="Close navigation menu"
+        >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
         <div class="flex items-center gap-3 mb-10">
             <div class="w-10 h-10 bg-gradient-to-br from-tiger-500 to-tiger-700 rounded-xl flex items-center justify-center text-xl font-bold">🐯</div>
             <span class="text-lg font-bold">Tiger Bot <span class="text-tiger-500">Scout</span></span>
@@ -481,7 +833,7 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="ml-64 p-8">
+    <main id="main-content" class="main-content ml-64 p-8" role="main" tabindex="-1">
         <!-- Header -->
         <header class="flex items-center justify-between mb-8">
             <div>
@@ -660,7 +1012,7 @@
                     </div>
                     
                     <!-- Status Filter -->
-                    <select id="filter-status" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-tiger-500" onchange="applyFilters()">
+                    <select id="filter-status" aria-label="Filter by status" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-tiger-500" onchange="applyFilters()" aria-label="Filter Status">
                         <option value="">All Statuses</option>
                         <option value="new">New</option>
                         <option value="contacted">Contacted</option>
@@ -683,7 +1035,7 @@
                     </div>
                     
                     <!-- Source Filter -->
-                    <select id="filter-source" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-tiger-500" onchange="applyFilters()">
+                    <select id="filter-source" aria-label="Filter by source" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-tiger-500" onchange="applyFilters()" aria-label="Filter Source">
                         <option value="">All Sources</option>
                         <option value="line">LINE</option>
                         <option value="telegram">Telegram</option>
@@ -756,7 +1108,7 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="text-sm text-slate-400">Per page:</span>
-                        <select id="pagination-limit" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm" onchange="applyFilters()">
+                        <select id="pagination-limit" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm" onchange="applyFilters()" aria-label="Pagination Limit">
                             <option value="10">10</option>
                             <option value="25" selected>25</option>
                             <option value="50">50</option>
@@ -804,14 +1156,14 @@
                             </div>
                         </div>
                         
-                        <select id="scripts-filter-type" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-tiger-500" onchange="applyScriptsFilters()">
+                        <select id="scripts-filter-type" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-tiger-500" onchange="applyScriptsFilters()" aria-label="Scripts Filter Type">
                             <option value="">All Types</option>
                             <option value="approach">Approach</option>
                             <option value="follow_up">Follow-up</option>
                             <option value="objection">Objection Handler</option>
                         </select>
                         
-                        <select id="scripts-filter-feedback" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-tiger-500" onchange="applyScriptsFilters()">
+                        <select id="scripts-filter-feedback" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-tiger-500" onchange="applyScriptsFilters()" aria-label="Scripts Filter Feedback">
                             <option value="">All Feedback</option>
                             <option value="pending">⏳ Pending</option>
                             <option value="no_response">❌ No Response</option>
@@ -904,14 +1256,14 @@
                         <div class="space-y-4">
                             <div>
                                 <label class="block text-sm text-slate-400 mb-2">Select Prospect</label>
-                                <select id="generate-prospect-select" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-tiger-500">
+                                <select id="generate-prospect-select" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-tiger-500" aria-label="Generate Prospect Select">
                                     <option value="">Loading prospects...</option>
                                 </select>
                             </div>
                             
                             <div>
                                 <label class="block text-sm text-slate-400 mb-2">Script Type</label>
-                                <select id="generate-script-type" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-tiger-500">
+                                <select id="generate-script-type" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-tiger-500" aria-label="Generate Script Type">
                                     <option value="approach">🎯 Initial Approach</option>
                                     <option value="follow_up">🔄 Follow-up Message</option>
                                     <option value="objection">🛡️ Objection Handler</option>
@@ -4504,6 +4856,202 @@ ${'='.repeat(50)}
         if (document.readyState !== 'loading') {
             initTheme();
         }
+
+
+        // ===== MOBILE NAVIGATION & ACCESSIBILITY =====
+
+        // Mobile menu elements
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const sidebarCloseBtn = document.getElementById('sidebar-close-btn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+        // Open mobile sidebar
+        function openMobileSidebar() {
+            if (!sidebar || !sidebarOverlay || !mobileMenuBtn) return;
+
+            sidebar.classList.add('open');
+            sidebarOverlay.classList.add('active');
+            mobileMenuBtn.classList.add('active');
+            mobileMenuBtn.setAttribute('aria-expanded', 'true');
+            sidebarOverlay.setAttribute('aria-hidden', 'false');
+
+            // Focus first focusable element in sidebar
+            const firstFocusable = sidebar.querySelector('button, a, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            if (firstFocusable) {
+                setTimeout(() => firstFocusable.focus(), 100);
+            }
+
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Close mobile sidebar
+        function closeMobileSidebar() {
+            if (!sidebar || !sidebarOverlay || !mobileMenuBtn) return;
+
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('active');
+            mobileMenuBtn.classList.remove('active');
+            mobileMenuBtn.setAttribute('aria-expanded', 'false');
+            sidebarOverlay.setAttribute('aria-hidden', 'true');
+
+            // Restore body scroll
+            document.body.style.overflow = '';
+
+            // Return focus to menu button
+            mobileMenuBtn.focus();
+        }
+
+        // Toggle mobile sidebar
+        function toggleMobileSidebar() {
+            if (sidebar && sidebar.classList.contains('open')) {
+                closeMobileSidebar();
+            } else {
+                openMobileSidebar();
+            }
+        }
+
+        // Event listeners for mobile menu
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', toggleMobileSidebar);
+        }
+
+        if (sidebarCloseBtn) {
+            sidebarCloseBtn.addEventListener('click', closeMobileSidebar);
+        }
+
+        if (sidebarOverlay) {
+            sidebarOverlay.addEventListener('click', closeMobileSidebar);
+        }
+
+        // ===== KEYBOARD NAVIGATION =====
+
+        // Global keyboard event handler
+        document.addEventListener('keydown', function(e) {
+            // Escape key handling
+            if (e.key === 'Escape') {
+                // Close mobile sidebar if open
+                if (sidebar && sidebar.classList.contains('open')) {
+                    closeMobileSidebar();
+                    e.preventDefault();
+                    return;
+                }
+
+                // Close prospect modal if open
+                const prospectModal = document.getElementById('prospect-modal');
+                if (prospectModal && !prospectModal.classList.contains('hidden')) {
+                    closeProspectModal();
+                    e.preventDefault();
+                    return;
+                }
+
+                // Close any other open modals
+                const openModals = document.querySelectorAll('[role="dialog"]:not(.hidden)');
+                openModals.forEach(modal => {
+                    if (!modal.classList.contains('hidden')) {
+                        modal.classList.add('hidden');
+                    }
+                });
+            }
+        });
+
+        // Focus trap for modals
+        function trapFocus(element) {
+            const focusableElements = element.querySelectorAll(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            );
+            const firstFocusable = focusableElements[0];
+            const lastFocusable = focusableElements[focusableElements.length - 1];
+
+            element.addEventListener('keydown', function(e) {
+                if (e.key !== 'Tab') return;
+
+                if (e.shiftKey) {
+                    if (document.activeElement === firstFocusable) {
+                        lastFocusable.focus();
+                        e.preventDefault();
+                    }
+                } else {
+                    if (document.activeElement === lastFocusable) {
+                        firstFocusable.focus();
+                        e.preventDefault();
+                    }
+                }
+            });
+        }
+
+        // Apply focus trap to modals
+        const prospectModalEl = document.getElementById('prospect-modal');
+        if (prospectModalEl) {
+            trapFocus(prospectModalEl);
+        }
+
+        // ===== ENHANCED MODAL FUNCTIONS =====
+
+        // Store last focused element before modal opens
+        let lastFocusedElement = null;
+
+        // Override showProspectDetail to handle focus
+        const originalShowProspectDetail = typeof showProspectDetail === 'function' ? showProspectDetail : null;
+
+        if (originalShowProspectDetail) {
+            window.showProspectDetail = function(prospect) {
+                lastFocusedElement = document.activeElement;
+                originalShowProspectDetail(prospect);
+
+                // Focus the modal or first focusable element
+                setTimeout(() => {
+                    const modal = document.getElementById('prospect-modal');
+                    if (modal) {
+                        const closeBtn = modal.querySelector('[aria-label="Close modal"]');
+                        if (closeBtn) closeBtn.focus();
+                    }
+                }, 100);
+            };
+        }
+
+        // Override closeProspectModal to restore focus
+        const originalCloseProspectModal = typeof closeProspectModal === 'function' ? closeProspectModal : null;
+
+        if (originalCloseProspectModal) {
+            window.closeProspectModal = function() {
+                originalCloseProspectModal();
+
+                // Restore focus to last focused element
+                if (lastFocusedElement) {
+                    lastFocusedElement.focus();
+                    lastFocusedElement = null;
+                }
+            };
+        }
+
+        // ===== RESPONSIVE HANDLER =====
+
+        // Close mobile sidebar when window resizes to desktop
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 768 && sidebar && sidebar.classList.contains('open')) {
+                closeMobileSidebar();
+            }
+        });
+
+        // ===== ANNOUNCE DYNAMIC CONTENT FOR SCREEN READERS =====
+
+        function announceToScreenReader(message) {
+            const announcer = document.createElement('div');
+            announcer.setAttribute('aria-live', 'polite');
+            announcer.setAttribute('aria-atomic', 'true');
+            announcer.classList.add('sr-only');
+            announcer.textContent = message;
+            document.body.appendChild(announcer);
+
+            setTimeout(() => {
+                document.body.removeChild(announcer);
+            }, 1000);
+        }
+
+        // Make function globally available
+        window.announceToScreenReader = announceToScreenReader;
 
 </script>
 </body>
