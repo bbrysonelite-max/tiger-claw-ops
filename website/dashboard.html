@@ -152,6 +152,45 @@
         .funnel-stage:hover {
             transform: translateX(5px);
         }
+
+        /* Hive Section Styles */
+        .hive-pulse-indicator .animate-pulse {
+            animation: hivePulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes hivePulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .hive-tab-content {
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        #source-cards-grid > div:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px -10px rgba(249, 115, 22, 0.2);
+        }
+
+        #leaderboard-list > div:hover {
+            background: rgba(51, 65, 85, 0.5);
+        }
+
+        .trends-chart-bar {
+            transition: height 0.5s ease-out;
+        }
 </style>
 </head>
 <body class="bg-slate-950 text-white font-sans">
@@ -796,16 +835,158 @@
 
         <!-- ============ HIVE SECTION ============ -->
         <section id="section-hive" class="section-content hidden">
-            <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                <h2 class="text-xl font-semibold mb-4">Hive Learnings</h2>
-                <p class="text-slate-400 mb-4">Collective intelligence from all bot interactions</p>
-                <div id="hive-learnings-list" class="space-y-4">
-                    <div class="loading-skeleton h-20 rounded-lg"></div>
-                    <div class="loading-skeleton h-20 rounded-lg"></div>
+            <!-- Hive Header with Pulse Indicator -->
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold flex items-center gap-3">
+                        Hive Learnings
+                        <span class="hive-pulse-indicator flex items-center gap-2 px-3 py-1 bg-tiger-500/20 rounded-full text-sm">
+                            <span class="w-2 h-2 bg-tiger-500 rounded-full animate-pulse"></span>
+                            <span class="text-tiger-400">Live</span>
+                        </span>
+                    </h1>
+                    <p class="text-slate-400">Collective intelligence from all bot interactions</p>
+                </div>
+                <button onclick="refreshHiveData()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl transition" id="hive-refresh-btn">
+                    <svg class="w-4 h-4" id="hive-refresh-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Refresh
+                </button>
+            </div>
+
+            <!-- Hive Sub-Navigation Tabs -->
+            <div class="flex items-center gap-4 mb-6 border-b border-slate-800">
+                <button onclick="showHiveTab('leaderboard')" class="hive-tab px-4 py-3 text-tiger-400 border-b-2 border-tiger-500 font-medium" data-tab="leaderboard">🏆 Leaderboard</button>
+                <button onclick="showHiveTab('source-performance')" class="hive-tab px-4 py-3 text-slate-400 hover:text-white border-b-2 border-transparent" data-tab="source-performance">📊 Source Performance</button>
+                <button onclick="showHiveTab('trends')" class="hive-tab px-4 py-3 text-slate-400 hover:text-white border-b-2 border-transparent" data-tab="trends">📈 Trends</button>
+            </div>
+
+            <div class="grid lg:grid-cols-4 gap-6">
+                <!-- Main Content Area (3 cols) -->
+                <div class="lg:col-span-3">
+                    <!-- ===== LEADERBOARD TAB ===== -->
+                    <div id="hive-tab-leaderboard" class="hive-tab-content">
+                        <div class="flex items-center gap-2 mb-6 flex-wrap">
+                            <button onclick="filterLeaderboard('')" class="leaderboard-category-btn px-4 py-2 bg-tiger-500 text-white rounded-lg text-sm font-medium" data-category="">All</button>
+                            <button onclick="filterLeaderboard('approach')" class="leaderboard-category-btn px-4 py-2 bg-slate-800 text-slate-400 hover:bg-slate-700 rounded-lg text-sm" data-category="approach">🎯 Approaches</button>
+                            <button onclick="filterLeaderboard('follow_up')" class="leaderboard-category-btn px-4 py-2 bg-slate-800 text-slate-400 hover:bg-slate-700 rounded-lg text-sm" data-category="follow_up">🔄 Follow-ups</button>
+                            <button onclick="filterLeaderboard('objection')" class="leaderboard-category-btn px-4 py-2 bg-slate-800 text-slate-400 hover:bg-slate-700 rounded-lg text-sm" data-category="objection">🛡️ Objection Handlers</button>
+                        </div>
+                        <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
+                            <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+                                <h3 class="font-semibold">Top 10 Performing Scripts</h3>
+                                <div id="leaderboard-loading" class="hidden"><svg class="w-5 h-5 spinner text-tiger-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg></div>
+                            </div>
+                            <div id="leaderboard-list" class="divide-y divide-slate-800">
+                                <div class="p-4"><div class="loading-skeleton h-16 rounded-lg bg-slate-800"></div></div>
+                                <div class="p-4"><div class="loading-skeleton h-16 rounded-lg bg-slate-800"></div></div>
+                                <div class="p-4"><div class="loading-skeleton h-16 rounded-lg bg-slate-800"></div></div>
+                            </div>
+                            <div id="leaderboard-error" class="hidden p-8 text-center">
+                                <div class="text-red-400 mb-2">Failed to load leaderboard</div>
+                                <button onclick="fetchLeaderboard()" class="text-tiger-400 hover:underline">Retry</button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- ===== SOURCE PERFORMANCE TAB ===== -->
+                    <div id="hive-tab-source-performance" class="hive-tab-content hidden">
+                        <div class="flex items-center gap-4 mb-6 flex-wrap">
+                            <span class="text-sm text-slate-400">Sort by:</span>
+                            <div class="flex gap-2">
+                                <button onclick="sortSourcePerformance('prospects')" class="source-sort-btn px-3 py-1.5 bg-tiger-500 text-white rounded-lg text-sm" data-sort="prospects">Prospects</button>
+                                <button onclick="sortSourcePerformance('conversion')" class="source-sort-btn px-3 py-1.5 bg-slate-800 text-slate-400 hover:bg-slate-700 rounded-lg text-sm" data-sort="conversion">Conversion Rate</button>
+                                <button onclick="sortSourcePerformance('score')" class="source-sort-btn px-3 py-1.5 bg-slate-800 text-slate-400 hover:bg-slate-700 rounded-lg text-sm" data-sort="score">Avg Score</button>
+                            </div>
+                            <div id="source-performance-loading" class="ml-auto hidden"><svg class="w-5 h-5 spinner text-tiger-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg></div>
+                        </div>
+                        <div id="source-cards-grid" class="grid md:grid-cols-2 gap-4 mb-6">
+                            <div class="loading-skeleton h-48 rounded-2xl bg-slate-800"></div>
+                            <div class="loading-skeleton h-48 rounded-2xl bg-slate-800"></div>
+                        </div>
+                        <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                            <h3 class="font-semibold mb-4">Prospects by Source</h3>
+                            <div id="source-bar-chart" class="space-y-3">
+                                <div class="loading-skeleton h-8 rounded bg-slate-800"></div>
+                                <div class="loading-skeleton h-8 rounded bg-slate-800"></div>
+                            </div>
+                        </div>
+                        <div id="source-performance-error" class="hidden bg-slate-900 rounded-2xl border border-slate-800 p-8 text-center mt-6">
+                            <div class="text-red-400 mb-2">Failed to load source performance</div>
+                            <button onclick="fetchSourcePerformance()" class="text-tiger-400 hover:underline">Retry</button>
+                        </div>
+                    </div>
+                    <!-- ===== TRENDS TAB ===== -->
+                    <div id="hive-tab-trends" class="hive-tab-content hidden">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="flex gap-2 bg-slate-800 rounded-lg p-1">
+                                <button onclick="setTrendsPeriod(7)" class="trends-period-btn px-3 py-1.5 bg-tiger-500 text-white rounded-md text-sm" data-days="7">7 Days</button>
+                                <button onclick="setTrendsPeriod(30)" class="trends-period-btn px-3 py-1.5 text-slate-400 hover:text-white rounded-md text-sm" data-days="30">30 Days</button>
+                                <button onclick="setTrendsPeriod(90)" class="trends-period-btn px-3 py-1.5 text-slate-400 hover:text-white rounded-md text-sm" data-days="90">90 Days</button>
+                            </div>
+                            <div id="trends-loading" class="ml-auto hidden"><svg class="w-5 h-5 spinner text-tiger-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg></div>
+                        </div>
+                        <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6 mb-6">
+                            <h3 class="font-semibold mb-4">Learnings Over Time</h3>
+                            <div class="flex items-center gap-6 mb-4">
+                                <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-tiger-500"></div><span class="text-sm text-slate-400">New Learnings</span></div>
+                                <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-green-500"></div><span class="text-sm text-slate-400">Cumulative Success</span></div>
+                            </div>
+                            <div id="trends-chart" class="h-64 flex items-end gap-1 border-b border-l border-slate-700 p-4 relative">
+                                <div class="flex-1 loading-skeleton h-full rounded-t bg-slate-800"></div>
+                            </div>
+                            <div id="trends-x-axis" class="flex justify-between mt-2 text-xs text-slate-500 px-4"><span>Loading...</span></div>
+                        </div>
+                        <!-- This Week's Highlights -->
+                        <div class="bg-gradient-to-br from-tiger-500/10 to-orange-600/10 rounded-2xl border border-tiger-500/20 p-6">
+                            <h3 class="font-semibold mb-4 flex items-center gap-2"><span>✨</span> This Week's Highlights</h3>
+                            <div id="trends-highlights" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div class="bg-slate-900/50 rounded-xl p-4"><div class="text-2xl font-bold text-tiger-400" id="highlight-new-learnings">--</div><div class="text-sm text-slate-400">New Learnings</div></div>
+                                <div class="bg-slate-900/50 rounded-xl p-4"><div class="text-2xl font-bold text-green-400" id="highlight-top-type">--</div><div class="text-sm text-slate-400">Most Successful Type</div></div>
+                                <div class="bg-slate-900/50 rounded-xl p-4"><div class="text-2xl font-bold text-blue-400" id="highlight-best-source">--</div><div class="text-sm text-slate-400">Best Source</div></div>
+                                <div class="bg-slate-900/50 rounded-xl p-4"><div class="text-2xl font-bold text-purple-400" id="highlight-milestone">--</div><div class="text-sm text-slate-400">Milestone</div></div>
+                            </div>
+                        </div>
+                        <div id="trends-error" class="hidden bg-slate-900 rounded-2xl border border-slate-800 p-8 text-center mt-6">
+                            <div class="text-red-400 mb-2">Failed to load trends</div>
+                            <button onclick="fetchTrends()" class="text-tiger-400 hover:underline">Retry</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- My Contributions Sidebar (1 col) -->
+                <div class="lg:col-span-1">
+                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-5 sticky top-6">
+                        <h3 class="font-semibold mb-4 flex items-center gap-2"><span>🐝</span> My Contributions</h3>
+                        <div id="my-contributions-loading" class="space-y-3">
+                            <div class="loading-skeleton h-16 rounded-lg bg-slate-800"></div>
+                            <div class="loading-skeleton h-24 rounded-lg bg-slate-800"></div>
+                        </div>
+                        <div id="my-contributions-content" class="hidden space-y-4">
+                            <div class="bg-slate-800/50 rounded-xl p-4 text-center">
+                                <div class="text-3xl font-bold text-tiger-400" id="my-scripts-count">0</div>
+                                <div class="text-sm text-slate-400">Scripts in the Hive</div>
+                            </div>
+                            <div class="bg-slate-800/50 rounded-xl p-4 text-center">
+                                <div class="text-3xl font-bold text-green-400" id="my-success-count">0</div>
+                                <div class="text-sm text-slate-400">Total Success Count</div>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-medium text-slate-400 mb-2">Recent Contributions</h4>
+                                <div id="my-recent-scripts" class="space-y-2 max-h-48 overflow-y-auto">
+                                    <div class="text-sm text-slate-500 text-center py-2">No contributions yet</div>
+                                </div>
+                            </div>
+                            <div class="bg-gradient-to-r from-tiger-500/20 to-orange-500/20 rounded-xl p-4 text-center">
+                                <div class="text-sm text-tiger-300 mb-2">Share your winning scripts!</div>
+                                <button onclick="showSection('scripts')" class="text-xs text-tiger-400 hover:underline">Go to Scripts →</button>
+                            </div>
+                        </div>
+                        <div id="my-contributions-error" class="hidden text-center py-4">
+                            <div class="text-red-400 text-sm mb-2">Failed to load</div>
+                            <button onclick="fetchMyContributions()" class="text-tiger-400 text-sm hover:underline">Retry</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
-
         <!-- ============ ANALYTICS SECTION ============ -->
         <section id="section-analytics" class="section-content hidden">
             <!-- Analytics Header -->
@@ -2042,6 +2223,9 @@
             } else if (sectionName === 'settings') {
                 // Load settings - show bot config by default
                 showSettingsTab('bot-config');
+            } else if (sectionName === 'hive') {
+                // Load hive learnings data
+                initHiveSection();
             }
         }
 
@@ -3348,6 +3532,524 @@ Powered by Tiger Bot Scout`;
                 showToast('Failed to copy results', 'error');
             });
         }
+
+
+        // ============ HIVE LEARNINGS SECTION ============
+
+        let hiveData = {
+            leaderboard: [],
+            sourcePerformance: [],
+            trends: [],
+            myContributions: null,
+            currentCategory: '',
+            currentSort: 'prospects',
+            currentPeriod: 7
+        };
+
+        // Tab switching
+        function showHiveTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.hive-tab').forEach(btn => {
+                if (btn.dataset.tab === tab) {
+                    btn.classList.add('text-tiger-400', 'border-tiger-500');
+                    btn.classList.remove('text-slate-400', 'border-transparent');
+                } else {
+                    btn.classList.remove('text-tiger-400', 'border-tiger-500');
+                    btn.classList.add('text-slate-400', 'border-transparent');
+                }
+            });
+            // Show/hide content
+            document.querySelectorAll('.hive-tab-content').forEach(content => content.classList.add('hidden'));
+            const tabContent = document.getElementById(`hive-tab-${tab}`);
+            if (tabContent) tabContent.classList.remove('hidden');
+
+            // Load data for the tab
+            if (tab === 'leaderboard') fetchLeaderboard();
+            else if (tab === 'source-performance') fetchSourcePerformance();
+            else if (tab === 'trends') fetchTrends();
+        }
+
+        // Refresh all hive data
+        function refreshHiveData() {
+            const btn = document.getElementById('hive-refresh-btn');
+            const icon = document.getElementById('hive-refresh-icon');
+            if (btn) btn.disabled = true;
+            if (icon) icon.classList.add('spinner');
+
+            Promise.all([
+                fetchLeaderboard(),
+                fetchSourcePerformance(),
+                fetchTrends(),
+                fetchMyContributions()
+            ]).finally(() => {
+                if (btn) btn.disabled = false;
+                if (icon) icon.classList.remove('spinner');
+            });
+        }
+
+        // ===== LEADERBOARD =====
+        async function fetchLeaderboard() {
+            const loading = document.getElementById('leaderboard-loading');
+            const list = document.getElementById('leaderboard-list');
+            const error = document.getElementById('leaderboard-error');
+
+            loading?.classList.remove('hidden');
+            error?.classList.add('hidden');
+
+            try {
+                const params = new URLSearchParams();
+                if (hiveData.currentCategory) params.append('type', hiveData.currentCategory);
+                params.append('limit', '10');
+
+                const data = await apiFetch(`/hive/leaderboard?${params}`);
+                hiveData.leaderboard = data.leaderboard || data || [];
+                renderLeaderboard();
+            } catch (err) {
+                console.error('Failed to fetch leaderboard:', err);
+                error?.classList.remove('hidden');
+                list.innerHTML = '';
+            } finally {
+                loading?.classList.add('hidden');
+            }
+        }
+
+        function filterLeaderboard(category) {
+            hiveData.currentCategory = category;
+            // Update button states
+            document.querySelectorAll('.leaderboard-category-btn').forEach(btn => {
+                if (btn.dataset.category === category) {
+                    btn.classList.add('bg-tiger-500', 'text-white');
+                    btn.classList.remove('bg-slate-800', 'text-slate-400');
+                } else {
+                    btn.classList.remove('bg-tiger-500', 'text-white');
+                    btn.classList.add('bg-slate-800', 'text-slate-400');
+                }
+            });
+            fetchLeaderboard();
+        }
+
+        function renderLeaderboard() {
+            const list = document.getElementById('leaderboard-list');
+            if (!list) return;
+
+            if (!hiveData.leaderboard.length) {
+                list.innerHTML = '<div class="p-8 text-center text-slate-500">No scripts found</div>';
+                return;
+            }
+
+            const medals = ['🥇', '🥈', '🥉'];
+            const sourceIcons = { LINE: '📱', Facebook: '📘', Instagram: '📷', Twitter: '🐦', Web: '🌐', Email: '📧' };
+            const typeColors = { approach: 'bg-blue-500/20 text-blue-400', follow_up: 'bg-purple-500/20 text-purple-400', objection: 'bg-amber-500/20 text-amber-400' };
+
+            list.innerHTML = hiveData.leaderboard.map((item, idx) => {
+                const rank = idx + 1;
+                const medal = rank <= 3 ? medals[rank - 1] : `<span class="text-slate-500 font-bold">${rank}</span>`;
+                const preview = (item.script_content || item.scriptContent || item.content || '').substring(0, 150);
+                const type = item.learning_type || item.learningType || item.type || 'approach';
+                const typeColor = typeColors[type] || 'bg-slate-500/20 text-slate-400';
+                const successCount = item.success_count || item.successCount || 0;
+                const source = item.source_context || item.sourceContext || item.source || 'Unknown';
+                const sourceIcon = sourceIcons[source] || '💬';
+                const signal = item.signal_type || item.signalType || '';
+
+                return `
+                    <div class="p-4 hover:bg-slate-800/50 transition cursor-pointer" onclick="showLeaderboardScript(${idx})">
+                        <div class="flex items-start gap-4">
+                            <div class="text-2xl w-10 text-center">${medal}</div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-slate-200 text-sm mb-2 line-clamp-2">${preview}${preview.length >= 150 ? '...' : ''}</p>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="px-2 py-0.5 ${typeColor} text-xs rounded-full">${type.replace('_', ' ')}</span>
+                                    <span class="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded-full">${sourceIcon} ${source}</span>
+                                    ${signal ? `<span class="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded-full">⚡ ${signal}</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1 text-green-400 font-semibold">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                ${successCount}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showLeaderboardScript(idx) {
+            const item = hiveData.leaderboard[idx];
+            if (!item) return;
+
+            const content = item.script_content || item.scriptContent || item.content || '';
+            const type = item.learning_type || item.learningType || item.type || 'Unknown';
+            const source = item.source_context || item.sourceContext || item.source || 'Unknown';
+            const successCount = item.success_count || item.successCount || 0;
+
+            // Reuse the script modal
+            document.getElementById('script-modal-title').textContent = 'Top Performing Script';
+            document.getElementById('script-modal-subtitle').textContent = `Rank #${idx + 1} • ${successCount} successes`;
+            document.getElementById('script-modal-content').textContent = content;
+            document.getElementById('script-modal-type').textContent = type.replace('_', ' ');
+            document.getElementById('script-modal-feedback').textContent = '✅ Proven';
+            document.getElementById('script-modal-created').textContent = '--';
+            document.getElementById('script-modal-prospect').textContent = source;
+
+            // Store for copy
+            window.currentScriptContent = content;
+
+            document.getElementById('script-modal').classList.remove('hidden');
+        }
+
+        function copyScriptFromModal() {
+            const content = window.currentScriptContent || document.getElementById('script-modal-content')?.textContent || '';
+            navigator.clipboard.writeText(content).then(() => {
+                showToast('Script copied to clipboard!', 'success');
+            }).catch(err => {
+                console.error('Copy failed:', err);
+                showToast('Failed to copy script', 'error');
+            });
+        }
+
+        // ===== SOURCE PERFORMANCE =====
+        async function fetchSourcePerformance() {
+            const loading = document.getElementById('source-performance-loading');
+            const grid = document.getElementById('source-cards-grid');
+            const chart = document.getElementById('source-bar-chart');
+            const error = document.getElementById('source-performance-error');
+
+            loading?.classList.remove('hidden');
+            error?.classList.add('hidden');
+
+            try {
+                const data = await apiFetch('/hive/source-performance-v2');
+                hiveData.sourcePerformance = data.sources || data || [];
+                renderSourceCards();
+                renderSourceChart();
+            } catch (err) {
+                console.error('Failed to fetch source performance:', err);
+                error?.classList.remove('hidden');
+                grid.innerHTML = '';
+                chart.innerHTML = '<div class="text-center text-slate-500">Failed to load chart</div>';
+            } finally {
+                loading?.classList.add('hidden');
+            }
+        }
+
+        function sortSourcePerformance(sortBy) {
+            hiveData.currentSort = sortBy;
+            // Update button states
+            document.querySelectorAll('.source-sort-btn').forEach(btn => {
+                if (btn.dataset.sort === sortBy) {
+                    btn.classList.add('bg-tiger-500', 'text-white');
+                    btn.classList.remove('bg-slate-800', 'text-slate-400');
+                } else {
+                    btn.classList.remove('bg-tiger-500', 'text-white');
+                    btn.classList.add('bg-slate-800', 'text-slate-400');
+                }
+            });
+            renderSourceCards();
+            renderSourceChart();
+        }
+
+        function renderSourceCards() {
+            const grid = document.getElementById('source-cards-grid');
+            if (!grid) return;
+
+            let sources = [...hiveData.sourcePerformance];
+
+            // Sort
+            if (hiveData.currentSort === 'prospects') {
+                sources.sort((a, b) => (b.prospects_found || b.prospectsFound || 0) - (a.prospects_found || a.prospectsFound || 0));
+            } else if (hiveData.currentSort === 'conversion') {
+                sources.sort((a, b) => (b.conversion_rate || b.conversionRate || 0) - (a.conversion_rate || a.conversionRate || 0));
+            } else if (hiveData.currentSort === 'score') {
+                sources.sort((a, b) => (b.avg_score || b.avgScore || 0) - (a.avg_score || a.avgScore || 0));
+            }
+
+            if (!sources.length) {
+                grid.innerHTML = '<div class="col-span-2 p-8 text-center text-slate-500">No source data available</div>';
+                return;
+            }
+
+            const sourceIcons = { LINE: '📱', Facebook: '📘', Instagram: '📷', Twitter: '🐦', Web: '🌐', Email: '📧', Telegram: '✈️' };
+
+            grid.innerHTML = sources.map(source => {
+                const name = source.source_name || source.sourceName || source.name || 'Unknown';
+                const icon = sourceIcons[name] || '💬';
+                const prospects = source.prospects_found || source.prospectsFound || 0;
+                const convRate = ((source.conversion_rate || source.conversionRate || 0) * 100).toFixed(1);
+                const avgScore = (source.avg_score || source.avgScore || 0).toFixed(1);
+                const topSignals = source.top_signals || source.topSignals || [];
+
+                // Color based on conversion rate
+                let convColor = 'text-red-400';
+                if (convRate >= 20) convColor = 'text-green-400';
+                else if (convRate >= 10) convColor = 'text-yellow-400';
+
+                return `
+                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-5 hover:border-slate-700 transition cursor-pointer" onclick="filterProspectsBySource('${name}')">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="text-3xl">${icon}</span>
+                            <h4 class="font-semibold text-lg">${name}</h4>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3 mb-4">
+                            <div>
+                                <div class="text-2xl font-bold text-tiger-400">${prospects}</div>
+                                <div class="text-xs text-slate-500">Prospects</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold ${convColor}">${convRate}%</div>
+                                <div class="text-xs text-slate-500">Conversion</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-blue-400">${avgScore}</div>
+                                <div class="text-xs text-slate-500">Avg Score</div>
+                            </div>
+                        </div>
+                        ${topSignals.length ? `
+                            <div>
+                                <div class="text-xs text-slate-500 mb-2">Top Signals</div>
+                                <div class="flex flex-wrap gap-1">
+                                    ${topSignals.slice(0, 5).map(sig => `<span class="px-2 py-0.5 bg-slate-800 text-slate-300 text-xs rounded-full">${sig}</span>`).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderSourceChart() {
+            const chart = document.getElementById('source-bar-chart');
+            if (!chart) return;
+
+            let sources = [...hiveData.sourcePerformance];
+            sources.sort((a, b) => (b.prospects_found || b.prospectsFound || 0) - (a.prospects_found || a.prospectsFound || 0));
+
+            if (!sources.length) {
+                chart.innerHTML = '<div class="text-center text-slate-500 py-4">No data available</div>';
+                return;
+            }
+
+            const max = Math.max(...sources.map(s => s.prospects_found || s.prospectsFound || 0));
+            const sourceIcons = { LINE: '📱', Facebook: '📘', Instagram: '📷', Twitter: '🐦', Web: '🌐', Email: '📧', Telegram: '✈️' };
+
+            chart.innerHTML = sources.map(source => {
+                const name = source.source_name || source.sourceName || source.name || 'Unknown';
+                const icon = sourceIcons[name] || '💬';
+                const prospects = source.prospects_found || source.prospectsFound || 0;
+                const pct = max > 0 ? (prospects / max * 100) : 0;
+
+                return `
+                    <div class="flex items-center gap-3">
+                        <div class="w-24 text-sm text-slate-400 flex items-center gap-2">${icon} ${name}</div>
+                        <div class="flex-1 bg-slate-800 rounded-full h-6 overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-tiger-500 to-orange-500 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+                        </div>
+                        <div class="w-12 text-right text-sm font-medium">${prospects}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterProspectsBySource(source) {
+            // Navigate to prospects tab with source filter
+            showSection('prospects');
+            // Set the source filter
+            const sourceSelect = document.getElementById('filter-source');
+            if (sourceSelect) {
+                sourceSelect.value = source;
+                applyProspectFilters();
+            }
+            showToast(`Filtered by source: ${source}`, 'info');
+        }
+
+        // ===== TRENDS =====
+        async function fetchTrends() {
+            const loading = document.getElementById('trends-loading');
+            const chart = document.getElementById('trends-chart');
+            const error = document.getElementById('trends-error');
+
+            loading?.classList.remove('hidden');
+            error?.classList.add('hidden');
+
+            try {
+                const params = new URLSearchParams();
+                params.append('days', hiveData.currentPeriod.toString());
+
+                const data = await apiFetch(`/hive/trends-v2?${params}`);
+                hiveData.trends = data.trends || data.daily || data || [];
+                renderTrendsChart();
+                renderTrendsHighlights(data);
+            } catch (err) {
+                console.error('Failed to fetch trends:', err);
+                error?.classList.remove('hidden');
+                chart.innerHTML = '<div class="text-center text-slate-500 py-8">Failed to load chart</div>';
+            } finally {
+                loading?.classList.add('hidden');
+            }
+        }
+
+        function setTrendsPeriod(days) {
+            hiveData.currentPeriod = days;
+            // Update button states
+            document.querySelectorAll('.trends-period-btn').forEach(btn => {
+                if (parseInt(btn.dataset.days) === days) {
+                    btn.classList.add('bg-tiger-500', 'text-white');
+                    btn.classList.remove('text-slate-400');
+                } else {
+                    btn.classList.remove('bg-tiger-500', 'text-white');
+                    btn.classList.add('text-slate-400');
+                }
+            });
+            fetchTrends();
+        }
+
+        function renderTrendsChart() {
+            const chart = document.getElementById('trends-chart');
+            const xAxis = document.getElementById('trends-x-axis');
+            if (!chart) return;
+
+            const trends = hiveData.trends;
+
+            if (!trends.length) {
+                chart.innerHTML = '<div class="flex items-center justify-center h-full text-slate-500">No trend data available</div>';
+                if (xAxis) xAxis.innerHTML = '';
+                return;
+            }
+
+            // Find max values for scaling
+            const maxLearnings = Math.max(...trends.map(t => t.new_learnings || t.newLearnings || t.count || 0), 1);
+            const maxCumulative = Math.max(...trends.map(t => t.cumulative_success || t.cumulativeSuccess || 0), 1);
+
+            // Build chart bars
+            chart.innerHTML = trends.map((day, idx) => {
+                const learnings = day.new_learnings || day.newLearnings || day.count || 0;
+                const cumulative = day.cumulative_success || day.cumulativeSuccess || 0;
+                const learningsHeight = (learnings / maxLearnings * 100);
+                const cumulativeHeight = (cumulative / maxCumulative * 100);
+                const date = day.date || day.day || '';
+                const topType = day.top_type || day.topType || '';
+
+                return `
+                    <div class="flex-1 flex flex-col items-center gap-1 group relative">
+                        <div class="w-full flex items-end justify-center gap-0.5 h-48">
+                            <div class="w-2 bg-tiger-500 rounded-t transition-all duration-300" style="height: ${learningsHeight}%" title="New: ${learnings}"></div>
+                            <div class="w-2 bg-green-500 rounded-t transition-all duration-300" style="height: ${cumulativeHeight}%" title="Cumulative: ${cumulative}"></div>
+                        </div>
+                        <!-- Tooltip -->
+                        <div class="absolute bottom-full mb-2 hidden group-hover:block bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs whitespace-nowrap z-10">
+                            <div class="font-medium">${date}</div>
+                            <div class="text-tiger-400">New: ${learnings}</div>
+                            <div class="text-green-400">Cumulative: ${cumulative}</div>
+                            ${topType ? `<div class="text-slate-400">Top: ${topType}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // X-axis labels
+            if (xAxis) {
+                const step = Math.ceil(trends.length / 7);
+                const labels = trends.filter((_, i) => i % step === 0 || i === trends.length - 1)
+                    .map(day => {
+                        const date = day.date || day.day || '';
+                        return formatTrendDate(date);
+                    });
+                xAxis.innerHTML = labels.map(l => `<span>${l}</span>`).join('');
+            }
+        }
+
+        function formatTrendDate(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const d = new Date(dateStr);
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            } catch {
+                return dateStr;
+            }
+        }
+
+        function renderTrendsHighlights(data) {
+            const highlights = data.highlights || data.summary || {};
+
+            document.getElementById('highlight-new-learnings').textContent = 
+                highlights.new_learnings_this_week || highlights.newLearningsThisWeek || highlights.total_new || '0';
+            document.getElementById('highlight-top-type').textContent = 
+                highlights.most_successful_type || highlights.mostSuccessfulType || highlights.top_type || '--';
+            document.getElementById('highlight-best-source').textContent = 
+                highlights.best_source || highlights.bestSource || highlights.top_source || '--';
+            document.getElementById('highlight-milestone').textContent = 
+                highlights.milestone || highlights.achievement || (data.total_learnings ? `${data.total_learnings} total` : '--');
+        }
+
+        // ===== MY CONTRIBUTIONS =====
+        async function fetchMyContributions() {
+            const loading = document.getElementById('my-contributions-loading');
+            const content = document.getElementById('my-contributions-content');
+            const error = document.getElementById('my-contributions-error');
+
+            loading?.classList.remove('hidden');
+            content?.classList.add('hidden');
+            error?.classList.add('hidden');
+
+            try {
+                // Try to fetch user contributions - this endpoint may vary
+                const data = await apiFetch('/hive/my-contributions');
+                hiveData.myContributions = data;
+                renderMyContributions();
+            } catch (err) {
+                console.error('Failed to fetch my contributions:', err);
+                // Show placeholder data on error
+                hiveData.myContributions = { scripts_count: 0, total_success: 0, recent: [] };
+                renderMyContributions();
+            } finally {
+                loading?.classList.add('hidden');
+            }
+        }
+
+        function renderMyContributions() {
+            const content = document.getElementById('my-contributions-content');
+            const error = document.getElementById('my-contributions-error');
+
+            if (!hiveData.myContributions) {
+                error?.classList.remove('hidden');
+                return;
+            }
+
+            content?.classList.remove('hidden');
+
+            const data = hiveData.myContributions;
+            document.getElementById('my-scripts-count').textContent = 
+                data.scripts_count || data.scriptsCount || data.count || 0;
+            document.getElementById('my-success-count').textContent = 
+                data.total_success || data.totalSuccess || data.success || 0;
+
+            const recentList = document.getElementById('my-recent-scripts');
+            const recent = data.recent_scripts || data.recentScripts || data.recent || [];
+
+            if (recentList) {
+                if (recent.length === 0) {
+                    recentList.innerHTML = '<div class="text-sm text-slate-500 text-center py-2">No contributions yet</div>';
+                } else {
+                    recentList.innerHTML = recent.slice(0, 5).map(script => {
+                        const preview = (script.content || script.script_content || '').substring(0, 60);
+                        const success = script.success_count || script.successCount || 0;
+                        return `
+                            <div class="p-2 bg-slate-800/50 rounded-lg">
+                                <p class="text-xs text-slate-300 line-clamp-2">${preview}...</p>
+                                <div class="text-xs text-green-400 mt-1">✓ ${success} successes</div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+        }
+
+        // Load hive data when section becomes visible
+        function initHiveSection() {
+            fetchLeaderboard();
+            fetchMyContributions();
+        }
+
 </script>
 </body>
 </html>
