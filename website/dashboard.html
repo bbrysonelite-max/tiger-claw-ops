@@ -808,6 +808,523 @@
         .batch-status-option:hover { background: rgba(249, 115, 22, 0.1); }
         @media (hover: none) and (pointer: coarse) { .context-menu-item { padding: 14px 16px; } }
 
+        /* ===== COMMAND PALETTE STYLES ===== */
+        .command-palette-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 15vh;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.15s ease;
+        }
+        .command-palette-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .command-palette {
+            width: 100%;
+            max-width: 560px;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid #334155;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.05);
+            overflow: hidden;
+            transform: scale(0.95) translateY(-10px);
+            transition: transform 0.15s ease;
+        }
+        .command-palette-overlay.visible .command-palette {
+            transform: scale(1) translateY(0);
+        }
+        .command-palette-search {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            border-bottom: 1px solid #334155;
+        }
+        .command-palette-search svg {
+            width: 20px;
+            height: 20px;
+            color: #64748b;
+            flex-shrink: 0;
+        }
+        .command-palette-search input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            color: #f8fafc;
+            font-family: inherit;
+        }
+        .command-palette-search input::placeholder {
+            color: #64748b;
+        }
+        .command-palette-search .cmd-hint {
+            font-size: 12px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .command-palette-search .cmd-hint kbd {
+            background: #334155;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: inherit;
+        }
+        .command-palette-results {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        .command-palette-results::-webkit-scrollbar { width: 6px; }
+        .command-palette-results::-webkit-scrollbar-track { background: transparent; }
+        .command-palette-results::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        .command-palette-divider {
+            padding: 8px 12px 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #64748b;
+            letter-spacing: 0.5px;
+        }
+        .command-palette-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+        .command-palette-item:hover,
+        .command-palette-item.selected {
+            background: rgba(249, 115, 22, 0.15);
+        }
+        .command-palette-item.selected {
+            background: rgba(249, 115, 22, 0.25);
+        }
+        .command-palette-item-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #e2e8f0;
+        }
+        .command-palette-item-icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #334155;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .command-palette-item-shortcut {
+            font-size: 12px;
+            color: #64748b;
+        }
+        .command-palette-item-shortcut kbd {
+            background: #334155;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: inherit;
+            margin-left: 4px;
+        }
+        .command-palette-empty {
+            padding: 40px 20px;
+            text-align: center;
+            color: #64748b;
+        }
+        .command-palette-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            border-top: 1px solid #334155;
+            font-size: 12px;
+            color: #64748b;
+        }
+        .command-palette-footer-hints {
+            display: flex;
+            gap: 16px;
+        }
+        .command-palette-footer-hints span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .command-palette-footer-hints kbd {
+            background: #334155;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        /* ===== ONBOARDING TUTORIAL STYLES ===== */
+        .onboarding-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9998;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .onboarding-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        .onboarding-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+        }
+        .onboarding-spotlight {
+            position: absolute;
+            border-radius: 12px;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75);
+            transition: all 0.4s ease;
+            pointer-events: none;
+        }
+        .onboarding-tooltip {
+            position: absolute;
+            width: 340px;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            z-index: 1;
+            animation: tooltipFadeIn 0.3s ease;
+        }
+        @keyframes tooltipFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .onboarding-tooltip.center {
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .onboarding-tooltip-arrow {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            transform: rotate(45deg);
+        }
+        .onboarding-tooltip.position-bottom .onboarding-tooltip-arrow {
+            top: -7px;
+            left: 24px;
+            border-right: none;
+            border-bottom: none;
+        }
+        .onboarding-tooltip.position-top .onboarding-tooltip-arrow {
+            bottom: -7px;
+            left: 24px;
+            border-left: none;
+            border-top: none;
+        }
+        .onboarding-tooltip.position-right .onboarding-tooltip-arrow {
+            left: -7px;
+            top: 24px;
+            border-top: none;
+            border-right: none;
+        }
+        .onboarding-tooltip.position-left .onboarding-tooltip-arrow {
+            right: -7px;
+            top: 24px;
+            border-bottom: none;
+            border-left: none;
+        }
+        .onboarding-tooltip-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-bottom: 8px;
+        }
+        .onboarding-tooltip-content {
+            font-size: 14px;
+            color: #94a3b8;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+        .onboarding-progress {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+        .onboarding-progress-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #334155;
+            transition: all 0.2s ease;
+        }
+        .onboarding-progress-dot.active {
+            background: #f97316;
+            transform: scale(1.2);
+        }
+        .onboarding-progress-dot.completed {
+            background: #22c55e;
+        }
+        .onboarding-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .onboarding-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+        .onboarding-btn-skip {
+            background: transparent;
+            color: #64748b;
+        }
+        .onboarding-btn-skip:hover {
+            color: #94a3b8;
+        }
+        .onboarding-btn-prev {
+            background: #334155;
+            color: #e2e8f0;
+        }
+        .onboarding-btn-prev:hover {
+            background: #475569;
+        }
+        .onboarding-btn-next {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            color: white;
+        }
+        .onboarding-btn-next:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+        }
+        .onboarding-nav-btns {
+            display: flex;
+            gap: 8px;
+        }
+        .onboarding-dont-show {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #334155;
+            font-size: 12px;
+            color: #64748b;
+        }
+        .onboarding-dont-show input {
+            accent-color: #f97316;
+        }
+
+        /* ===== NOTIFICATION CENTER STYLES ===== */
+        .notification-bell-wrapper {
+            position: relative;
+        }
+        .notification-bell {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .notification-bell:hover {
+            background: #334155;
+            border-color: #475569;
+        }
+        .notification-bell svg {
+            width: 20px;
+            height: 20px;
+            color: #94a3b8;
+            transition: color 0.2s ease;
+        }
+        .notification-bell:hover svg {
+            color: #f8fafc;
+        }
+        .notification-bell.has-unread svg {
+            color: #f97316;
+            animation: bellShake 0.5s ease;
+        }
+        @keyframes bellShake {
+            0%, 100% { transform: rotate(0); }
+            25% { transform: rotate(10deg); }
+            50% { transform: rotate(-10deg); }
+            75% { transform: rotate(5deg); }
+        }
+        .notification-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            background: #ef4444;
+            border-radius: 9px;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.2s ease;
+        }
+        .notification-bell.has-unread .notification-badge {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .notification-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            width: 360px;
+            max-height: 480px;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid #334155;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            overflow: hidden;
+        }
+        .notification-dropdown.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .notification-dropdown-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            border-bottom: 1px solid #334155;
+        }
+        .notification-dropdown-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #f8fafc;
+        }
+        .notification-dropdown-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .notification-dropdown-btn {
+            font-size: 12px;
+            color: #64748b;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        .notification-dropdown-btn:hover {
+            color: #f8fafc;
+            background: #334155;
+        }
+        .notification-list {
+            max-height: 360px;
+            overflow-y: auto;
+        }
+        .notification-list::-webkit-scrollbar { width: 6px; }
+        .notification-list::-webkit-scrollbar-track { background: transparent; }
+        .notification-list::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        .notification-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid #1e293b;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        .notification-item:hover {
+            background: rgba(249, 115, 22, 0.05);
+        }
+        .notification-item.unread {
+            background: rgba(249, 115, 22, 0.1);
+        }
+        .notification-item-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #334155;
+            border-radius: 8px;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .notification-item-icon.prospect { background: rgba(34, 197, 94, 0.2); }
+        .notification-item-icon.script { background: rgba(59, 130, 246, 0.2); }
+        .notification-item-icon.system { background: rgba(168, 85, 247, 0.2); }
+        .notification-item-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .notification-item-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: #e2e8f0;
+            margin-bottom: 2px;
+        }
+        .notification-item-message {
+            font-size: 12px;
+            color: #64748b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .notification-item-time {
+            font-size: 11px;
+            color: #475569;
+            margin-top: 4px;
+        }
+        .notification-item-unread-dot {
+            width: 8px;
+            height: 8px;
+            background: #f97316;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+        .notification-empty {
+            padding: 40px 20px;
+            text-align: center;
+            color: #64748b;
+        }
+        .notification-empty-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
     </style>
 </head>
 <body class="bg-slate-950 text-white min-h-screen font-sans">
@@ -1079,6 +1596,24 @@
                     <svg class="w-5 h-5" id="refresh-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                     <span>Refresh</span>
                 </button>
+                                <!-- Notification Bell -->
+                <div class="notification-bell-wrapper">
+                    <button class="notification-bell" id="notification-bell" onclick="NotificationCenter.toggle()" aria-label="Notifications" aria-haspopup="true" aria-expanded="false">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                        <span class="notification-badge" id="notification-badge" aria-live="polite">0</span>
+                    </button>
+                    <div class="notification-dropdown" id="notification-dropdown" role="menu" aria-label="Notifications">
+                        <div class="notification-dropdown-header">
+                            <span class="notification-dropdown-title">Notifications</span>
+                            <div class="notification-dropdown-actions">
+                                <button class="notification-dropdown-btn" onclick="NotificationCenter.markAllAsRead()">Mark all read</button>
+                                <button class="notification-dropdown-btn" onclick="NotificationCenter.clear()">Clear all</button>
+                            </div>
+                        </div>
+                        <div class="notification-list" id="notification-list" aria-live="polite"></div>
+                    </div>
+                </div>
+
                 <!-- Dark Mode Toggle -->
                 <button onclick="toggleDarkMode()" class="theme-toggle" title="Toggle dark/light mode" aria-label="Toggle theme">
                     <div class="theme-toggle-slider">
@@ -2141,6 +2676,20 @@
                             </label>
                         </div>
                     </div>
+                        <!-- Restart Tutorial -->
+                        <div class="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">🎓</span>
+                                <div>
+                                    <div class="font-medium">Product Tour</div>
+                                    <div class="text-xs text-slate-400">Restart the onboarding tutorial</div>
+                                </div>
+                            </div>
+                            <button onclick="Onboarding.restart()" class="px-4 py-2 bg-tiger-500 hover:bg-tiger-600 rounded-lg font-medium transition text-sm">
+                                Restart Tutorial
+                            </button>
+                        </div>
+
                     <!-- Saved Confirmation -->
                     <div id="notification-saved" class="hidden mt-4 p-3 bg-green-500/20 border border-green-500/30 rounded-lg text-green-400 text-sm flex items-center gap-2">
                         <span>✅</span> Notification preferences saved
@@ -5594,6 +6143,7 @@ ${'='.repeat(50)}
             <div class="shortcut-row"><span>New script</span><span class="shortcut-key">N</span></div>
             <div class="shortcut-row"><span>Close modal</span><span class="shortcut-key">Esc</span></div>
             <div class="shortcut-row"><span>Show shortcuts</span><span class="shortcut-key">?</span></div>
+            <div class="shortcut-row"><span>Command palette</span><span class="shortcut-key">⌘K</span></div>
             <p class="text-xs text-slate-500 mt-4 pt-4 border-t border-slate-700">Shortcuts disabled when typing</p>
         </div>
     </div>
@@ -7350,7 +7900,764 @@ setTimeout(reinjectOnSectionChange, 500);
 
 console.log('[UserPreferences] Module loaded');
 
+// ===== COMMAND PALETTE =====
+const CommandPalette = {
+    isOpen: false,
+    searchTerm: '',
+    selectedIndex: 0,
+    filteredCommands: [],
+    recentCommands: JSON.parse(localStorage.getItem('tbs_recent_commands') || '[]'),
+    
+    commands: [
+        { id: 'nav-dashboard', icon: '📊', label: 'Go to Dashboard', shortcut: '1', category: 'Navigation', action: () => showSection('dashboard') },
+        { id: 'nav-prospects', icon: '👥', label: 'Go to Prospects', shortcut: '2', category: 'Navigation', action: () => showSection('prospects') },
+        { id: 'nav-scripts', icon: '📝', label: 'Go to Scripts', shortcut: '3', category: 'Navigation', action: () => showSection('scripts') },
+        { id: 'nav-hive', icon: '🐝', label: 'Go to Hive', shortcut: '4', category: 'Navigation', action: () => showSection('hive') },
+        { id: 'nav-analytics', icon: '📈', label: 'Go to Analytics', shortcut: '5', category: 'Navigation', action: () => showSection('analytics') },
+        { id: 'nav-settings', icon: '⚙️', label: 'Go to Settings', shortcut: '6', category: 'Navigation', action: () => showSection('settings') },
+        { divider: true, label: 'Actions' },
+        { id: 'action-refresh', icon: '🔄', label: 'Refresh Data', shortcut: 'R', category: 'Actions', action: () => { CommandPalette.close(); manualRefresh(); } },
+        { id: 'action-search', icon: '🔍', label: 'Search Prospects', shortcut: '/', category: 'Actions', action: () => { CommandPalette.close(); focusSearch(); } },
+        { id: 'action-export', icon: '📤', label: 'Export Data', category: 'Actions', action: () => { CommandPalette.close(); if(typeof exportCurrentSection === 'function') exportCurrentSection(); else showToast('Export not available for this section', 'info'); } },
+        { id: 'action-print', icon: '🖨️', label: 'Print Report', category: 'Actions', action: () => { CommandPalette.close(); window.print(); } },
+        { divider: true, label: 'View' },
+        { id: 'view-dark', icon: '🌙', label: 'Toggle Dark Mode', shortcut: 'D', category: 'View', action: () => { CommandPalette.close(); toggleDarkMode(); } },
+        { id: 'view-compact', icon: '📐', label: 'Toggle Compact Mode', category: 'View', action: () => { CommandPalette.close(); toggleCompactMode(); } },
+        { divider: true, label: 'Help' },
+        { id: 'help-shortcuts', icon: '⌨️', label: 'Show Keyboard Shortcuts', shortcut: '?', category: 'Help', action: () => { CommandPalette.close(); showShortcutsModal(); } },
+        { id: 'help-tutorial', icon: '🎓', label: 'Restart Tutorial', category: 'Help', action: () => { CommandPalette.close(); Onboarding.start(true); } },
+        { id: 'help-support', icon: '💬', label: 'Contact Support', category: 'Help', action: () => { CommandPalette.close(); window.open('mailto:support@botcraftwrks.ai'); } },
+    ],
+    
+    init() {
+        document.addEventListener('keydown', (e) => this.handleGlobalKeydown(e));
+        const input = document.getElementById('command-palette-input');
+        if (input) {
+            input.addEventListener('input', (e) => this.search(e.target.value));
+            input.addEventListener('keydown', (e) => this.handleInputKeydown(e));
+        }
+        const overlay = document.getElementById('command-palette-overlay');
+        if (overlay) {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) this.close();
+            });
+        }
+    },
+    
+    handleGlobalKeydown(e) {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+            e.preventDefault();
+            this.isOpen ? this.close() : this.open();
+        }
+    },
+    
+    handleInputKeydown(e) {
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                this.selectNext();
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                this.selectPrev();
+                break;
+            case 'Enter':
+                e.preventDefault();
+                this.executeSelected();
+                break;
+            case 'Escape':
+                e.preventDefault();
+                this.close();
+                break;
+        }
+    },
+    
+    open() {
+        this.isOpen = true;
+        this.searchTerm = '';
+        this.selectedIndex = 0;
+        const overlay = document.getElementById('command-palette-overlay');
+        const input = document.getElementById('command-palette-input');
+        if (overlay) overlay.classList.add('visible');
+        if (input) {
+            input.value = '';
+            setTimeout(() => input.focus(), 50);
+        }
+        this.search('');
+    },
+    
+    close() {
+        this.isOpen = false;
+        const overlay = document.getElementById('command-palette-overlay');
+        if (overlay) overlay.classList.remove('visible');
+    },
+    
+    search(term) {
+        this.searchTerm = term.toLowerCase();
+        this.selectedIndex = 0;
+        this.render();
+    },
+    
+    fuzzyMatch(text, query) {
+        if (!query) return true;
+        text = text.toLowerCase();
+        let qi = 0;
+        for (let i = 0; i < text.length && qi < query.length; i++) {
+            if (text[i] === query[qi]) qi++;
+        }
+        return qi === query.length;
+    },
+    
+    getFilteredCommands() {
+        let commands = this.commands.filter(cmd => !cmd.divider);
+        if (this.searchTerm) {
+            commands = commands.filter(cmd => 
+                this.fuzzyMatch(cmd.label, this.searchTerm) || 
+                (cmd.category && this.fuzzyMatch(cmd.category, this.searchTerm))
+            );
+        } else {
+            // Show recent commands first when no search
+            const recent = this.recentCommands.slice(0, 3);
+            const recentCmds = recent.map(id => commands.find(c => c.id === id)).filter(Boolean);
+            const otherCmds = commands.filter(c => !recent.includes(c.id));
+            commands = [...recentCmds, ...otherCmds];
+        }
+        return commands;
+    },
+    
+    render() {
+        const container = document.getElementById('command-palette-results');
+        if (!container) return;
+        
+        const filtered = this.getFilteredCommands();
+        this.filteredCommands = filtered;
+        
+        if (filtered.length === 0) {
+            container.innerHTML = '<div class="command-palette-empty">No commands found</div>';
+            return;
+        }
+        
+        // Group by category if no search
+        let html = '';
+        let currentCategory = '';
+        
+        if (!this.searchTerm && this.recentCommands.length > 0) {
+            const recentInFiltered = filtered.filter(c => this.recentCommands.slice(0, 3).includes(c.id));
+            if (recentInFiltered.length > 0) {
+                html += '<div class="command-palette-divider">Recent</div>';
+                recentInFiltered.forEach((cmd, i) => {
+                    html += this.renderItem(cmd, i);
+                });
+                currentCategory = 'recent-shown';
+            }
+        }
+        
+        filtered.forEach((cmd, index) => {
+            if (!this.searchTerm && this.recentCommands.slice(0, 3).includes(cmd.id)) return;
+            
+            if (!this.searchTerm && cmd.category !== currentCategory) {
+                currentCategory = cmd.category;
+                html += `<div class="command-palette-divider">${currentCategory}</div>`;
+            }
+            const actualIndex = this.searchTerm ? index : 
+                (this.recentCommands.slice(0, 3).filter(id => filtered.some(c => c.id === id)).length + 
+                filtered.filter(c => !this.recentCommands.slice(0, 3).includes(c.id)).indexOf(cmd));
+            html += this.renderItem(cmd, index);
+        });
+        
+        container.innerHTML = html;
+    },
+    
+    renderItem(cmd, index) {
+        const selected = index === this.selectedIndex ? 'selected' : '';
+        const shortcut = cmd.shortcut ? `<span class="command-palette-item-shortcut"><kbd>${cmd.shortcut}</kbd></span>` : '';
+        return `
+            <div class="command-palette-item ${selected}" data-index="${index}" onclick="CommandPalette.execute(${index})" onmouseenter="CommandPalette.selectedIndex=${index};CommandPalette.updateSelection()">
+                <span class="command-palette-item-label">
+                    <span class="command-palette-item-icon">${cmd.icon || '⚡'}</span>
+                    ${cmd.label}
+                </span>
+                ${shortcut}
+            </div>
+        `;
+    },
+    
+    selectNext() {
+        if (this.selectedIndex < this.filteredCommands.length - 1) {
+            this.selectedIndex++;
+            this.updateSelection();
+        }
+    },
+    
+    selectPrev() {
+        if (this.selectedIndex > 0) {
+            this.selectedIndex--;
+            this.updateSelection();
+        }
+    },
+    
+    updateSelection() {
+        const items = document.querySelectorAll('.command-palette-item');
+        items.forEach((item, i) => {
+            item.classList.toggle('selected', i === this.selectedIndex);
+        });
+        const selected = items[this.selectedIndex];
+        if (selected) selected.scrollIntoView({ block: 'nearest' });
+    },
+    
+    execute(index) {
+        const cmd = this.filteredCommands[index];
+        if (cmd) {
+            this.addToRecent(cmd.id);
+            this.close();
+            cmd.action();
+        }
+    },
+    
+    executeSelected() {
+        this.execute(this.selectedIndex);
+    },
+    
+    addToRecent(id) {
+        this.recentCommands = [id, ...this.recentCommands.filter(r => r !== id)].slice(0, 5);
+        localStorage.setItem('tbs_recent_commands', JSON.stringify(this.recentCommands));
+    }
+};
+
+
+// ===== ONBOARDING TUTORIAL =====
+const Onboarding = {
+    storageKey: 'tbs_onboarding_complete',
+    currentStep: 0,
+    isActive: false,
+    
+    steps: [
+        {
+            target: '.overview-cards',
+            title: 'Welcome to Tiger Bot Scout! 🐯',
+            content: "This is your command center. Here you can see today's prospects, script performance, and more.",
+            position: 'bottom'
+        },
+        {
+            target: '[onclick*="showSection(\'prospects\')"]',
+            title: 'Prospects',
+            content: 'View and manage all your prospects here. Filter, sort, and update their status.',
+            position: 'right'
+        },
+        {
+            target: '[onclick*="showSection(\'scripts\')"]',
+            title: 'Scripts',
+            content: "Access your generated scripts and see what's working in the Winning Scripts gallery.",
+            position: 'right'
+        },
+        {
+            target: '[onclick*="showSection(\'hive\')"]',
+            title: 'Hive Learnings',
+            content: 'Learn from the collective intelligence of all Tiger Bot users.',
+            position: 'right'
+        },
+        {
+            target: '.theme-toggle',
+            title: 'Customize Your View',
+            content: 'Toggle dark mode, use keyboard shortcuts (press ?), and more!',
+            position: 'bottom'
+        },
+        {
+            target: null,
+            title: "You're Ready! 🎉",
+            content: "That's it! Press Cmd+K (or Ctrl+K) anytime for quick actions. Happy hunting! 🐯",
+            position: 'center'
+        }
+    ],
+    
+    init() {
+        // Check if should show onboarding
+        if (!localStorage.getItem(this.storageKey)) {
+            setTimeout(() => this.start(), 1500);
+        }
+    },
+    
+    start(force = false) {
+        if (!force && localStorage.getItem(this.storageKey)) return;
+        
+        this.currentStep = 0;
+        this.isActive = true;
+        const overlay = document.getElementById('onboarding-overlay');
+        if (overlay) overlay.classList.add('visible');
+        this.showStep(0);
+    },
+    
+    next() {
+        if (this.currentStep < this.steps.length - 1) {
+            this.currentStep++;
+            this.showStep(this.currentStep);
+        } else {
+            this.complete();
+        }
+    },
+    
+    prev() {
+        if (this.currentStep > 0) {
+            this.currentStep--;
+            this.showStep(this.currentStep);
+        }
+    },
+    
+    skip() {
+        this.complete();
+    },
+    
+    complete() {
+        const dontShow = document.getElementById('onboarding-dont-show-checkbox');
+        if (!dontShow || dontShow.checked) {
+            localStorage.setItem(this.storageKey, 'true');
+        }
+        this.isActive = false;
+        const overlay = document.getElementById('onboarding-overlay');
+        if (overlay) overlay.classList.remove('visible');
+        showToast('Tutorial complete! Press ? anytime for shortcuts.', 'success');
+    },
+    
+    showStep(stepIndex) {
+        const step = this.steps[stepIndex];
+        if (!step) return;
+        
+        const tooltip = document.getElementById('onboarding-tooltip');
+        const spotlight = document.getElementById('onboarding-spotlight');
+        const title = document.getElementById('onboarding-title');
+        const content = document.getElementById('onboarding-content');
+        const progress = document.getElementById('onboarding-progress');
+        const prevBtn = document.getElementById('onboarding-prev');
+        const nextBtn = document.getElementById('onboarding-next');
+        const dontShowDiv = document.getElementById('onboarding-dont-show');
+        const arrow = document.getElementById('onboarding-arrow');
+        
+        // Update content
+        if (title) title.textContent = step.title;
+        if (content) content.textContent = step.content;
+        
+        // Update progress dots
+        if (progress) {
+            progress.innerHTML = this.steps.map((_, i) => {
+                const cls = i < stepIndex ? 'completed' : (i === stepIndex ? 'active' : '');
+                return `<div class="onboarding-progress-dot ${cls}"></div>`;
+            }).join('');
+        }
+        
+        // Update buttons
+        if (prevBtn) prevBtn.style.display = stepIndex === 0 ? 'none' : 'block';
+        if (nextBtn) nextBtn.textContent = stepIndex === this.steps.length - 1 ? 'Finish' : 'Next';
+        if (dontShowDiv) dontShowDiv.style.display = stepIndex === this.steps.length - 1 ? 'flex' : 'none';
+        
+        // Position tooltip and spotlight
+        if (step.target) {
+            const targetEl = document.querySelector(step.target);
+            if (targetEl) {
+                const rect = targetEl.getBoundingClientRect();
+                const padding = 8;
+                
+                // Position spotlight
+                if (spotlight) {
+                    spotlight.style.display = 'block';
+                    spotlight.style.left = (rect.left - padding) + 'px';
+                    spotlight.style.top = (rect.top - padding) + 'px';
+                    spotlight.style.width = (rect.width + padding * 2) + 'px';
+                    spotlight.style.height = (rect.height + padding * 2) + 'px';
+                }
+                
+                // Position tooltip
+                if (tooltip) {
+                    tooltip.classList.remove('center', 'position-bottom', 'position-top', 'position-left', 'position-right');
+                    tooltip.classList.add('position-' + step.position);
+                    if (arrow) arrow.style.display = 'block';
+                    
+                    switch (step.position) {
+                        case 'bottom':
+                            tooltip.style.left = rect.left + 'px';
+                            tooltip.style.top = (rect.bottom + padding + 12) + 'px';
+                            tooltip.style.transform = 'none';
+                            break;
+                        case 'top':
+                            tooltip.style.left = rect.left + 'px';
+                            tooltip.style.top = (rect.top - padding - 12) + 'px';
+                            tooltip.style.transform = 'translateY(-100%)';
+                            break;
+                        case 'right':
+                            tooltip.style.left = (rect.right + padding + 12) + 'px';
+                            tooltip.style.top = rect.top + 'px';
+                            tooltip.style.transform = 'none';
+                            break;
+                        case 'left':
+                            tooltip.style.left = (rect.left - padding - 12) + 'px';
+                            tooltip.style.top = rect.top + 'px';
+                            tooltip.style.transform = 'translateX(-100%)';
+                            break;
+                    }
+                }
+            }
+        } else {
+            // Center position (no target)
+            if (spotlight) spotlight.style.display = 'none';
+            if (tooltip) {
+                tooltip.classList.remove('position-bottom', 'position-top', 'position-left', 'position-right');
+                tooltip.classList.add('center');
+                tooltip.style.left = '50%';
+                tooltip.style.top = '50%';
+                tooltip.style.transform = 'translate(-50%, -50%)';
+            }
+            if (arrow) arrow.style.display = 'none';
+        }
+    },
+    
+    restart() {
+        localStorage.removeItem(this.storageKey);
+        this.start(true);
+    }
+};
+
+
+// ===== NOTIFICATION CENTER =====
+const NotificationCenter = {
+    notifications: JSON.parse(localStorage.getItem('tbs_notifications') || '[]'),
+    unreadCount: 0,
+    isOpen: false,
+    maxNotifications: 50,
+    
+    init() {
+        this.updateBadge();
+        this.render();
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const wrapper = document.querySelector('.notification-bell-wrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                this.closeDropdown();
+            }
+        });
+        
+        // Generate some welcome notifications for new users
+        if (this.notifications.length === 0) {
+            setTimeout(() => {
+                this.add({
+                    type: 'system',
+                    title: 'Welcome to Tiger Bot Scout! 🐯',
+                    message: 'Your AI recruiting partner is ready to help you find prospects.'
+                });
+            }, 3000);
+        }
+    },
+    
+    add(notification) {
+        const newNotif = {
+            id: Date.now() + Math.random().toString(36).substr(2, 9),
+            type: notification.type || 'system',
+            title: notification.title,
+            message: notification.message,
+            timestamp: Date.now(),
+            read: false,
+            action: notification.action || null
+        };
+        
+        this.notifications.unshift(newNotif);
+        
+        // Trim to max
+        if (this.notifications.length > this.maxNotifications) {
+            this.notifications = this.notifications.slice(0, this.maxNotifications);
+        }
+        
+        this.save();
+        this.updateBadge();
+        this.render();
+        
+        // Show toast for new notification
+        showToast(notification.title, 'info');
+        
+        // Animate bell
+        const bell = document.getElementById('notification-bell');
+        if (bell) {
+            bell.classList.add('has-unread');
+            bell.style.animation = 'none';
+            setTimeout(() => bell.style.animation = '', 10);
+        }
+        
+        return newNotif.id;
+    },
+    
+    markAsRead(id) {
+        const notif = this.notifications.find(n => n.id === id);
+        if (notif && !notif.read) {
+            notif.read = true;
+            this.save();
+            this.updateBadge();
+            this.render();
+        }
+    },
+    
+    markAllAsRead() {
+        this.notifications.forEach(n => n.read = true);
+        this.save();
+        this.updateBadge();
+        this.render();
+    },
+    
+    clear() {
+        this.notifications = [];
+        this.save();
+        this.updateBadge();
+        this.render();
+    },
+    
+    remove(id) {
+        this.notifications = this.notifications.filter(n => n.id !== id);
+        this.save();
+        this.updateBadge();
+        this.render();
+    },
+    
+    save() {
+        localStorage.setItem('tbs_notifications', JSON.stringify(this.notifications));
+    },
+    
+    updateBadge() {
+        this.unreadCount = this.notifications.filter(n => !n.read).length;
+        const badge = document.getElementById('notification-badge');
+        const bell = document.getElementById('notification-bell');
+        
+        if (badge) {
+            badge.textContent = this.unreadCount > 99 ? '99+' : this.unreadCount;
+        }
+        
+        if (bell) {
+            bell.classList.toggle('has-unread', this.unreadCount > 0);
+            bell.setAttribute('aria-label', `Notifications (${this.unreadCount} unread)`);
+        }
+    },
+    
+    toggle() {
+        this.isOpen ? this.closeDropdown() : this.openDropdown();
+    },
+    
+    openDropdown() {
+        this.isOpen = true;
+        const dropdown = document.getElementById('notification-dropdown');
+        const bell = document.getElementById('notification-bell');
+        if (dropdown) dropdown.classList.add('visible');
+        if (bell) bell.setAttribute('aria-expanded', 'true');
+    },
+    
+    closeDropdown() {
+        this.isOpen = false;
+        const dropdown = document.getElementById('notification-dropdown');
+        const bell = document.getElementById('notification-bell');
+        if (dropdown) dropdown.classList.remove('visible');
+        if (bell) bell.setAttribute('aria-expanded', 'false');
+    },
+    
+    render() {
+        const list = document.getElementById('notification-list');
+        if (!list) return;
+        
+        if (this.notifications.length === 0) {
+            list.innerHTML = `
+                <div class="notification-empty">
+                    <div class="notification-empty-icon">🔔</div>
+                    <div>No notifications yet</div>
+                </div>
+            `;
+            return;
+        }
+        
+        list.innerHTML = this.notifications.map(notif => this.renderItem(notif)).join('');
+    },
+    
+    renderItem(notif) {
+        const icon = this.getIcon(notif.type);
+        const timeAgo = this.formatTimeAgo(notif.timestamp);
+        const unreadClass = notif.read ? '' : 'unread';
+        const unreadDot = notif.read ? '' : '<div class="notification-item-unread-dot"></div>';
+        
+        return `
+            <div class="notification-item ${unreadClass}" onclick="NotificationCenter.handleClick('${notif.id}')">
+                <div class="notification-item-icon ${notif.type}">${icon}</div>
+                <div class="notification-item-content">
+                    <div class="notification-item-title">${this.escapeHtml(notif.title)}</div>
+                    <div class="notification-item-message">${this.escapeHtml(notif.message)}</div>
+                    <div class="notification-item-time">${timeAgo}</div>
+                </div>
+                ${unreadDot}
+            </div>
+        `;
+    },
+    
+    handleClick(id) {
+        const notif = this.notifications.find(n => n.id === id);
+        if (notif) {
+            this.markAsRead(id);
+            if (notif.action && typeof notif.action === 'function') {
+                notif.action();
+            }
+        }
+    },
+    
+    getIcon(type) {
+        switch (type) {
+            case 'prospect': return '👤';
+            case 'script': return '📝';
+            case 'system': return '⚙️';
+            case 'success': return '✅';
+            case 'warning': return '⚠️';
+            case 'error': return '❌';
+            default: return '🔔';
+        }
+    },
+    
+    formatTimeAgo(timestamp) {
+        const seconds = Math.floor((Date.now() - timestamp) / 1000);
+        if (seconds < 60) return 'Just now';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes}m ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours}h ago`;
+        const days = Math.floor(hours / 24);
+        if (days < 7) return `${days}d ago`;
+        return new Date(timestamp).toLocaleDateString();
+    },
+    
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    },
+    
+    // Helper to generate prospect notification
+    notifyNewProspect(prospect) {
+        this.add({
+            type: 'prospect',
+            title: `New high-score prospect: ${prospect.name}`,
+            message: `Score: ${prospect.score} - ${prospect.source || 'Unknown source'}`
+        });
+    },
+    
+    // Helper to generate script notification
+    notifyScriptReply(script) {
+        this.add({
+            type: 'script',
+            title: 'Script got a reply!',
+            message: `${script.prospectName} replied to your script`
+        });
+    },
+    
+    // Helper for system notifications
+    notifySystem(title, message) {
+        this.add({
+            type: 'system',
+            title: title,
+            message: message
+        });
+    }
+};
+
+
+// ===== COMPACT MODE =====
+function toggleCompactMode() {
+    document.documentElement.classList.toggle('compact-mode');
+    const isCompact = document.documentElement.classList.contains('compact-mode');
+    localStorage.setItem('tbs_compact_mode', isCompact);
+    showToast(isCompact ? 'Compact mode enabled' : 'Compact mode disabled', 'info');
+}
+
+// Load compact mode preference
+if (localStorage.getItem('tbs_compact_mode') === 'true') {
+    document.documentElement.classList.add('compact-mode');
+}
+
+// ===== EXPORT CURRENT SECTION =====
+function exportCurrentSection() {
+    switch (currentSection) {
+        case 'prospects':
+            if (typeof exportProspects === 'function') exportProspects();
+            else showToast('Export prospects feature coming soon', 'info');
+            break;
+        case 'analytics':
+            if (typeof exportAnalytics === 'function') exportAnalytics();
+            else showToast('Export analytics feature coming soon', 'info');
+            break;
+        default:
+            showToast('Export not available for this section', 'info');
+    }
+}
+
+// ===== PRINT REPORT =====
+function printReport() {
+    const printDate = document.getElementById('print-date');
+    if (printDate) {
+        printDate.textContent = 'Generated: ' + new Date().toLocaleString();
+    }
+    window.print();
+}
+
+// ===== INITIALIZE NEW FEATURES =====
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize command palette
+    if (typeof CommandPalette !== 'undefined') {
+        CommandPalette.init();
+    }
+    
+    // Initialize notification center
+    if (typeof NotificationCenter !== 'undefined') {
+        NotificationCenter.init();
+    }
+    
+    // Initialize onboarding (with delay to let page load)
+    if (typeof Onboarding !== 'undefined') {
+        setTimeout(() => Onboarding.init(), 500);
+    }
+});
+
+
 </script>
+
+    <!-- ===== COMMAND PALETTE ===== -->
+    <div id="command-palette-overlay" class="command-palette-overlay" role="dialog" aria-labelledby="command-palette-title" aria-modal="true">
+        <div class="command-palette">
+            <div class="command-palette-search">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input type="text" id="command-palette-input" placeholder="Type a command or search..." autocomplete="off" aria-label="Search commands">
+                <div class="cmd-hint"><kbd>esc</kbd> to close</div>
+            </div>
+            <div class="command-palette-results" id="command-palette-results" role="listbox" aria-label="Commands"></div>
+            <div class="command-palette-footer">
+                <div class="command-palette-footer-hints">
+                    <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+                    <span><kbd>↵</kbd> select</span>
+                    <span><kbd>esc</kbd> close</span>
+                </div>
+                <span id="command-palette-hint"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== ONBOARDING TUTORIAL ===== -->
+    <div id="onboarding-overlay" class="onboarding-overlay" role="dialog" aria-labelledby="onboarding-title" aria-modal="true">
+        <div class="onboarding-spotlight" id="onboarding-spotlight"></div>
+        <div class="onboarding-tooltip" id="onboarding-tooltip">
+            <div class="onboarding-tooltip-arrow" id="onboarding-arrow"></div>
+            <h3 class="onboarding-tooltip-title" id="onboarding-title"></h3>
+            <p class="onboarding-tooltip-content" id="onboarding-content"></p>
+            <div class="onboarding-progress" id="onboarding-progress"></div>
+            <div class="onboarding-actions">
+                <button class="onboarding-btn onboarding-btn-skip" id="onboarding-skip" onclick="Onboarding.skip()">Skip tour</button>
+                <div class="onboarding-nav-btns">
+                    <button class="onboarding-btn onboarding-btn-prev" id="onboarding-prev" onclick="Onboarding.prev()">Back</button>
+                    <button class="onboarding-btn onboarding-btn-next" id="onboarding-next" onclick="Onboarding.next()">Next</button>
+                </div>
+            </div>
+            <div class="onboarding-dont-show" id="onboarding-dont-show" style="display: none;">
+                <input type="checkbox" id="onboarding-dont-show-checkbox">
+                <label for="onboarding-dont-show-checkbox">Don't show this again</label>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>
