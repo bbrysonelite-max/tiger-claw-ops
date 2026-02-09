@@ -1,0 +1,54 @@
+{
+  "id": "2026-02-08-dashboard-migration-phase1-overview",
+  "title": "Implement Overview dashboard cards wired to /dashboard/overview API",
+  "description": "Create the four Overview dashboard cards and wire them to a GET /dashboard/overview API, using TypeScript types defined in a shared types/dashboard.ts file.",
+  "priority": "high",
+  "labels": ["frontend", "dashboard", "overview", "api"],
+  "contextFiles": [
+    "/usr/projects/tiger-bot-scout/website/dashboard.html",
+    "/usr/projects/tiger_bot_multiagent/docs/blueprints/dashboard_migration_from_html.md"
+  ],
+  "repoPath": "/usr/projects/tiger-bot-scout",
+  "steps": [
+    {
+      "id": "step-1",
+      "kind": "create_files",
+      "instruction": "Create four React components for the Overview dashboard cards: TodaysProspectsCard, ScriptPerformanceCard, ConversionFunnelCard, and HivePulseCard, under a components/dashboard/ directory. For now, they can render simple boxes with placeholders for title, a primary metric, and a small description.",
+      "targetFiles": [
+        "components/dashboard/TodaysProspectsCard.tsx",
+        "components/dashboard/ScriptPerformanceCard.tsx",
+        "components/dashboard/ConversionFunnelCard.tsx",
+        "components/dashboard/HivePulseCard.tsx"
+      ]
+    },
+    {
+      "id": "step-2",
+      "kind": "create_files",
+      "instruction": "Create a types/dashboard.ts file that defines TypeScript interfaces for the Overview data structure (e.g. DashboardOverview, with fields for todaysProspects, scriptPerformance, conversionFunnel, hivePulse). Aim to match the Tiger Bot dashboard PRD and keep the types generic enough to map onto whatever backend implementation exists or will exist.",
+      "targetFiles": [
+        "types/dashboard.ts"
+      ]
+    },
+    {
+      "id": "step-3",
+      "kind": "edit_files",
+      "instruction": "Update the new dashboard route (e.g. app/dashboard/page.tsx or equivalent) to fetch Overview data from a GET /dashboard/overview endpoint. Use the types from types/dashboard.ts for the response shape, and pass the resulting data into the four card components as typed props.",
+      "targetFiles": [
+        "app/dashboard/page.tsx",
+        "components/dashboard/TodaysProspectsCard.tsx",
+        "components/dashboard/ScriptPerformanceCard.tsx",
+        "components/dashboard/ConversionFunnelCard.tsx",
+        "components/dashboard/HivePulseCard.tsx",
+        "types/dashboard.ts"
+      ]
+    },
+    {
+      "id": "step-4",
+      "kind": "run_command",
+      "instruction": "Run linting and tests (or at least a build) to ensure the new Overview route and components compile and pass basic checks.",
+      "commands": [
+        "npm run lint || npm test || npm run build || echo 'no-check'"
+      ]
+    }
+  ]
+}

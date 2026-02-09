@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Agent Task Status",
+  "type": "object",
+  "required": ["taskId", "status", "updatedAt"],
+  "properties": {
+    "taskId": {
+      "type": "string",
+      "description": "ID of the task this status refers to (matches task.id)"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["queued", "running", "success", "failed", "partial"],
+      "description": "Overall execution status"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Human-readable summary of what happened"
+    },
+    "stepStatuses": {
+      "type": "array",
+      "description": "Per-step outcomes keyed by step.id from the task",
+      "items": {
+        "type": "object",
+        "required": ["stepId", "status"],
+        "properties": {
+          "stepId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "running", "success", "failed", "skipped"]
+          },
+          "detail": {
+            "type": "string",
+            "description": "Optional detail or error message"
+          }
+        }
+      }
+    },
+    "tests": {
+      "type": "object",
+      "description": "Optional structured test results",
+      "properties": {
+        "command": { "type": "string" },
+        "exitCode": { "type": "integer" },
+        "passed": { "type": "boolean" },
+        "logPath": { "type": "string" }
+      }
+    },
+    "logs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Short log lines or references to logs"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO timestamp when this status was last updated"
+    }
+  }
+}

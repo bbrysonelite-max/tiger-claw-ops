@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Agent Task",
+  "type": "object",
+  "required": ["id", "title", "description", "priority", "steps"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique task identifier (e.g. date-seq or UUID)"
+    },
+    "title": {
+      "type": "string",
+      "description": "Short human-readable title of the task"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of what should be done"
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "normal", "high", "critical"],
+      "default": "normal"
+    },
+    "labels": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional tags (e.g. frontend, backend, openclaw, analytics)"
+    },
+    "contextFiles": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Paths to docs or code files the executor should read first"
+    },
+    "repoPath": {
+      "type": "string",
+      "description": "Filesystem path to the git repo root for this task"
+    },
+    "steps": {
+      "type": "array",
+      "description": "Ordered list of concrete steps the builder agent / code assistant should perform",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "instruction"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Step identifier (for referencing in status)"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "edit_files",
+              "create_files",
+              "run_command",
+              "update_api_contract",
+              "write_tests",
+              "refactor",
+              "documentation"
+            ]
+          },
+          "instruction": {
+            "type": "string",
+            "description": "Natural-language instruction describing exactly what to do"
+          },
+          "targetFiles": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Files this step is expected to touch or create"
+          },
+          "commands": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Shell commands to run for this step (tests, build, lint)"
+          }
+        }
+      }
+    }
+  }
+}

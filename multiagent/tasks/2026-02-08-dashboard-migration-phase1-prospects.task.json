@@ -1,0 +1,66 @@
+{
+  "id": "2026-02-08-dashboard-migration-phase1-prospects",
+  "title": "Implement v2 Prospects page using legacy #customers section as reference",
+  "description": "Build a new /dashboard/prospects route with a ProspectsTable and ProspectDetailModal, taking visual/UX cues from the legacy #customers section in website/dashboard.html but wiring it to /ai-crm/leads APIs.",
+  "priority": "high",
+  "labels": ["frontend", "dashboard", "prospects", "migration"],
+  "contextFiles": [
+    "/usr/projects/tiger-bot-scout/website/dashboard.html",
+    "/usr/projects/tiger_bot_multiagent/docs/blueprints/dashboard_migration_from_html.md"
+  ],
+  "repoPath": "/usr/projects/tiger-bot-scout",
+  "steps": [
+    {
+      "id": "step-1",
+      "kind": "create_files",
+      "instruction": "Create a new React route for /dashboard/prospects that renders a ProspectsTable component, taking the table structure and column naming inspiration from the #customers table in website/dashboard.html.",
+      "targetFiles": [
+        "app/dashboard/prospects/page.tsx",
+        "components/dashboard/ProspectsTable.tsx"
+      ]
+    },
+    {
+      "id": "step-2",
+      "kind": "edit_files",
+      "instruction": "Ensure the ProspectsTable component uses the shared Prospect type from types/dashboard.ts (or create/extend that type if it does not yet exist). Include at least: id, name, score, status, source, lastContactedAt.",
+      "targetFiles": [
+        "types/dashboard.ts",
+        "components/dashboard/ProspectsTable.tsx"
+      ]
+    },
+    {
+      "id": "step-3",
+      "kind": "edit_files",
+      "instruction": "Wire the ProspectsTable to fetch data from a backend API, e.g. GET /ai-crm/leads, supporting basic query params for status, minimum score, and source. Implement client-side controls (dropdowns/inputs) for these filters, defaulting to sort by score descending.",
+      "targetFiles": [
+        "app/dashboard/prospects/page.tsx",
+        "components/dashboard/ProspectsTable.tsx"
+      ]
+    },
+    {
+      "id": "step-4",
+      "kind": "create_files",
+      "instruction": "Create a ProspectDetailModal component that displays full details for a selected prospect, including placeholders for scripts and recent activities so those can be wired up later. Take visual cues from any detail views or modals present in website/dashboard.html, but do not modify that file.",
+      "targetFiles": [
+        "components/dashboard/ProspectDetailModal.tsx"
+      ]
+    },
+    {
+      "id": "step-5",
+      "kind": "edit_files",
+      "instruction": "Integrate the ProspectDetailModal into the /dashboard/prospects page such that clicking a row in the ProspectsTable opens the modal and fetches detailed data from GET /ai-crm/leads/:id. Handle loading and error states gracefully.",
+      "targetFiles": [
+        "app/dashboard/prospects/page.tsx",
+        "components/dashboard/ProspectDetailModal.tsx"
+      ]
+    },
+    {
+      "id": "step-6",
+      "kind": "run_command",
+      "instruction": "Run linting and tests (or build) to ensure the new Prospects route and components are healthy.",
+      "commands": [
+        "npm run lint || npm test || npm run build || echo 'no-check'"
+      ]
+    }
+  ]
+}

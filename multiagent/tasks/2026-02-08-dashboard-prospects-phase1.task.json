@@ -1,0 +1,66 @@
+{
+  "id": "2026-02-08-dashboard-prospects-phase1",
+  "title": "Implement Prospects table, filters, and detail modal",
+  "description": "Create the Prospects table page for Tiger Bot Scout dashboard with scoring, basic filters, and a detail modal wired to API endpoints described in the PRD.",
+  "priority": "high",
+  "labels": ["frontend", "dashboard", "prospects", "react"],
+  "contextFiles": [
+    "/usr/projects/tiger_bot_multiagent/docs/blueprints/builder_agent_blueprint.md"
+  ],
+  "repoPath": "/usr/projects/tiger-bot-scout",
+  "steps": [
+    {
+      "id": "step-1",
+      "kind": "create_files",
+      "instruction": "Create a React route for /dashboard/prospects that displays a table of prospects with columns: Name, Source, Score, Status, Last Contacted.",
+      "targetFiles": [
+        "app/dashboard/prospects/page.tsx",
+        "components/dashboard/ProspectsTable.tsx"
+      ]
+    },
+    {
+      "id": "step-2",
+      "kind": "edit_files",
+      "instruction": "Define TypeScript types for prospects consistent with the PRD (including id, name, score, status, source, lastContactedAt, and any other required fields) and expose them from a shared types file.",
+      "targetFiles": [
+        "types/dashboard.ts",
+        "components/dashboard/ProspectsTable.tsx"
+      ]
+    },
+    {
+      "id": "step-3",
+      "kind": "edit_files",
+      "instruction": "Wire the Prospects table to fetch data from the backend API (e.g. GET /ai-crm/leads with query params for filters and pagination). Implement basic filters for status, minimum score, and source, and default sort by score descending.",
+      "targetFiles": [
+        "app/dashboard/prospects/page.tsx",
+        "components/dashboard/ProspectsTable.tsx"
+      ]
+    },
+    {
+      "id": "step-4",
+      "kind": "create_files",
+      "instruction": "Create a ProspectDetailModal component that shows detailed information for a selected prospect, including core fields and placeholders for scripts and recent activities.",
+      "targetFiles": [
+        "components/dashboard/ProspectDetailModal.tsx"
+      ]
+    },
+    {
+      "id": "step-5",
+      "kind": "edit_files",
+      "instruction": "Integrate the ProspectDetailModal into the /dashboard/prospects page so that clicking a row opens the modal. Fetch full prospect details from GET /ai-crm/leads/:id and handle loading/error states gracefully.",
+      "targetFiles": [
+        "app/dashboard/prospects/page.tsx",
+        "components/dashboard/ProspectDetailModal.tsx"
+      ]
+    },
+    {
+      "id": "step-6",
+      "kind": "run_command",
+      "instruction": "Run linting and tests to ensure the Prospects page and components compile and basic tests pass.",
+      "commands": [
+        "npm run lint",
+        "npm test"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "id": "2026-02-08-dashboard-migration-phase1-shell",
+  "title": "Create new dashboard app shell alongside legacy dashboard.html",
+  "description": "Introduce a new dashboard app structure (routes + layout + components folder) next to website/dashboard.html without modifying the legacy HTML.",
+  "priority": "high",
+  "labels": ["frontend", "dashboard", "migration", "shell"],
+  "contextFiles": [
+    "/usr/projects/tiger-bot-scout/website/dashboard.html",
+    "/usr/projects/tiger_bot_multiagent/docs/blueprints/dashboard_migration_from_html.md",
+    "/usr/projects/tiger_bot_multiagent/docs/blueprints/builder_agent_blueprint.md"
+  ],
+  "repoPath": "/usr/projects/tiger-bot-scout",
+  "steps": [
+    {
+      "id": "step-1",
+      "kind": "create_files",
+      "instruction": "Inspect website/dashboard.html to understand the existing layout (nav, header, main content). Create a new dashboard app shell under an appropriate framework-specific directory (for example, app/dashboard/page.tsx and components/dashboard/Layout.tsx if the project uses Next.js, or src/pages/dashboard/index.tsx and src/components/dashboard/Layout.tsx if it uses a CRA/Vite-style React app). The new shell should roughly mirror the structure of the legacy page (sidebar/header/content), but should not yet include real data.",
+      "targetFiles": [
+        "app/dashboard/page.tsx",
+        "components/dashboard/Layout.tsx"
+      ]
+    },
+    {
+      "id": "step-2",
+      "kind": "edit_files",
+      "instruction": "If the repo already has an established routing/layout pattern, adapt the new dashboard route and layout to match that convention instead of inventing a new one. Ensure there is a single entry point for the new dashboard (e.g. /dashboard) that renders the Layout and a placeholder for Overview content.",
+      "targetFiles": [
+        "app/dashboard/page.tsx",
+        "components/dashboard/Layout.tsx"
+      ]
+    },
+    {
+      "id": "step-3",
+      "kind": "documentation",
+      "instruction": "Add a brief comment or small markdown note in the repo (e.g. docs/dashboard-migration-notes.md) summarizing where the new dashboard app shell lives and how it relates to the legacy website/dashboard.html, referencing the migration blueprint.",
+      "targetFiles": [
+        "docs/dashboard-migration-notes.md"
+      ]
+    },
+    {
+      "id": "step-4",
+      "kind": "run_command",
+      "instruction": "Run the project type-check or build command (if present) to ensure the new dashboard shell compiles. Use an appropriate command such as npm run build, npm run lint, or npm run type-check depending on what exists in package.json.",
+      "commands": [
+        "npm run lint || npm run build || npm test || echo 'no-check'"
+      ]
+    }
+  ]
+}

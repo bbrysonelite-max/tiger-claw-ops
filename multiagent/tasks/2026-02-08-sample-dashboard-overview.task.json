@@ -1,0 +1,51 @@
+{
+  "id": "2026-02-08-sample-dashboard-overview",
+  "title": "Implement basic Dashboard Overview page skeleton",
+  "description": "Create the React route and minimal components for the Tiger Bot Dashboard overview page, wiring it to the /dashboard/overview API with typed props.",
+  "priority": "normal",
+  "labels": [
+    "frontend",
+    "dashboard",
+    "react"
+  ],
+  "contextFiles": [
+    "/usr/projects/tiger_bot_multiagent/docs/blueprints/builder_agent_blueprint.md"
+  ],
+  "repoPath": "/usr/projects/tiger-bot-scout",
+  "steps": [
+    {
+      "id": "step-1",
+      "kind": "create_files",
+      "instruction": "Create a React route for /dashboard (Overview page) with a simple layout that renders four placeholder cards: TodaysProspectsCard, ScriptPerformanceCard, ConversionFunnelCard, and HivePulseCard.",
+      "targetFiles": [
+        "app/dashboard/page.tsx",
+        "components/dashboard/TodaysProspectsCard.tsx",
+        "components/dashboard/ScriptPerformanceCard.tsx",
+        "components/dashboard/ConversionFunnelCard.tsx",
+        "components/dashboard/HivePulseCard.tsx"
+      ]
+    },
+    {
+      "id": "step-2",
+      "kind": "edit_files",
+      "instruction": "Define TypeScript props interfaces for the four cards consistent with the Tiger Dashboard PRD, and ensure the Overview page fetches data from GET /dashboard/overview and passes the correct props down.",
+      "targetFiles": [
+        "app/dashboard/page.tsx",
+        "components/dashboard/TodaysProspectsCard.tsx",
+        "components/dashboard/ScriptPerformanceCard.tsx",
+        "components/dashboard/ConversionFunnelCard.tsx",
+        "components/dashboard/HivePulseCard.tsx",
+        "types/dashboard.ts"
+      ]
+    },
+    {
+      "id": "step-3",
+      "kind": "run_command",
+      "instruction": "Run type-check and unit tests to ensure the new components compile and basic tests pass.",
+      "commands": [
+        "npm run lint",
+        "npm test"
+      ]
+    }
+  ]
+}
