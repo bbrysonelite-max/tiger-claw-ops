@@ -22,6 +22,104 @@
         }
     </script>
     <style>
+
+        /* ===== DARK MODE CSS VARIABLES ===== */
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #0f172a;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: #334155;
+        }
+
+        :root.light {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f1f5f9;
+            --bg-card: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border-color: #e2e8f0;
+        }
+
+        /* Theme transitions */
+        body, aside, main, section, div, input, select, textarea {
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease;
+        }
+
+        /* Light mode overrides */
+        :root.light body { background-color: var(--bg-secondary) !important; color: var(--text-primary) !important; }
+        :root.light .bg-slate-950 { background-color: var(--bg-secondary) !important; }
+        :root.light .bg-slate-900 { background-color: var(--bg-card) !important; }
+        :root.light .bg-slate-800 { background-color: var(--bg-secondary) !important; }
+        :root.light .bg-slate-800\/50 { background-color: rgba(241, 245, 249, 0.5) !important; }
+        :root.light .text-white { color: var(--text-primary) !important; }
+        :root.light .text-slate-400, :root.light .text-slate-300 { color: var(--text-secondary) !important; }
+        :root.light .text-slate-500 { color: var(--text-muted) !important; }
+        :root.light .border-slate-800, :root.light .border-slate-700, :root.light .border-slate-600 { border-color: var(--border-color) !important; }
+        :root.light .divide-slate-800 > * + * { border-color: var(--border-color) !important; }
+        :root.light aside { background-color: var(--bg-card) !important; border-color: var(--border-color) !important; }
+        :root.light .hover\:bg-slate-800:hover { background-color: var(--bg-secondary) !important; }
+        :root.light .hover\:bg-slate-700:hover { background-color: #e2e8f0 !important; }
+        :root.light input, :root.light select, :root.light textarea { background-color: var(--bg-secondary) !important; border-color: var(--border-color) !important; color: var(--text-primary) !important; }
+        :root.light .modal-backdrop { background: rgba(0,0,0,0.5); }
+        :root.light .bg-slate-700 { background-color: #e2e8f0 !important; }
+        :root.light .roi-gauge-mask { background: var(--bg-card) !important; }
+        :root.light .timeline-tooltip { background: var(--bg-card) !important; border-color: var(--border-color) !important; }
+
+        /* Dark mode toggle button styles */
+        .theme-toggle {
+            position: relative;
+            width: 52px;
+            height: 28px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #475569;
+            flex-shrink: 0;
+        }
+        .theme-toggle:hover { border-color: #f97316; box-shadow: 0 0 10px rgba(249, 115, 22, 0.2); }
+        .theme-toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #f8fafc;
+            transition: transform 0.3s ease, background 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+        }
+        :root.light .theme-toggle { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-color: #fbbf24; }
+        :root.light .theme-toggle-slider { transform: translateX(24px); background: #f97316; }
+
+        /* Export button styles */
+        .export-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .export-btn:hover { background: linear-gradient(135deg, #047857 0%, #065f46 100%); transform: translateY(-1px); }
+        .export-btn:active { transform: translateY(0); }
+        .export-btn.loading { opacity: 0.7; pointer-events: none; }
+        .export-btn svg { width: 16px; height: 16px; }
+        .export-btn-secondary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        .export-btn-secondary:hover { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
         .gradient-text { background: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #c2410c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .spinner { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -399,12 +497,26 @@
                     <svg class="w-5 h-5" id="refresh-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                     <span>Refresh</span>
                 </button>
+                <!-- Dark Mode Toggle -->
+                <button onclick="toggleDarkMode()" class="theme-toggle" title="Toggle dark/light mode" aria-label="Toggle theme">
+                    <div class="theme-toggle-slider">
+                        <span id="theme-icon">🌙</span>
+                    </div>
+                </button>
                 <div class="w-10 h-10 bg-tiger-500 rounded-full flex items-center justify-center font-bold">B</div>
             </div>
         </header>
 
         <!-- ============ DASHBOARD SECTION ============ -->
         <section id="section-dashboard" class="section-content">
+            <!-- Analytics Export Controls -->
+            <div class="flex justify-end mb-4">
+                <button onclick="exportAnalyticsReport()" class="export-btn export-btn-secondary" title="Generate analytics summary report">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Export Report
+                </button>
+            </div>
+
             <!-- Overview Cards Row -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <!-- Today's Prospects Card -->
@@ -588,7 +700,12 @@
                         <input type="date" id="filter-date-to" 
                             class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-sm focus:outline-none focus:border-tiger-500" 
                             onchange="applyFilters()">
-                    </div>
+                    
+                    <!-- Export Prospects Button -->
+                    <button onclick="exportProspectsCSV()" class="export-btn ml-2" title="Export filtered prospects to CSV">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Export CSV
+                    </button></div>
                     
                     <!-- Clear Filters -->
                     <button onclick="clearFilters()" class="text-slate-400 hover:text-white text-sm px-3 py-2">
@@ -652,6 +769,14 @@
 
         <!-- ============ SCRIPTS SECTION ============ -->
         <section id="section-scripts" class="section-content hidden">
+            <!-- Scripts Export Controls -->
+            <div class="flex justify-end mb-4">
+                <button onclick="exportScriptsText()" class="export-btn" title="Export all winning scripts">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Export Scripts
+                </button>
+            </div>
+
             <!-- Scripts Sub-Navigation Tabs -->
             <div class="flex items-center gap-4 mb-6 border-b border-slate-800">
                 <button onclick="showScriptsTab('history')" class="scripts-tab px-4 py-3 text-tiger-400 border-b-2 border-tiger-500 font-medium" data-tab="history">
@@ -4048,6 +4173,336 @@ Powered by Tiger Bot Scout`;
         function initHiveSection() {
             fetchLeaderboard();
             fetchMyContributions();
+        }
+
+
+        // ===== DARK MODE FUNCTIONALITY =====
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const isDark = !html.classList.contains('light');
+
+            if (isDark) {
+                html.classList.add('light');
+                localStorage.setItem('theme', 'light');
+                document.getElementById('theme-icon').textContent = '☀️';
+            } else {
+                html.classList.remove('light');
+                localStorage.setItem('theme', 'dark');
+                document.getElementById('theme-icon').textContent = '🌙';
+            }
+        }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const themeIcon = document.getElementById('theme-icon');
+
+            if (savedTheme === 'light' || (!savedTheme && !prefersDark)) {
+                document.documentElement.classList.add('light');
+                if (themeIcon) themeIcon.textContent = '☀️';
+            } else {
+                document.documentElement.classList.remove('light');
+                if (themeIcon) themeIcon.textContent = '🌙';
+            }
+
+            // Listen for system preference changes
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                if (!localStorage.getItem('theme')) {
+                    if (e.matches) {
+                        document.documentElement.classList.remove('light');
+                        if (themeIcon) themeIcon.textContent = '🌙';
+                    } else {
+                        document.documentElement.classList.add('light');
+                        if (themeIcon) themeIcon.textContent = '☀️';
+                    }
+                }
+            });
+        }
+
+        // ===== EXPORT FUNCTIONALITY =====
+
+        // Helper function to download files
+        function downloadFile(content, filename, type) {
+            const blob = new Blob([content], { type: type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Reset export button state
+        function resetExportBtn(btn, text, isSecondary = false) {
+            btn.classList.remove('loading');
+            const icon = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`;
+            btn.innerHTML = icon + ' ' + text;
+        }
+
+        // Export prospects to CSV
+        function exportProspectsCSV() {
+            const btn = event.currentTarget;
+            btn.classList.add('loading');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<svg class="spinner w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2" stroke-dasharray="32" stroke-dashoffset="12"></circle></svg> Exporting...';
+
+            setTimeout(() => {
+                try {
+                    // Get the currently displayed prospects (filtered)
+                    const prospects = window.cachedProspects || [];
+
+                    if (prospects.length === 0) {
+                        showToast('No prospects to export', 'warning');
+                        btn.classList.remove('loading');
+                        btn.innerHTML = originalText;
+                        return;
+                    }
+
+                    // CSV Headers
+                    const headers = ['Name', 'Source', 'Score', 'Status', 'Signal', 'Created Date', 'Email', 'Phone'];
+
+                    // Escape CSV fields helper
+                    const escapeCSV = (val) => {
+                        if (val === null || val === undefined) return '';
+                        const str = String(val);
+                        if (str.includes(',') || str.includes('"') || str.includes('
+')) {
+                            return '"' + str.replace(/"/g, '""') + '"';
+                        }
+                        return str;
+                    };
+
+                    // Build CSV rows
+                    const rows = prospects.map(p => {
+                        const name = p.display_name || p.displayName || p.name || 'Unknown';
+                        const source = p.source || p.platform || '';
+                        const score = p.score || p.ai_score || 0;
+                        const status = p.status || p.pipeline_status || 'new';
+                        const signal = Array.isArray(p.signals || p.buying_signals) ? (p.signals || p.buying_signals).join('; ') : '';
+                        const created = p.created_at || p.createdAt || p.discovered_at || '';
+                        const email = p.email || '';
+                        const phone = p.phone || '';
+
+                        return [name, source, score, status, signal, created, email, phone].map(escapeCSV).join(',');
+                    });
+
+                    // Combine headers and rows
+                    const csv = [headers.join(','), ...rows].join('
+');
+
+                    // Generate filename with date
+                    const date = new Date().toISOString().split('T')[0];
+                    const filename = `tiger-prospects-${date}.csv`;
+
+                    // Download
+                    downloadFile(csv, filename, 'text/csv;charset=utf-8;');
+                    showToast(`Exported ${prospects.length} prospects to ${filename}`, 'success');
+
+                } catch (error) {
+                    console.error('Export error:', error);
+                    showToast('Failed to export prospects', 'error');
+                } finally {
+                    btn.classList.remove('loading');
+                    btn.innerHTML = originalText;
+                }
+            }, 100);
+        }
+
+        // Export analytics report
+        function exportAnalyticsReport() {
+            const btn = event.currentTarget;
+            btn.classList.add('loading');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<svg class="spinner w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2" stroke-dasharray="32" stroke-dashoffset="12"></circle></svg> Generating...';
+
+            setTimeout(() => {
+                try {
+                    const now = new Date();
+                    const dateStr = now.toLocaleString();
+
+                    // Gather data from dashboard state
+                    const overview = window.overviewData || {};
+
+                    // Build report
+                    let report = `Tiger Bot Scout Analytics Report
+`;
+                    report += `=====================================
+`;
+                    report += `Generated: ${dateStr}
+
+`;
+
+                    // Overview Stats
+                    report += `OVERVIEW STATS
+`;
+                    report += `--------------
+`;
+                    const todaysProspects = overview.todaysProspects || {};
+                    const scriptPerf = overview.scriptPerformance || {};
+                    report += `Total Prospects: ${todaysProspects.count || todaysProspects.total || '--'}
+`;
+                    report += `Hot Leads (Score 80+): ${todaysProspects.hotLeads || todaysProspects.hot || '--'}
+`;
+                    report += `Scripts Generated: ${scriptPerf.totalGenerated || scriptPerf.total || '--'}
+`;
+                    report += `Script Success Rate: ${scriptPerf.successRate || '--'}%
+
+`;
+
+                    // Conversion Funnel
+                    report += `CONVERSION FUNNEL
+`;
+                    report += `-----------------
+`;
+                    const funnel = overview.conversionFunnel || {};
+                    const stages = ['new', 'contacted', 'qualified', 'negotiating', 'converted', 'lost'];
+                    let prevCount = 0;
+                    stages.forEach((stage, idx) => {
+                        const count = funnel[stage] || 0;
+                        const conversion = (idx > 0 && prevCount > 0) ? ((count / prevCount) * 100).toFixed(1) : '--';
+                        report += `- ${stage.charAt(0).toUpperCase() + stage.slice(1)}: ${count}`;
+                        if (idx > 0 && conversion !== '--') report += ` (${conversion}% from previous)`;
+                        report += `
+`;
+                        if (count > 0) prevCount = count;
+                    });
+                    report += `
+`;
+
+                    // Hive Stats
+                    report += `HIVE INTELLIGENCE
+`;
+                    report += `------------------
+`;
+                    const hive = overview.hivePulse || {};
+                    report += `Active Learnings: ${hive.activeLearnings || hive.active || '--'}
+`;
+                    report += `Success Rate: ${hive.successRate || '--'}%
+`;
+                    report += `Top Performing Source: ${hive.topSource || '--'}
+
+`;
+
+                    report += `=====================================
+`;
+                    report += `Report generated by Tiger Bot Scout
+`;
+
+                    // Copy to clipboard
+                    navigator.clipboard.writeText(report).then(() => {
+                        showToast('Report copied to clipboard!', 'info');
+                    }).catch(() => {});
+
+                    // Download file
+                    const date = new Date().toISOString().split('T')[0];
+                    downloadFile(report, `tiger-analytics-report-${date}.txt`, 'text/plain;charset=utf-8;');
+                    showToast('Analytics report downloaded', 'success');
+
+                } catch (error) {
+                    console.error('Report generation error:', error);
+                    showToast('Failed to generate report', 'error');
+                } finally {
+                    btn.classList.remove('loading');
+                    btn.innerHTML = originalText;
+                }
+            }, 100);
+        }
+
+        // Export scripts to text file
+        function exportScriptsText() {
+            const btn = event.currentTarget;
+            btn.classList.add('loading');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<svg class="spinner w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2" stroke-dasharray="32" stroke-dashoffset="12"></circle></svg> Exporting...';
+
+            setTimeout(() => {
+                try {
+                    // Get scripts from the hive leaderboard data or cached scripts
+                    const scripts = (window.hiveData && window.hiveData.leaderboard) || window.cachedScripts || [];
+
+                    if (scripts.length === 0) {
+                        showToast('No scripts to export. Visit the Hive section first to load scripts.', 'warning');
+                        btn.classList.remove('loading');
+                        btn.innerHTML = originalText;
+                        return;
+                    }
+
+                    const now = new Date();
+                    let output = `Tiger Bot Scout - Winning Scripts Export
+`;
+                    output += `==========================================
+`;
+                    output += `Exported: ${now.toLocaleString()}
+`;
+                    output += `Total Scripts: ${scripts.length}
+
+`;
+
+                    scripts.forEach((script, idx) => {
+                        output += `
+${'='.repeat(50)}
+`;
+                        output += `SCRIPT #${idx + 1}
+`;
+                        output += `${'='.repeat(50)}
+
+`;
+
+                        const source = script.source || script.platform || 'Unknown';
+                        const signal = script.signal || script.buying_signal || script.buyingSignal || 'General';
+                        const successCount = script.success_count || script.successCount || 0;
+                        const content = script.content || script.script_content || script.scriptContent || script.text || '';
+                        const scriptType = script.type || script.script_type || script.scriptType || 'Unknown';
+
+                        output += `Source: ${source}
+`;
+                        output += `Signal: ${signal}
+`;
+                        output += `Type: ${scriptType}
+`;
+                        output += `Success Count: ${successCount}
+`;
+                        output += `
+--- Script Content ---
+
+`;
+                        output += `${content}
+`;
+                    });
+
+                    output += `
+
+${'='.repeat(50)}
+`;
+                    output += `End of Export
+`;
+                    output += `Generated by Tiger Bot Scout
+`;
+
+                    const date = new Date().toISOString().split('T')[0];
+                    downloadFile(output, `tiger-scripts-${date}.txt`, 'text/plain;charset=utf-8;');
+                    showToast(`Exported ${scripts.length} scripts`, 'success');
+
+                } catch (error) {
+                    console.error('Scripts export error:', error);
+                    showToast('Failed to export scripts', 'error');
+                } finally {
+                    btn.classList.remove('loading');
+                    btn.innerHTML = originalText;
+                }
+            }, 100);
+        }
+
+        // Initialize theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initTheme();
+        });
+
+        // Also run immediately in case DOMContentLoaded already fired
+        if (document.readyState !== 'loading') {
+            initTheme();
         }
 
 </script>
