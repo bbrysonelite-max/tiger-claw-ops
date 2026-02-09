@@ -89,7 +89,41 @@ async function initDatabase() {
     await db.query(`CREATE INDEX IF NOT EXISTS idx_hive_learnings_type ON hive_learnings(learning_type)`).catch(() => {});
     await db.query(`CREATE INDEX IF NOT EXISTS idx_hive_learnings_success ON hive_learnings(success_count DESC)`).catch(() => {});
 
-    console.log('✅ Database tables ready (leads, script_feedback, hive_learnings)');
+    
+    // Create lead_activities table for tracking all activities on a lead
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS lead_activities (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        lead_id UUID NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
+        activity_type TEXT NOT NULL,
+        description TEXT NOT NULL,
+        metadata JSONB,
+        created_by TEXT,
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Create lead_notes table for tracking notes on leads
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS lead_notes (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        lead_id UUID NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
+        content TEXT NOT NULL,
+        created_by TEXT,
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Additional indexes
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_script_feedback_prospect ON script_feedback(prospect_id)`).catch(() => {});
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_lead_activities_lead ON lead_activities(lead_id)`).catch(() => {});
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_lead_activities_type ON lead_activities(activity_type)`).catch(() => {});
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_lead_notes_lead ON lead_notes(lead_id)`).catch(() => {});
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status)`).catch(() => {});
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_leads_source ON leads(source)`).catch(() => {});
+
+    console.log('✅ Database tables ready (leads, script_feedback, hive_learnings, lead_activities, lead_notes)');
   } catch (error) {
     console.error('Database init error:', error);
   }
@@ -110,6 +144,23 @@ const calendly = new CalendlyClient(process.env.CALENDLY_API_KEY!, process.env.C
 // Middleware
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+
+// Helper function to log activity on a lead
+async function logActivity(leadId: string, activityType: string, description: string, metadata?: any, createdBy?: string) {
+  try {
+    await db.query(
+      `INSERT INTO lead_activities (lead_id, activity_type, description, metadata, created_by)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [leadId, activityType, description, metadata ? JSON.stringify(metadata) : null, createdBy || 'system']
+    );
+    await db.query(
+      `UPDATE leads SET last_activity_at = NOW(), updated_at = NOW() WHERE id = $1`,
+      [leadId]
+    );
+  } catch (error) {
+    console.error('Failed to log activity:', error);
+  }
+}
 
 // Health check
 app.get('/health', (req, res) => {
@@ -155,36 +206,115 @@ app.post('/ai-crm/leads', async (req, res) => {
   }
 });
 
-// List leads with optional filters
+// List leads with comprehensive filters and pagination
 app.get('/ai-crm/leads', async (req, res) => {
   try {
-    const { status, min_score, since, limit } = req.query;
+    const { status, min_score, max_score, source, since, until, search, limit, offset, sort_by, sort_order } = req.query;
+
     let query = 'SELECT * FROM leads WHERE 1=1';
+    let countQuery = 'SELECT COUNT(*) as total FROM leads WHERE 1=1';
     const params: any[] = [];
+    const countParams: any[] = [];
     let paramIdx = 1;
 
+    // Status filter
     if (status) {
-      query += ` AND status = $${paramIdx++}`;
+      const clause = ` AND status = $${paramIdx++}`;
+      query += clause;
+      countQuery += clause;
       params.push(status);
+      countParams.push(status);
     }
+
+    // Min score filter
     if (min_score) {
-      query += ` AND ai_score >= $${paramIdx++}`;
-      params.push(parseInt(min_score as string));
+      const clause = ` AND ai_score >= $${paramIdx++}`;
+      query += clause;
+      countQuery += clause;
+      const val = parseInt(min_score as string);
+      params.push(val);
+      countParams.push(val);
     }
+
+    // Max score filter
+    if (max_score) {
+      const clause = ` AND ai_score <= $${paramIdx++}`;
+      query += clause;
+      countQuery += clause;
+      const val = parseInt(max_score as string);
+      params.push(val);
+      countParams.push(val);
+    }
+
+    // Source filter
+    if (source) {
+      const clause = ` AND source = $${paramIdx++}`;
+      query += clause;
+      countQuery += clause;
+      params.push(source);
+      countParams.push(source);
+    }
+
+    // Since filter (created_at >= date)
     if (since) {
-      query += ` AND created_at >= $${paramIdx++}`;
+      const clause = ` AND created_at >= $${paramIdx++}`;
+      query += clause;
+      countQuery += clause;
       params.push(since);
+      countParams.push(since);
     }
 
-    query += ' ORDER BY ai_score DESC, created_at DESC';
-    query += ` LIMIT $${paramIdx++}`;
-    params.push(parseInt(limit as string) || 50);
+    // Until filter (created_at <= date)
+    if (until) {
+      const clause = ` AND created_at <= $${paramIdx++}`;
+      query += clause;
+      countQuery += clause;
+      params.push(until);
+      countParams.push(until);
+    }
 
-    const result = await db.query(query, params);
-    res.json({ leads: result.rows, count: result.rows.length });
+    // Search filter (name, email, company, notes)
+    if (search) {
+      const clause = ` AND (name ILIKE $${paramIdx} OR email ILIKE $${paramIdx} OR company ILIKE $${paramIdx} OR notes ILIKE $${paramIdx})`;
+      paramIdx++;
+      query += clause;
+      countQuery += clause;
+      const val = `%${search}%`;
+      params.push(val);
+      countParams.push(val);
+    }
+
+    // Sorting
+    const validSortColumns = ['ai_score', 'created_at', 'updated_at', 'name', 'status', 'source'];
+    const sortColumn = validSortColumns.includes(sort_by as string) ? sort_by : 'ai_score';
+    const sortDir = sort_order === 'asc' ? 'ASC' : 'DESC';
+    query += ` ORDER BY ${sortColumn} ${sortDir}, created_at DESC`;
+
+    // Pagination
+    const limitVal = Math.min(parseInt(limit as string) || 50, 100);
+    const offsetVal = parseInt(offset as string) || 0;
+    query += ` LIMIT $${paramIdx++} OFFSET $${paramIdx++}`;
+    params.push(limitVal, offsetVal);
+
+    // Execute both queries in parallel
+    const [result, countResult] = await Promise.all([
+      db.query(query, params),
+      db.query(countQuery, countParams)
+    ]);
+
+    const total = parseInt(countResult.rows[0].total);
+
+    res.json({ 
+      leads: result.rows, 
+      count: result.rows.length,
+      total,
+      limit: limitVal,
+      offset: offsetVal,
+      hasMore: offsetVal + result.rows.length < total
+    });
   } catch (error: any) {
     console.error('List leads error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 });
 
@@ -236,6 +366,220 @@ app.patch('/ai-crm/leads/:id', async (req, res) => {
   } catch (error: any) {
     console.error('Update lead error:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+// PUT - Full update of lead (replaces all updatable fields)
+app.put('/ai-crm/leads/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      name, email, phone, company, website, notes, source, status, 
+      priority, ai_score, signal_text, platform_link, linkedin_profile,
+      position, assigned_to, ai_qualification, next_best_action 
+    } = req.body;
+
+    if (!name || !source) {
+      res.status(400).json({ error: 'name and source are required' });
+      return;
+    }
+
+    // Check if lead exists
+    const existing = await db.query('SELECT id FROM leads WHERE id = $1', [id]);
+    if (existing.rows.length === 0) {
+      res.status(404).json({ error: 'Lead not found' });
+      return;
+    }
+
+    const result = await db.query(
+      `UPDATE leads SET 
+        name = $1, email = $2, phone = $3, company = $4, website = $5,
+        notes = $6, source = $7, status = $8, priority = $9, ai_score = $10,
+        signal_text = $11, platform_link = $12, linkedin_profile = $13,
+        position = $14, assigned_to = $15, ai_qualification = $16,
+        next_best_action = $17, updated_at = NOW()
+       WHERE id = $18 RETURNING *`,
+      [
+        name, email || null, phone || null, company || null, website || null,
+        notes || null, source, status || 'new', priority || 'medium', ai_score || 0,
+        signal_text || null, platform_link || null, linkedin_profile || null,
+        position || null, assigned_to || null, ai_qualification || null,
+        next_best_action || null, id
+      ]
+    );
+
+    await logActivity(id, 'updated', 'Lead fully updated via PUT', { fields: Object.keys(req.body) });
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    console.error('PUT lead error:', error);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
+});
+
+// GET all scripts for a lead
+app.get('/ai-crm/leads/:id/scripts', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { limit, offset } = req.query;
+
+    // Check if lead exists
+    const leadCheck = await db.query('SELECT id, name FROM leads WHERE id = $1', [id]);
+    if (leadCheck.rows.length === 0) {
+      res.status(404).json({ error: 'Lead not found' });
+      return;
+    }
+
+    const limitVal = Math.min(parseInt(limit as string) || 50, 100);
+    const offsetVal = parseInt(offset as string) || 0;
+
+    const result = await db.query(
+      `SELECT * FROM script_feedback 
+       WHERE prospect_id = $1 
+       ORDER BY created_at DESC 
+       LIMIT $2 OFFSET $3`,
+      [id, limitVal, offsetVal]
+    );
+
+    const countResult = await db.query(
+      'SELECT COUNT(*) as total FROM script_feedback WHERE prospect_id = $1',
+      [id]
+    );
+
+    res.json({ 
+      scripts: result.rows, 
+      count: result.rows.length,
+      total: parseInt(countResult.rows[0].total),
+      lead: leadCheck.rows[0]
+    });
+  } catch (error: any) {
+    console.error('Get lead scripts error:', error);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
+});
+
+// GET activity timeline for a lead
+app.get('/ai-crm/leads/:id/activities', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { limit, offset, type } = req.query;
+
+    // Check if lead exists
+    const leadCheck = await db.query('SELECT id, name FROM leads WHERE id = $1', [id]);
+    if (leadCheck.rows.length === 0) {
+      res.status(404).json({ error: 'Lead not found' });
+      return;
+    }
+
+    let query = 'SELECT * FROM lead_activities WHERE lead_id = $1';
+    let countQuery = 'SELECT COUNT(*) as total FROM lead_activities WHERE lead_id = $1';
+    const params: any[] = [id];
+    const countParams: any[] = [id];
+    let paramIdx = 2;
+
+    if (type) {
+      const clause = ` AND activity_type = $${paramIdx++}`;
+      query += clause;
+      countQuery += clause;
+      params.push(type);
+      countParams.push(type);
+    }
+
+    query += ' ORDER BY created_at DESC';
+
+    const limitVal = Math.min(parseInt(limit as string) || 50, 100);
+    const offsetVal = parseInt(offset as string) || 0;
+    query += ` LIMIT $${paramIdx++} OFFSET $${paramIdx++}`;
+    params.push(limitVal, offsetVal);
+
+    const [result, countResult] = await Promise.all([
+      db.query(query, params),
+      db.query(countQuery, countParams)
+    ]);
+
+    res.json({ 
+      activities: result.rows, 
+      count: result.rows.length,
+      total: parseInt(countResult.rows[0].total),
+      lead: leadCheck.rows[0]
+    });
+  } catch (error: any) {
+    console.error('Get lead activities error:', error);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
+});
+
+// GET notes for a lead
+app.get('/ai-crm/leads/:id/notes', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { limit, offset } = req.query;
+
+    // Check if lead exists
+    const leadCheck = await db.query('SELECT id, name FROM leads WHERE id = $1', [id]);
+    if (leadCheck.rows.length === 0) {
+      res.status(404).json({ error: 'Lead not found' });
+      return;
+    }
+
+    const limitVal = Math.min(parseInt(limit as string) || 50, 100);
+    const offsetVal = parseInt(offset as string) || 0;
+
+    const result = await db.query(
+      `SELECT * FROM lead_notes 
+       WHERE lead_id = $1 
+       ORDER BY created_at DESC 
+       LIMIT $2 OFFSET $3`,
+      [id, limitVal, offsetVal]
+    );
+
+    const countResult = await db.query(
+      'SELECT COUNT(*) as total FROM lead_notes WHERE lead_id = $1',
+      [id]
+    );
+
+    res.json({ 
+      notes: result.rows, 
+      count: result.rows.length,
+      total: parseInt(countResult.rows[0].total),
+      lead: leadCheck.rows[0]
+    });
+  } catch (error: any) {
+    console.error('Get lead notes error:', error);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
+});
+
+// POST notes to a lead
+app.post('/ai-crm/leads/:id/notes', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { content, created_by } = req.body;
+
+    if (!content || content.trim() === '') {
+      res.status(400).json({ error: 'content is required' });
+      return;
+    }
+
+    // Check if lead exists
+    const leadCheck = await db.query('SELECT id, name FROM leads WHERE id = $1', [id]);
+    if (leadCheck.rows.length === 0) {
+      res.status(404).json({ error: 'Lead not found' });
+      return;
+    }
+
+    const result = await db.query(
+      `INSERT INTO lead_notes (lead_id, content, created_by) 
+       VALUES ($1, $2, $3) RETURNING *`,
+      [id, content.trim(), created_by || 'user']
+    );
+
+    await logActivity(id, 'note_added', 'Note added to lead', { note_id: result.rows[0].id, preview: content.substring(0, 100) });
+
+    res.status(201).json(result.rows[0]);
+  } catch (error: any) {
+    console.error('Add lead note error:', error);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 });
 
