@@ -22,10 +22,88 @@
         }
     </script>
     <style>
-        .gradient-text { background: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #c2410c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .gradient-text { background: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #c2410c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .spinner { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .modal-backdrop { background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
+        .loading-skeleton { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        .toast { animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     </style>
 </head>
 <body class="bg-slate-950 text-white font-sans">
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Prospect Detail Modal -->
+    <div id="prospect-modal" class="fixed inset-0 modal-backdrop z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 rounded-2xl border border-slate-700 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="flex items-center justify-between p-6 border-b border-slate-700">
+                <div>
+                    <h2 class="text-xl font-bold" id="modal-prospect-name">Loading...</h2>
+                    <p class="text-slate-400 text-sm" id="modal-prospect-source"></p>
+                </div>
+                <button onclick="closeProspectModal()" class="text-slate-400 hover:text-white p-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Left Column - Info -->
+                    <div class="space-y-6">
+                        <div class="bg-slate-800/50 rounded-xl p-4">
+                            <h3 class="font-semibold mb-3 flex items-center gap-2"><span>📊</span> Score & Status</h3>
+                            <div class="flex items-center gap-4">
+                                <div class="text-4xl font-bold" id="modal-score">--</div>
+                                <select id="modal-status-select" onchange="updateProspectStatus()" class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm">
+                                    <option value="new">New</option>
+                                    <option value="contacted">Contacted</option>
+                                    <option value="qualified">Qualified</option>
+                                    <option value="negotiating">Negotiating</option>
+                                    <option value="converted">Converted</option>
+                                    <option value="lost">Lost</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="bg-slate-800/50 rounded-xl p-4">
+                            <h3 class="font-semibold mb-3 flex items-center gap-2"><span>👤</span> Contact Info</h3>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between"><span class="text-slate-400">Platform</span><span id="modal-platform">--</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">Username</span><span id="modal-username">--</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">Phone</span><span id="modal-phone">--</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">Email</span><span id="modal-email">--</span></div>
+                            </div>
+                        </div>
+                        <div class="bg-slate-800/50 rounded-xl p-4">
+                            <h3 class="font-semibold mb-3 flex items-center gap-2"><span>🔍</span> AI Analysis</h3>
+                            <p class="text-sm text-slate-300" id="modal-reasoning">Loading...</p>
+                        </div>
+                    </div>
+                    <!-- Right Column - Scripts, Activities, Notes -->
+                    <div class="space-y-6">
+                        <div class="bg-slate-800/50 rounded-xl p-4">
+                            <h3 class="font-semibold mb-3 flex items-center gap-2"><span>📝</span> Generated Scripts</h3>
+                            <div id="modal-scripts" class="space-y-2 max-h-48 overflow-y-auto">Loading...</div>
+                        </div>
+                        <div class="bg-slate-800/50 rounded-xl p-4">
+                            <h3 class="font-semibold mb-3 flex items-center gap-2"><span>📋</span> Activity Log</h3>
+                            <div id="modal-activities" class="space-y-2 max-h-32 overflow-y-auto">Loading...</div>
+                        </div>
+                        <div class="bg-slate-800/50 rounded-xl p-4">
+                            <h3 class="font-semibold mb-3 flex items-center gap-2"><span>📌</span> Notes</h3>
+                            <div id="modal-notes" class="space-y-2 max-h-32 overflow-y-auto mb-3">No notes yet</div>
+                            <div class="flex gap-2">
+                                <input type="text" id="modal-note-input" placeholder="Add a note..." class="flex-1 bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm" onkeypress="if(event.key==='Enter')addNote()">
+                                <button onclick="addNote()" class="bg-tiger-500 hover:bg-tiger-600 px-4 py-2 rounded-lg text-sm font-medium">Add</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Sidebar -->
     <aside class="fixed left-0 top-0 h-full w-64 bg-slate-900 border-r border-slate-800 p-6 flex flex-col z-40">
         <div class="flex items-center gap-3 mb-10">
@@ -40,23 +118,11 @@
             <a href="#prospects" onclick="showSection('prospects')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800 transition" data-section="prospects">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 Prospects
+                <span class="ml-auto bg-tiger-500 text-white text-xs px-2 py-0.5 rounded-full" id="nav-prospects-count">0</span>
             </a>
             <a href="#scripts" onclick="showSection('scripts')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800 transition" data-section="scripts">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 Scripts
-            </a>
-            <a href="#comms" onclick="showSection('comms')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800 transition" data-section="comms">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                Communications
-            </a>
-            <a href="#customers" onclick="showSection('customers')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800 transition" data-section="customers">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                Customers
-                <span class="ml-auto bg-tiger-500 text-white text-xs px-2 py-0.5 rounded-full">7</span>
-            </a>
-            <a href="#bots" onclick="showSection('bots')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800 transition" data-section="bots">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                Bot Fleet
             </a>
             <a href="#hive" onclick="showSection('hive')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800 transition" data-section="hive">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
@@ -87,13 +153,17 @@
         <!-- Header -->
         <header class="flex items-center justify-between mb-8">
             <div>
-                <h1 class="text-3xl font-bold">Command Center</h1>
+                <h1 class="text-3xl font-bold" id="page-title">Command Center</h1>
                 <p class="text-slate-400">Tiger Bot Scout — AI Recruiting System</p>
             </div>
             <div class="flex items-center gap-4">
-                <button onclick="refreshData()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    Refresh
+                <div id="connection-status" class="flex items-center gap-2 text-sm">
+                    <span class="w-2 h-2 rounded-full bg-slate-500" id="status-dot"></span>
+                    <span class="text-slate-400" id="status-text">Checking...</span>
+                </div>
+                <button onclick="refreshData()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition" id="refresh-btn">
+                    <svg class="w-5 h-5" id="refresh-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    <span>Refresh</span>
                 </button>
                 <div class="w-10 h-10 bg-tiger-500 rounded-full flex items-center justify-center font-bold">B</div>
             </div>
@@ -101,755 +171,246 @@
 
         <!-- ============ DASHBOARD SECTION ============ -->
         <section id="section-dashboard" class="section-content">
-            <!-- Stats Cards -->
+            <!-- Overview Cards Row -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-slate-400">Total Prospects</span>
-                        <span class="w-10 h-10 bg-tiger-500/10 rounded-xl flex items-center justify-center text-tiger-500">👥</span>
+                <!-- Today's Prospects Card -->
+                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6 relative overflow-hidden" id="card-todays-prospects">
+                    <div class="card-loading absolute inset-0 bg-slate-900 flex items-center justify-center">
+                        <svg class="w-6 h-6 spinner text-tiger-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
                     </div>
-                    <div class="text-3xl font-bold" id="stat-total">--</div>
-                    <div class="text-sm text-green-400 mt-1" id="stat-week">+0 this week</div>
-                </div>
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-slate-400">Qualified (70+)</span>
-                        <span class="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center text-green-500">✅</span>
+                    <div class="card-content">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-slate-400">Today's Prospects</span>
+                            <span class="w-10 h-10 bg-tiger-500/10 rounded-xl flex items-center justify-center text-tiger-500">👥</span>
+                        </div>
+                        <div class="text-3xl font-bold" id="todays-count">--</div>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="text-sm text-green-400" id="todays-qualified">0 qualified</span>
+                            <span class="text-slate-600">•</span>
+                            <span class="text-sm" id="todays-trend">--</span>
+                        </div>
                     </div>
-                    <div class="text-3xl font-bold" id="stat-qualified">--</div>
-                    <div class="text-sm text-slate-400 mt-1">Ready to contact</div>
-                </div>
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-slate-400">Customers</span>
-                        <span class="w-10 h-10 bg-tiger-500/10 rounded-xl flex items-center justify-center text-tiger-500">👥</span>
+                    <div class="card-error hidden text-red-400 text-sm mt-2">
+                        <span>Failed to load</span>
+                        <button onclick="fetchOverview()" class="ml-2 underline">Retry</button>
                     </div>
-                    <div class="text-3xl font-bold" id="stat-customers">7</div>
-                    <div class="text-sm text-yellow-400 mt-1">7 pending setup • $693/mo</div>
                 </div>
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-slate-400">Script Success</span>
-                        <span class="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-500">📝</span>
-                    </div>
-                    <div class="text-3xl font-bold" id="stat-success-rate">--%</div>
-                    <div class="text-sm text-slate-400 mt-1"><span id="stat-converted" class="text-green-400">0</span> converted / <span id="stat-scripts">0</span> scripts</div>
-                </div>
-            </div>
 
-            <!-- Hive Pulse Card -->
-            <div class="bg-gradient-to-br from-tiger-500/10 to-orange-600/10 rounded-2xl border border-tiger-500/20 p-6 mb-8">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 bg-tiger-500/20 rounded-xl flex items-center justify-center">
+                <!-- Script Performance Card -->
+                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6 relative overflow-hidden" id="card-script-performance">
+                    <div class="card-loading absolute inset-0 bg-slate-900 flex items-center justify-center">
+                        <svg class="w-6 h-6 spinner text-purple-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                    </div>
+                    <div class="card-content">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-slate-400">Script Performance</span>
+                            <span class="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-500">📝</span>
+                        </div>
+                        <div class="text-3xl font-bold" id="scripts-generated">--</div>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="text-sm text-yellow-400" id="scripts-pending">0 pending</span>
+                            <span class="text-slate-600">•</span>
+                            <span class="text-sm text-green-400" id="scripts-success-rate">--% success</span>
+                        </div>
+                    </div>
+                    <div class="card-error hidden text-red-400 text-sm mt-2">
+                        <span>Failed to load</span>
+                        <button onclick="fetchOverview()" class="ml-2 underline">Retry</button>
+                    </div>
+                </div>
+
+                <!-- Conversion Funnel Card -->
+                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6 relative overflow-hidden" id="card-conversion-funnel">
+                    <div class="card-loading absolute inset-0 bg-slate-900 flex items-center justify-center">
+                        <svg class="w-6 h-6 spinner text-blue-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                    </div>
+                    <div class="card-content">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-slate-400">Conversion Funnel</span>
+                            <span class="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500">📊</span>
+                        </div>
+                        <div class="flex items-center gap-1 text-sm" id="funnel-stages">
+                            <span class="px-2 py-1 bg-slate-700 rounded">--</span>
+                            <span class="text-slate-600">→</span>
+                            <span class="px-2 py-1 bg-slate-700 rounded">--</span>
+                            <span class="text-slate-600">→</span>
+                            <span class="px-2 py-1 bg-green-500/20 text-green-400 rounded">--</span>
+                        </div>
+                        <div class="text-xs text-slate-500 mt-2">New → Contacted → Converted</div>
+                    </div>
+                    <div class="card-error hidden text-red-400 text-sm mt-2">
+                        <span>Failed to load</span>
+                        <button onclick="fetchOverview()" class="ml-2 underline">Retry</button>
+                    </div>
+                </div>
+
+                <!-- Hive Pulse Card -->
+                <div class="bg-gradient-to-br from-tiger-500/10 to-orange-600/10 rounded-2xl border border-tiger-500/20 p-6 relative overflow-hidden" id="card-hive-pulse">
+                    <div class="card-loading absolute inset-0 bg-slate-900/50 flex items-center justify-center">
+                        <svg class="w-6 h-6 spinner text-tiger-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                    </div>
+                    <div class="card-content">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-slate-300">Hive Pulse</span>
                             <span class="text-2xl animate-pulse">🐯</span>
                         </div>
-                        <div>
-                            <h3 class="font-semibold text-lg">Hive Pulse</h3>
-                            <p class="text-sm text-slate-400">Learning from the collective</p>
-                        </div>
+                        <div class="text-sm text-slate-400 mb-2"><span id="hive-total-learnings">0</span> learnings</div>
+                        <div class="text-xs text-slate-500 truncate" id="hive-top-script-preview">Loading top script...</div>
                     </div>
-                    <span class="text-xs text-tiger-400 bg-tiger-500/10 px-3 py-1 rounded-full"><span id="hive-count">0</span> learnings</span>
-                </div>
-                <div id="hive-top-script" class="bg-slate-900/50 rounded-xl p-4 mb-4">
-                    <div class="text-xs text-slate-500 mb-2">TOP WINNING SCRIPT</div>
-                    <p class="text-sm text-slate-300 italic" id="hive-script-preview">Loading...</p>
-                    <div class="flex items-center gap-2 mt-2">
-                        <span class="text-xs bg-green-500/10 text-green-400 px-2 py-0.5 rounded">🎯 <span id="hive-script-success">0</span> successes</span>
+                    <div class="card-error hidden text-red-400 text-sm mt-2">
+                        <span>Failed to load</span>
+                        <button onclick="fetchOverview()" class="ml-2 underline">Retry</button>
                     </div>
                 </div>
-                <a href="#" onclick="showSection('hive')" class="text-tiger-400 text-sm hover:underline">View all learnings →</a>
             </div>
 
-            <!-- Main Grid -->
-            <div class="grid lg:grid-cols-3 gap-8">
-                <!-- Bot Status Overview -->
-                <div class="lg:col-span-2">
-                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6 mb-8">
-                        <h2 class="text-xl font-semibold mb-6">System Status</h2>
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <!-- Agent Zero -->
-                            <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
-                                <div class="flex items-center justify-between mb-3">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">🔍</div>
-                                        <div>
-                                            <div class="font-medium">Agent Zero</div>
-                                            <div class="text-xs text-slate-500">Prospect Discovery</div>
-                                        </div>
-                                    </div>
-                                    <span class="flex items-center gap-1 text-green-400 text-sm">
-                                        <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span> Running
-                                    </span>
-                                </div>
-                                <div class="text-sm text-slate-400">Next scan: <span class="text-white">2 hours</span></div>
-                                <div class="text-sm text-slate-400">Last found: <span class="text-white">3 prospects</span></div>
-                            </div>
-                            <!-- Tiger Bot Scout -->
-                            <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
-                                <div class="flex items-center justify-between mb-3">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 bg-tiger-500/20 rounded-lg flex items-center justify-center">🐯</div>
-                                        <div>
-                                            <div class="font-medium">Tiger Bot Scout</div>
-                                            <div class="text-xs text-slate-500">Telegram Reports</div>
-                                        </div>
-                                    </div>
-                                    <span class="flex items-center gap-1 text-green-400 text-sm">
-                                        <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span> Online
-                                    </span>
-                                </div>
-                                <div class="text-sm text-slate-400">Platform: <span class="text-telegram-500">Telegram</span></div>
-                                <div class="text-sm text-slate-400">Commands today: <span class="text-white">12</span></div>
-                            </div>
-                            <!-- Tiger Bot (OpenClaw) -->
-                            <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
-                                <div class="flex items-center justify-between mb-3">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">🔥</div>
-                                        <div>
-                                            <div class="font-medium">Tiger Bot</div>
-                                            <div class="text-xs text-slate-500">Follow-up & Objections</div>
-                                        </div>
-                                    </div>
-                                    <span class="flex items-center gap-1 text-yellow-400 text-sm">
-                                        <span class="w-2 h-2 bg-yellow-400 rounded-full"></span> Standby
-                                    </span>
-                                </div>
-                                <div class="text-sm text-slate-400">Platform: <span class="text-telegram-500">Telegram</span></div>
-                                <div class="text-sm text-slate-400">Location: <span class="text-white">Mac Pro</span></div>
-                            </div>
-                            <!-- Birdie Bot -->
-                            <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
-                                <div class="flex items-center justify-between mb-3">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">🐦</div>
-                                        <div>
-                                            <div class="font-medium">Birdie Bot</div>
-                                            <div class="text-xs text-slate-500">Personal Assistant</div>
-                                        </div>
-                                    </div>
-                                    <span class="flex items-center gap-1 text-green-400 text-sm">
-                                        <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span> Online
-                                    </span>
-                                </div>
-                                <div class="text-sm text-slate-400">Platform: <span class="text-telegram-500">Telegram</span></div>
-                                <div class="text-sm text-slate-400">Location: <span class="text-white">Mac Pro</span></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Recent Prospects -->
-                    <div class="bg-slate-900 rounded-2xl border border-slate-800">
-                        <div class="p-6 border-b border-slate-800 flex items-center justify-between">
-                            <h2 class="text-xl font-semibold">Recent Prospects</h2>
-                            <a href="#prospects" onclick="showSection('prospects')" class="text-tiger-500 text-sm hover:underline">View all →</a>
-                        </div>
-                        <div class="divide-y divide-slate-800" id="prospects-list">
-                            <div class="p-6 text-center text-slate-500">Loading...</div>
-                        </div>
-                    </div>
+            <!-- Quick Stats Row -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="bg-slate-800/50 rounded-xl p-4 text-center">
+                    <div class="text-2xl font-bold text-white" id="stat-total-prospects">--</div>
+                    <div class="text-xs text-slate-400">Total Prospects</div>
                 </div>
+                <div class="bg-slate-800/50 rounded-xl p-4 text-center">
+                    <div class="text-2xl font-bold text-green-400" id="stat-qualified-count">--</div>
+                    <div class="text-xs text-slate-400">Qualified (70+)</div>
+                </div>
+                <div class="bg-slate-800/50 rounded-xl p-4 text-center">
+                    <div class="text-2xl font-bold text-yellow-400" id="stat-contacted-count">--</div>
+                    <div class="text-xs text-slate-400">Contacted</div>
+                </div>
+                <div class="bg-slate-800/50 rounded-xl p-4 text-center">
+                    <div class="text-2xl font-bold text-tiger-500" id="stat-converted-count">--</div>
+                    <div class="text-xs text-slate-400">Converted</div>
+                </div>
+            </div>
 
-                <!-- Right Column -->
-                <div class="space-y-8">
-                    <!-- Communication Channels -->
-                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                        <h2 class="text-xl font-semibold mb-4">Communication Channels</h2>
-                        <div class="space-y-3">
-                            <!-- Telegram -->
-                            <div class="bg-telegram-500/10 rounded-xl p-4 border border-telegram-500/20">
-                                <div class="flex items-center justify-between mb-3">
-                                    <div class="flex items-center gap-3">
-                                        <span class="text-2xl">📱</span>
-                                        <div>
-                                            <div class="font-medium text-telegram-500">Telegram</div>
-                                            <div class="text-xs text-slate-400">@TigerBotScout_bot</div>
-                                        </div>
-                                    </div>
-                                    <span class="text-green-400 text-xs font-medium px-2 py-1 bg-green-400/10 rounded-full">Connected</span>
-                                </div>
-                                <div class="flex gap-2">
-                                    <a href="https://t.me/TigerBotScout_bot" target="_blank" class="flex-1 text-center py-2 bg-telegram-500 hover:bg-telegram-600 rounded-lg text-sm font-medium transition">Open Chat</a>
-                                    <button class="px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition">⚙️</button>
-                                </div>
-                            </div>
-                            <!-- LINE -->
-                            <div class="bg-line-500/10 rounded-xl p-4 border border-line-500/20">
-                                <div class="flex items-center justify-between mb-3">
-                                    <div class="flex items-center gap-3">
-                                        <span class="text-2xl">💚</span>
-                                        <div>
-                                            <div class="font-medium text-line-500">LINE</div>
-                                            <div class="text-xs text-slate-400">Thai Market Channel</div>
-                                        </div>
-                                    </div>
-                                    <span class="text-yellow-400 text-xs font-medium px-2 py-1 bg-yellow-400/10 rounded-full">Setup Required</span>
-                                </div>
-                                <div class="flex gap-2">
-                                    <button onclick="openLineSetup()" class="flex-1 text-center py-2 bg-line-500 hover:bg-line-600 rounded-lg text-sm font-medium transition">Connect LINE</button>
-                                    <button class="px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition">📖</button>
-                                </div>
-                            </div>
-                            <!-- Facebook Messenger (Coming Soon) -->
-                            <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700 opacity-60">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-3">
-                                        <span class="text-2xl">💬</span>
-                                        <div>
-                                            <div class="font-medium">Messenger</div>
-                                            <div class="text-xs text-slate-500">Coming Soon</div>
-                                        </div>
-                                    </div>
-                                    <span class="text-slate-500 text-xs">Q2 2026</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Quick Actions -->
-                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                        <h2 class="text-xl font-semibold mb-4">Quick Actions</h2>
-                        <div class="space-y-3">
-                            <button onclick="triggerDiscovery()" class="w-full flex items-center gap-3 p-4 bg-slate-800 hover:bg-slate-700 rounded-xl transition text-left">
-                                <span class="text-2xl">🔍</span>
-                                <div>
-                                    <div class="font-medium">Run Discovery Now</div>
-                                    <div class="text-sm text-slate-400">Trigger Agent Zero scan</div>
-                                </div>
-                            </button>
-                            <button onclick="sendDailyReport()" class="w-full flex items-center gap-3 p-4 bg-slate-800 hover:bg-slate-700 rounded-xl transition text-left">
-                                <span class="text-2xl">📊</span>
-                                <div>
-                                    <div class="font-medium">Send Daily Report</div>
-                                    <div class="text-sm text-slate-400">Push to Telegram now</div>
-                                </div>
-                            </button>
-                            <button onclick="openBroadcast()" class="w-full flex items-center gap-3 p-4 bg-slate-800 hover:bg-slate-700 rounded-xl transition text-left">
-                                <span class="text-2xl">📢</span>
-                                <div>
-                                    <div class="font-medium">Broadcast Message</div>
-                                    <div class="text-sm text-slate-400">Send to all channels</div>
-                                </div>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Pipeline -->
-                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                        <h2 class="text-xl font-semibold mb-4">Pipeline</h2>
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2"><span class="w-3 h-3 bg-blue-500 rounded-full"></span><span>New</span></div>
-                                <span class="font-semibold" id="pipe-new">0</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2"><span class="w-3 h-3 bg-yellow-500 rounded-full"></span><span>Contacted</span></div>
-                                <span class="font-semibold" id="pipe-contacted">0</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2"><span class="w-3 h-3 bg-green-500 rounded-full"></span><span>Qualified</span></div>
-                                <span class="font-semibold" id="pipe-qualified">0</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2"><span class="w-3 h-3 bg-tiger-500 rounded-full"></span><span>Converted</span></div>
-                                <span class="font-semibold" id="pipe-converted">0</span>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Recent Prospects Preview -->
+            <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-semibold">Recent Prospects</h2>
+                    <a href="#prospects" onclick="showSection('prospects')" class="text-tiger-400 text-sm hover:underline">View All →</a>
+                </div>
+                <div id="recent-prospects-preview" class="space-y-2">
+                    <div class="loading-skeleton h-12 rounded-lg"></div>
+                    <div class="loading-skeleton h-12 rounded-lg"></div>
+                    <div class="loading-skeleton h-12 rounded-lg"></div>
                 </div>
             </div>
         </section>
 
         <!-- ============ PROSPECTS SECTION ============ -->
         <section id="section-prospects" class="section-content hidden">
-            <div class="bg-slate-900 rounded-2xl border border-slate-800">
-                <div class="p-6 border-b border-slate-800 flex items-center justify-between">
-                    <h2 class="text-xl font-semibold">All Prospects</h2>
-                    <div class="flex gap-3">
-                        <select id="filter-status" onchange="filterProspects()" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm">
-                            <option value="all">All Status</option>
-                            <option value="new">New</option>
-                            <option value="contacted">Contacted</option>
-                            <option value="qualified">Qualified</option>
-                            <option value="converted">Converted</option>
+            <!-- Filters Bar -->
+            <div class="bg-slate-900 rounded-2xl border border-slate-800 p-4 mb-6">
+                <div class="flex flex-wrap items-center gap-4">
+                    <!-- Search -->
+                    <div class="flex-1 min-w-[200px]">
+                        <div class="relative">
+                            <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            <input type="text" id="filter-search" placeholder="Search name, username, platform..." 
+                                class="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-tiger-500" 
+                                oninput="debounceFilter()">
+                        </div>
+                    </div>
+                    
+                    <!-- Status Filter -->
+                    <select id="filter-status" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-tiger-500" onchange="applyFilters()">
+                        <option value="">All Statuses</option>
+                        <option value="new">New</option>
+                        <option value="contacted">Contacted</option>
+                        <option value="qualified">Qualified</option>
+                        <option value="negotiating">Negotiating</option>
+                        <option value="converted">Converted</option>
+                        <option value="lost">Lost</option>
+                    </select>
+                    
+                    <!-- Score Range -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-slate-400">Score:</span>
+                        <input type="number" id="filter-score-min" placeholder="Min" min="0" max="100" 
+                            class="w-16 bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-sm focus:outline-none focus:border-tiger-500" 
+                            oninput="debounceFilter()">
+                        <span class="text-slate-500">-</span>
+                        <input type="number" id="filter-score-max" placeholder="Max" min="0" max="100" 
+                            class="w-16 bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-sm focus:outline-none focus:border-tiger-500" 
+                            oninput="debounceFilter()">
+                    </div>
+                    
+                    <!-- Source Filter -->
+                    <select id="filter-source" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-tiger-500" onchange="applyFilters()">
+                        <option value="">All Sources</option>
+                        <option value="line">LINE</option>
+                        <option value="telegram">Telegram</option>
+                        <option value="facebook">Facebook</option>
+                        <option value="manual">Manual</option>
+                    </select>
+                    
+                    <!-- Date Range -->
+                    <div class="flex items-center gap-2">
+                        <input type="date" id="filter-date-from" 
+                            class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-sm focus:outline-none focus:border-tiger-500" 
+                            onchange="applyFilters()">
+                        <span class="text-slate-500">to</span>
+                        <input type="date" id="filter-date-to" 
+                            class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-sm focus:outline-none focus:border-tiger-500" 
+                            onchange="applyFilters()">
+                    </div>
+                    
+                    <!-- Clear Filters -->
+                    <button onclick="clearFilters()" class="text-slate-400 hover:text-white text-sm px-3 py-2">
+                        Clear
+                    </button>
+                </div>
+            </div>
+
+            <!-- Prospects Table -->
+            <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-slate-800/50">
+                            <tr>
+                                <th class="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-4">Prospect</th>
+                                <th class="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-4">Score</th>
+                                <th class="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-4">Status</th>
+                                <th class="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-4">Source</th>
+                                <th class="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-4">Platform</th>
+                                <th class="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-4">Created</th>
+                                <th class="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="prospects-table-body" class="divide-y divide-slate-800">
+                            <tr><td colspan="7" class="px-6 py-8 text-center text-slate-500">
+                                <svg class="w-8 h-8 spinner text-tiger-500 mx-auto mb-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                Loading prospects...
+                            </td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <div class="flex items-center justify-between px-6 py-4 border-t border-slate-800">
+                    <div class="text-sm text-slate-400">
+                        Showing <span id="pagination-from">0</span> to <span id="pagination-to">0</span> of <span id="pagination-total">0</span> prospects
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="changePage(-1)" id="btn-prev-page" disabled 
+                            class="px-3 py-1 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm">
+                            ← Prev
+                        </button>
+                        <span class="text-sm text-slate-400">Page <span id="pagination-current">1</span> of <span id="pagination-pages">1</span></span>
+                        <button onclick="changePage(1)" id="btn-next-page" disabled 
+                            class="px-3 py-1 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm">
+                            Next →
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-slate-400">Per page:</span>
+                        <select id="pagination-limit" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm" onchange="applyFilters()">
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
                         </select>
-                        <select id="filter-source" onchange="filterProspects()" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm">
-                            <option value="all">All Sources</option>
-                            <option value="Facebook">Facebook</option>
-                            <option value="LINE">LINE</option>
-                            <option value="Telegram">Telegram</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="divide-y divide-slate-800" id="all-prospects-list">
-                    <div class="p-6 text-center text-slate-500">Loading...</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ============ COMMUNICATIONS SECTION ============ -->
-        <section id="section-comms" class="section-content hidden">
-            <div class="grid lg:grid-cols-2 gap-8">
-                <!-- Telegram Channel -->
-                <div class="bg-slate-900 rounded-2xl border border-slate-800">
-                    <div class="p-6 border-b border-slate-800 flex items-center gap-3">
-                        <span class="text-2xl">📱</span>
-                        <div>
-                            <h2 class="text-xl font-semibold">Telegram</h2>
-                            <p class="text-sm text-slate-400">@TigerBotScout_bot</p>
-                        </div>
-                        <span class="ml-auto text-green-400 text-sm flex items-center gap-1">
-                            <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span> Connected
-                        </span>
-                    </div>
-                    <div class="p-6">
-                        <div class="bg-slate-800 rounded-xl p-4 mb-4 h-64 overflow-y-auto" id="telegram-messages">
-                            <div class="text-center text-slate-500 py-8">
-                                <p>Messages will appear here</p>
-                                <a href="https://t.me/TigerBotScout_bot" target="_blank" class="text-telegram-500 text-sm hover:underline">Open Telegram →</a>
-                            </div>
-                        </div>
-                        <div class="flex gap-2">
-                            <input type="text" id="telegram-input" placeholder="Type a message..." class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 focus:border-telegram-500 outline-none">
-                            <button onclick="sendTelegramMessage()" class="px-6 bg-telegram-500 hover:bg-telegram-600 rounded-xl font-medium transition">Send</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- LINE Channel -->
-                <div class="bg-slate-900 rounded-2xl border border-slate-800">
-                    <div class="p-6 border-b border-slate-800 flex items-center gap-3">
-                        <span class="text-2xl">💚</span>
-                        <div>
-                            <h2 class="text-xl font-semibold">LINE</h2>
-                            <p class="text-sm text-slate-400">Thai Market Channel</p>
-                        </div>
-                        <span class="ml-auto text-yellow-400 text-sm">Setup Required</span>
-                    </div>
-                    <div class="p-6">
-                        <div class="text-center py-12">
-                            <div class="text-6xl mb-4">💚</div>
-                            <h3 class="text-xl font-semibold mb-2">Connect LINE</h3>
-                            <p class="text-slate-400 mb-6 max-w-xs mx-auto">Connect your LINE Official Account to reach prospects in Thailand.</p>
-                            <button onclick="openLineSetup()" class="bg-line-500 hover:bg-line-600 px-6 py-3 rounded-xl font-medium transition">Setup LINE Integration</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Unified Inbox -->
-            <div class="mt-8 bg-slate-900 rounded-2xl border border-slate-800">
-                <div class="p-6 border-b border-slate-800">
-                    <h2 class="text-xl font-semibold">Unified Inbox</h2>
-                    <p class="text-sm text-slate-400">All conversations across channels</p>
-                </div>
-                <div class="p-6 text-center text-slate-500 py-12">
-                    <p>Unified inbox coming soon</p>
-                    <p class="text-sm mt-2">See all Telegram + LINE + Messenger conversations in one place</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- ============ CUSTOMERS SECTION ============ -->
-        <section id="section-customers" class="section-content hidden">
-            <div class="mb-8 flex items-center justify-between">
-                <div>
-                    <h2 class="text-2xl font-bold">Customers</h2>
-                    <p class="text-slate-400">7 Tiger Bot subscribers • $693/mo MRR</p>
-                </div>
-                <button onclick="openAddCustomer()" class="bg-tiger-600 hover:bg-tiger-500 px-5 py-2.5 rounded-lg font-semibold transition flex items-center gap-2">
-                    <span>+</span> Add Customer
-                </button>
-            </div>
-
-            <!-- Customer Stats -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                <div class="bg-slate-900 rounded-xl border border-slate-800 p-4 text-center">
-                    <div class="text-3xl font-bold text-tiger-400">7</div>
-                    <div class="text-sm text-slate-400">Total Customers</div>
-                </div>
-                <div class="bg-slate-900 rounded-xl border border-slate-800 p-4 text-center">
-                    <div class="text-3xl font-bold text-yellow-400">7</div>
-                    <div class="text-sm text-slate-400">Pending Setup</div>
-                </div>
-                <div class="bg-slate-900 rounded-xl border border-slate-800 p-4 text-center">
-                    <div class="text-3xl font-bold text-green-400">0</div>
-                    <div class="text-sm text-slate-400">Active</div>
-                </div>
-                <div class="bg-slate-900 rounded-xl border border-slate-800 p-4 text-center">
-                    <div class="text-3xl font-bold text-green-400">$693</div>
-                    <div class="text-sm text-slate-400">Monthly Revenue</div>
-                </div>
-            </div>
-
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Customer 1: Nancy Lim -->
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 bg-pink-500/20 rounded-xl flex items-center justify-center text-2xl">👩</div>
-                            <div>
-                                <h3 class="font-semibold">Nancy Lim</h3>
-                                <p class="text-slate-400 text-sm">nancylimsk@gmail.com</p>
-                            </div>
-                        </div>
-                        <span class="bg-yellow-500/10 text-yellow-400 text-xs px-2 py-1 rounded-full">⏳ Pending Setup</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
-                        <div class="bg-slate-800 rounded-lg p-2">
-                            <div class="text-slate-500 text-xs">Plan</div>
-                            <div class="font-medium">Scout $99/mo</div>
-                        </div>
-                        <div class="bg-slate-800 rounded-lg p-2">
-                            <div class="text-slate-500 text-xs">Signed Up</div>
-                            <div class="font-medium">Feb 3, 2026</div>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="setupCustomerBot('nancy')" class="flex-1 bg-tiger-600 hover:bg-tiger-500 py-2 rounded-lg font-medium text-sm transition">Deploy Bot</button>
-                        <button onclick="contactCustomer('nancylimsk@gmail.com')" class="px-3 bg-slate-800 hover:bg-slate-700 py-2 rounded-lg transition">✉️</button>
-                    </div>
-                </div>
-
-                <!-- Customer 2: Chana Lohasaptawee -->
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center text-2xl">👩</div>
-                            <div>
-                                <h3 class="font-semibold">Chana Lohasaptawee</h3>
-                                <p class="text-slate-400 text-sm">chana.loh@gmail.com</p>
-                            </div>
-                        </div>
-                        <span class="bg-yellow-500/10 text-yellow-400 text-xs px-2 py-1 rounded-full">⏳ Pending Setup</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
-                        <div class="bg-slate-800 rounded-lg p-2">
-                            <div class="text-slate-500 text-xs">Plan</div>
-                            <div class="font-medium">Scout $99/mo</div>
-                        </div>
-                        <div class="bg-slate-800 rounded-lg p-2">
-                            <div class="text-slate-500 text-xs">Signed Up</div>
-                            <div class="font-medium">Feb 3, 2026</div>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="setupCustomerBot('chana')" class="flex-1 bg-tiger-600 hover:bg-tiger-500 py-2 rounded-lg font-medium text-sm transition">Deploy Bot</button>
-                        <button onclick="contactCustomer('chana.loh@gmail.com')" class="px-3 bg-slate-800 hover:bg-slate-700 py-2 rounded-lg transition">✉️</button>
-                    </div>
-                </div>
-
-                <!-- Customer 3: Phaitoon S. -->
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center text-2xl">👨</div>
-                            <div>
-                                <h3 class="font-semibold">Phaitoon S.</h3>
-                                <p class="text-slate-400 text-sm">phaitoon2010@gmail.com</p>
-                            </div>
-                        </div>
-                        <span class="bg-yellow-500/10 text-yellow-400 text-xs px-2 py-1 rounded-full">⏳ Pending Setup</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
-                        <div class="bg-slate-800 rounded-lg p-2">
-                            <div class="text-slate-500 text-xs">Plan</div>
-                            <div class="font-medium">Scout $99/mo</div>
-                        </div>
-                        <div class="bg-slate-800 rounded-lg p-2">
-                            <div class="text-slate-500 text-xs">Signed Up</div>
-                            <div class="font-medium">Feb 3, 2026</div>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="setupCustomerBot('phaitoon')" class="flex-1 bg-tiger-600 hover:bg-tiger-500 py-2 rounded-lg font-medium text-sm transition">Deploy Bot</button>
-                        <button onclick="contactCustomer('phaitoon2010@gmail.com')" class="px-3 bg-slate-800 hover:bg-slate-700 py-2 rounded-lg transition">✉️</button>
-                    </div>
-                </div>
-
-                <!-- Customer 4: Tarida Sukavanich -->
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center text-2xl">👩</div>
-                            <div>
-                                <h3 class="font-semibold">Tarida Sukavanich</h3>
-                                <p class="text-slate-400 text-sm">taridadew@gmail.com</p>
-                            </div>
-                        </div>
-                        <span class="bg-yellow-500/10 text-yellow-400 text-xs px-2 py-1 rounded-full">⏳ Pending Setup</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
-                        <div class="bg-slate-800 rounded-lg p-2">
-                            <div class="text-slate-500 text-xs">Plan</div>
-                            <div class="font-medium">Scout $99/mo</div>
-                        </div>
-                        <div class="bg-slate-800 rounded-lg p-2">
-                            <div class="text-slate-500 text-xs">Signed Up</div>
-                            <div class="font-medium">Feb 3, 2026</div>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="setupCustomerBot('tarida')" class="flex-1 bg-tiger-600 hover:bg-tiger-500 py-2 rounded-lg font-medium text-sm transition">Deploy Bot</button>
-                        <button onclick="contactCustomer('taridadew@gmail.com')" class="px-3 bg-slate-800 hover:bg-slate-700 py-2 rounded-lg transition">✉️</button>
-                    </div>
-                </div>
-
-                <!-- Customer 5: Lily Vergara -->
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center text-2xl">👩</div>
-                            <div>
-                                <h3 class="font-semibold">Lily Vergara</h3>
-                                <p class="text-slate-400 text-sm">lily.vergara@gmail.com</p>
-                            </div>
-                        </div>
-                        <span class="bg-yellow-500/10 text-yellow-400 text-xs px-2 py-1 rounded-full">⏳ Pending Setup</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
-                        <div class="bg-slate-800 rounded-lg p-2">
-                            <div class="text-slate-500 text-xs">Plan</div>
-                            <div class="font-medium">Scout $99/mo</div>
-                        </div>
-                        <div class="bg-slate-800 rounded-lg p-2">
-                            <div class="text-slate-500 text-xs">Signed Up</div>
-                            <div class="font-medium">Feb 3, 2026</div>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="setupCustomerBot('lily')" class="flex-1 bg-tiger-600 hover:bg-tiger-500 py-2 rounded-lg font-medium text-sm transition">Deploy Bot</button>
-                        <button onclick="contactCustomer('lily.vergara@gmail.com')" class="px-3 bg-slate-800 hover:bg-slate-700 py-2 rounded-lg transition">✉️</button>
-                    </div>
-                </div>
-
-                <!-- Customer 6: Theera Phetmalaigul -->
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center text-2xl">👨</div>
-                            <div>
-                                <h3 class="font-semibold">Theera Phetmalaigul</h3>
-                                <p class="text-slate-400 text-sm">phetmalaigul@gmail.com</p>
-                            </div>
-                        </div>
-                        <span class="bg-yellow-500/10 text-yellow-400 text-xs px-2 py-1 rounded-full">⏳ Pending Setup</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
-                        <div class="bg-slate-800 rounded-lg p-2">
-                            <div class="text-slate-500 text-xs">Plan</div>
-                            <div class="font-medium">Scout $99/mo</div>
-                        </div>
-                        <div class="bg-slate-800 rounded-lg p-2">
-                            <div class="text-slate-500 text-xs">Signed Up</div>
-                            <div class="font-medium">Feb 3, 2026</div>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="setupCustomerBot('theera')" class="flex-1 bg-tiger-600 hover:bg-tiger-500 py-2 rounded-lg font-medium text-sm transition">Deploy Bot</button>
-                        <button onclick="contactCustomer('phetmalaigul@gmail.com')" class="px-3 bg-slate-800 hover:bg-slate-700 py-2 rounded-lg transition">✉️</button>
-                    </div>
-                </div>
-
-                <!-- Customer 7: John & Noon -->
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center text-2xl">👫</div>
-                            <div>
-                                <h3 class="font-semibold">John & Noon</h3>
-                                <p class="text-slate-400 text-sm">vijohn@hotmail.com</p>
-                            </div>
-                        </div>
-                        <span class="bg-yellow-500/10 text-yellow-400 text-xs px-2 py-1 rounded-full">⏳ Pending Setup</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
-                        <div class="bg-slate-800 rounded-lg p-2">
-                            <div class="text-slate-500 text-xs">Plan</div>
-                            <div class="font-medium">Scout $99/mo</div>
-                        </div>
-                        <div class="bg-slate-800 rounded-lg p-2">
-                            <div class="text-slate-500 text-xs">Signed Up</div>
-                            <div class="font-medium">Feb 3, 2026</div>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="setupCustomerBot('johnnoon')" class="flex-1 bg-tiger-600 hover:bg-tiger-500 py-2 rounded-lg font-medium text-sm transition">Deploy Bot</button>
-                        <button onclick="contactCustomer('vijohn@hotmail.com')" class="px-3 bg-slate-800 hover:bg-slate-700 py-2 rounded-lg transition">✉️</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ============ BOT FLEET SECTION ============ -->
-        <section id="section-bots" class="section-content hidden">
-            <div class="mb-8 flex items-center justify-between">
-                <div>
-                    <h2 class="text-2xl font-bold">Bot Fleet Management</h2>
-                    <p class="text-slate-400">Monitor and control all your bots</p>
-                </div>
-                <button onclick="openAddBot()" class="bg-tiger-600 hover:bg-tiger-500 px-5 py-2.5 rounded-lg font-semibold transition flex items-center gap-2">
-                    <span>+</span> Add Bot
-                </button>
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-6">
-                <!-- Agent Zero -->
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <div class="flex items-center gap-4">
-                            <div class="w-14 h-14 bg-purple-500/20 rounded-xl flex items-center justify-center text-3xl">🔍</div>
-                            <div>
-                                <h3 class="text-xl font-semibold">Agent Zero</h3>
-                                <p class="text-slate-400 text-sm">Prospect Discovery Engine</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></span>
-                            <span class="text-green-400">Running</span>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        <div class="bg-slate-800 rounded-xl p-3">
-                            <div class="text-slate-400 text-sm">Location</div>
-                            <div class="font-medium">MacBook (Docker)</div>
-                        </div>
-                        <div class="bg-slate-800 rounded-xl p-3">
-                            <div class="text-slate-400 text-sm">Port</div>
-                            <div class="font-medium">50001</div>
-                        </div>
-                        <div class="bg-slate-800 rounded-xl p-3">
-                            <div class="text-slate-400 text-sm">Schedule</div>
-                            <div class="font-medium">Every 6 hours</div>
-                        </div>
-                        <div class="bg-slate-800 rounded-xl p-3">
-                            <div class="text-slate-400 text-sm">Last Run</div>
-                            <div class="font-medium">2h ago</div>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="triggerDiscovery()" class="flex-1 bg-purple-600 hover:bg-purple-500 py-2 rounded-lg font-medium transition">Run Now</button>
-                        <button class="px-4 bg-slate-800 hover:bg-slate-700 py-2 rounded-lg transition">⚙️</button>
-                        <button class="px-4 bg-slate-800 hover:bg-slate-700 py-2 rounded-lg transition">📊</button>
-                    </div>
-                </div>
-
-                <!-- Tiger Bot Scout -->
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <div class="flex items-center gap-4">
-                            <div class="w-14 h-14 bg-tiger-500/20 rounded-xl flex items-center justify-center text-3xl">🐯</div>
-                            <div>
-                                <h3 class="text-xl font-semibold">Tiger Bot Scout</h3>
-                                <p class="text-slate-400 text-sm">Telegram Reports & Scripts</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></span>
-                            <span class="text-green-400">Online</span>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        <div class="bg-slate-800 rounded-xl p-3">
-                            <div class="text-slate-400 text-sm">Location</div>
-                            <div class="font-medium">Cloud Server</div>
-                        </div>
-                        <div class="bg-slate-800 rounded-xl p-3">
-                            <div class="text-slate-400 text-sm">Platform</div>
-                            <div class="font-medium text-telegram-500">Telegram</div>
-                        </div>
-                        <div class="bg-slate-800 rounded-xl p-3">
-                            <div class="text-slate-400 text-sm">Daily Report</div>
-                            <div class="font-medium">7:00 AM BKK</div>
-                        </div>
-                        <div class="bg-slate-800 rounded-xl p-3">
-                            <div class="text-slate-400 text-sm">Commands</div>
-                            <div class="font-medium">12 today</div>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <a href="https://t.me/TigerBotScout_bot" target="_blank" class="flex-1 bg-telegram-500 hover:bg-telegram-600 py-2 rounded-lg font-medium text-center transition">Open Bot</a>
-                        <button class="px-4 bg-slate-800 hover:bg-slate-700 py-2 rounded-lg transition">⚙️</button>
-                        <button class="px-4 bg-slate-800 hover:bg-slate-700 py-2 rounded-lg transition">📊</button>
-                    </div>
-                </div>
-
-                <!-- Tiger Bot (OpenClaw) -->
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <div class="flex items-center gap-4">
-                            <div class="w-14 h-14 bg-orange-500/20 rounded-xl flex items-center justify-center text-3xl">🔥</div>
-                            <div>
-                                <h3 class="text-xl font-semibold">Tiger Bot</h3>
-                                <p class="text-slate-400 text-sm">Follow-up & Objection Handling</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="w-3 h-3 bg-yellow-400 rounded-full"></span>
-                            <span class="text-yellow-400">Standby</span>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        <div class="bg-slate-800 rounded-xl p-3">
-                            <div class="text-slate-400 text-sm">Location</div>
-                            <div class="font-medium">Mac Pro (Docker)</div>
-                        </div>
-                        <div class="bg-slate-800 rounded-xl p-3">
-                            <div class="text-slate-400 text-sm">Engine</div>
-                            <div class="font-medium">OpenClaw</div>
-                        </div>
-                        <div class="bg-slate-800 rounded-xl p-3">
-                            <div class="text-slate-400 text-sm">Port</div>
-                            <div class="font-medium">19500</div>
-                        </div>
-                        <div class="bg-slate-800 rounded-xl p-3">
-                            <div class="text-slate-400 text-sm">Status</div>
-                            <div class="font-medium">Docker stopped</div>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button class="flex-1 bg-orange-600 hover:bg-orange-500 py-2 rounded-lg font-medium transition">Start Docker</button>
-                        <button class="px-4 bg-slate-800 hover:bg-slate-700 py-2 rounded-lg transition">⚙️</button>
-                    </div>
-                </div>
-
-                <!-- Birdie Bot -->
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <div class="flex items-center gap-4">
-                            <div class="w-14 h-14 bg-blue-500/20 rounded-xl flex items-center justify-center text-3xl">🐦</div>
-                            <div>
-                                <h3 class="text-xl font-semibold">Birdie Bot</h3>
-                                <p class="text-slate-400 text-sm">Personal Assistant</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></span>
-                            <span class="text-green-400">Online</span>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        <div class="bg-slate-800 rounded-xl p-3">
-                            <div class="text-slate-400 text-sm">Location</div>
-                            <div class="font-medium">Mac Pro (Native)</div>
-                        </div>
-                        <div class="bg-slate-800 rounded-xl p-3">
-                            <div class="text-slate-400 text-sm">Engine</div>
-                            <div class="font-medium">OpenClaw</div>
-                        </div>
-                        <div class="bg-slate-800 rounded-xl p-3">
-                            <div class="text-slate-400 text-sm">Platform</div>
-                            <div class="font-medium text-telegram-500">Telegram</div>
-                        </div>
-                        <div class="bg-slate-800 rounded-xl p-3">
-                            <div class="text-slate-400 text-sm">Uptime</div>
-                            <div class="font-medium">3 days</div>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button class="flex-1 bg-blue-600 hover:bg-blue-500 py-2 rounded-lg font-medium transition">Open Chat</button>
-                        <button class="px-4 bg-slate-800 hover:bg-slate-700 py-2 rounded-lg transition">⚙️</button>
                     </div>
                 </div>
             </div>
@@ -857,1473 +418,820 @@
 
         <!-- ============ SCRIPTS SECTION ============ -->
         <section id="section-scripts" class="section-content hidden">
-            <div class="mb-8 flex items-center justify-between">
-                <div>
-                    <h2 class="text-2xl font-bold">Scripts</h2>
-                    <p class="text-slate-400">Generated approach scripts and their performance</p>
-                </div>
-                <div class="flex gap-3">
-                    <select id="script-filter" onchange="filterScripts()" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm">
-                        <option value="all">All Scripts</option>
-                        <option value="pending">Pending Feedback</option>
-                        <option value="no_response">No Response</option>
-                        <option value="got_reply">Got Reply</option>
-                        <option value="converted">Converted</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="grid lg:grid-cols-3 gap-8">
-                <!-- Scripts History -->
-                <div class="lg:col-span-2">
-                    <div class="bg-slate-900 rounded-2xl border border-slate-800">
-                        <div class="p-6 border-b border-slate-800">
-                            <h3 class="text-xl font-semibold">Script History</h3>
-                        </div>
-                        <div id="scripts-list" class="divide-y divide-slate-800">
-                            <div class="p-6 text-center text-slate-500">Loading...</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Winning Scripts Gallery -->
-                <div class="space-y-6">
-                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                        <h3 class="font-semibold mb-4">Winning Scripts Gallery</h3>
-                        <p class="text-sm text-slate-400 mb-4">Top performing scripts you can reuse</p>
-                        <div id="winning-scripts" class="space-y-4">
-                            <div class="text-slate-500 text-sm">Loading...</div>
-                        </div>
-                    </div>
-
-                    <!-- Generate Script -->
-                    <div class="bg-gradient-to-br from-tiger-500/10 to-orange-600/10 rounded-2xl border border-tiger-500/20 p-6">
-                        <h3 class="font-semibold mb-4">Generate New Script</h3>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm text-slate-400 mb-2">Prospect Name</label>
-                                <input type="text" id="gen-prospect-name" placeholder="Search prospect..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 focus:border-tiger-500 outline-none" list="prospect-datalist">
-                                <datalist id="prospect-datalist"></datalist>
-                            </div>
-                            <button onclick="generateScript()" class="w-full bg-tiger-600 hover:bg-tiger-500 py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2">
-                                <span>🐯</span> Generate Script
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Script Detail Modal -->
-            <div id="script-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-8 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-xl font-semibold">Script Details</h3>
-                        <button onclick="closeScriptModal()" class="text-slate-400 hover:text-white">✕</button>
-                    </div>
-                    <div id="script-modal-content">
-                        <!-- Dynamic content -->
-                    </div>
+            <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                <h2 class="text-xl font-semibold mb-4">Generated Scripts</h2>
+                <div id="scripts-list" class="space-y-4">
+                    <div class="loading-skeleton h-24 rounded-lg"></div>
+                    <div class="loading-skeleton h-24 rounded-lg"></div>
                 </div>
             </div>
         </section>
 
-        <!-- ============ HIVE LEARNINGS SECTION ============ -->
+        <!-- ============ HIVE SECTION ============ -->
         <section id="section-hive" class="section-content hidden">
-            <div class="mb-8">
-                <h2 class="text-2xl font-bold">Hive Learnings</h2>
-                <p class="text-slate-400">Scripts that work, shared across the Tiger Bot network</p>
-            </div>
-
-            <!-- Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="text-slate-400 text-sm mb-2">Total Learnings</div>
-                    <div class="text-3xl font-bold" id="hive-total-learnings">0</div>
-                </div>
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="text-slate-400 text-sm mb-2">Total Successes</div>
-                    <div class="text-3xl font-bold text-green-400" id="hive-total-successes">0</div>
-                </div>
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="text-slate-400 text-sm mb-2">This Week</div>
-                    <div class="text-3xl font-bold text-tiger-400" id="hive-this-week">0</div>
-                </div>
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="text-slate-400 text-sm mb-2">Best Source</div>
-                    <div class="text-2xl font-bold" id="hive-best-source">--</div>
-                </div>
-            </div>
-
-            <div class="grid lg:grid-cols-3 gap-8 mb-8">
-                <!-- Source Performance -->
-                <div class="lg:col-span-2 bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <h3 class="text-xl font-semibold mb-6">Source Performance</h3>
-                    <div id="source-performance" class="space-y-4">
-                        <div class="text-slate-500 text-center py-8">Loading...</div>
-                    </div>
-                </div>
-
-                <!-- Script Performance Stats -->
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <h3 class="font-semibold mb-4">Script Stats</h3>
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-center">
-                            <span class="text-slate-400">Total Scripts</span>
-                            <span class="font-bold" id="fb-total">0</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-slate-400">With Feedback</span>
-                            <span class="font-bold" id="fb-with-feedback">0</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-slate-400">Conversion Rate</span>
-                            <span class="font-bold text-green-400" id="fb-conversion">0%</span>
-                        </div>
-                        <div class="h-px bg-slate-800 my-2"></div>
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-2"><span class="w-3 h-3 bg-red-500 rounded-full"></span>No Response</div>
-                            <span id="fb-no-response">0</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-2"><span class="w-3 h-3 bg-blue-500 rounded-full"></span>Got Reply</div>
-                            <span id="fb-got-reply">0</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-2"><span class="w-3 h-3 bg-green-500 rounded-full"></span>Converted</div>
-                            <span id="fb-converted">0</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid lg:grid-cols-3 gap-8 mb-8">
-                <!-- Activity Trends Chart -->
-                <div class="lg:col-span-2 bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <h3 class="text-xl font-semibold mb-6">Activity Trends (Last 30 Days)</h3>
-                    <div id="trends-chart" class="h-64 relative">
-                        <div class="text-slate-500 text-center py-8">Loading...</div>
-                    </div>
-                </div>
-
-                <!-- Top Signals -->
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <h3 class="font-semibold mb-4">Top Signals</h3>
-                    <p class="text-xs text-slate-500 mb-4">What prospects say that leads to conversions</p>
-                    <div id="top-signals" class="space-y-3">
-                        <div class="text-slate-500 text-sm">Loading...</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid lg:grid-cols-3 gap-8">
-                <!-- Leaderboard -->
-                <div class="lg:col-span-2">
-                    <div class="bg-slate-900 rounded-2xl border border-slate-800">
-                        <div class="p-6 border-b border-slate-800">
-                            <h3 class="text-xl font-semibold">Top Converting Scripts</h3>
-                        </div>
-                        <div id="hive-leaderboard" class="divide-y divide-slate-800">
-                            <div class="p-6 text-center text-slate-500">Loading...</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Feedback -->
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <h3 class="font-semibold mb-4">Recent Feedback</h3>
-                    <div id="recent-feedback" class="space-y-3">
-                        <div class="text-slate-500 text-sm">Loading...</div>
-                    </div>
+            <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                <h2 class="text-xl font-semibold mb-4">Hive Learnings</h2>
+                <p class="text-slate-400 mb-4">Collective intelligence from all bot interactions</p>
+                <div id="hive-learnings-list" class="space-y-4">
+                    <div class="loading-skeleton h-20 rounded-lg"></div>
+                    <div class="loading-skeleton h-20 rounded-lg"></div>
                 </div>
             </div>
         </section>
 
         <!-- ============ ANALYTICS SECTION ============ -->
         <section id="section-analytics" class="section-content hidden">
-            <div class="mb-8 flex items-center justify-between">
-                <div>
-                    <h2 class="text-2xl font-bold">Analytics</h2>
-                    <p class="text-slate-400">Conversion rates, prospect quality trends, bot performance</p>
-                </div>
-                <div class="flex gap-3">
-                    <select id="analytics-period" onchange="updateAnalytics()" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm">
-                        <option value="7">Last 7 days</option>
-                        <option value="30" selected>Last 30 days</option>
-                        <option value="90">Last 90 days</option>
-                        <option value="all">All time</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Key Metrics -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="text-slate-400 text-sm mb-2">Total Prospects</div>
-                    <div class="text-3xl font-bold" id="analytics-total">0</div>
-                    <div class="text-sm text-green-400 mt-1" id="analytics-total-change">--</div>
-                </div>
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="text-slate-400 text-sm mb-2">Conversion Rate</div>
-                    <div class="text-3xl font-bold text-green-400" id="analytics-conversion">0%</div>
-                    <div class="text-sm text-slate-400 mt-1">New → Converted</div>
-                </div>
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="text-slate-400 text-sm mb-2">Avg. Score</div>
-                    <div class="text-3xl font-bold" id="analytics-avg-score">0</div>
-                    <div class="text-sm text-slate-400 mt-1">AI quality score</div>
-                </div>
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <div class="text-slate-400 text-sm mb-2">Script Success</div>
-                    <div class="text-3xl font-bold text-tiger-400" id="analytics-script-success">0%</div>
-                    <div class="text-sm text-slate-400 mt-1">Reply + Converted</div>
-                </div>
-            </div>
-
-            <div class="grid lg:grid-cols-2 gap-8 mb-8">
-                <!-- Conversion Funnel -->
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <h3 class="text-xl font-semibold mb-6">Conversion Funnel</h3>
-                    <div class="space-y-4">
-                        <div class="relative">
-                            <div class="flex items-center gap-4">
-                                <div class="w-full bg-blue-500/20 rounded-lg p-4">
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-medium">New</span>
-                                        <span class="text-2xl font-bold" id="funnel-new">0</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="text-center text-slate-500 text-sm">↓ <span id="funnel-rate-1">0%</span></div>
-                        <div class="relative">
-                            <div class="flex items-center gap-4">
-                                <div class="w-11/12 mx-auto bg-yellow-500/20 rounded-lg p-4">
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-medium">Contacted</span>
-                                        <span class="text-2xl font-bold" id="funnel-contacted">0</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="text-center text-slate-500 text-sm">↓ <span id="funnel-rate-2">0%</span></div>
-                        <div class="relative">
-                            <div class="flex items-center gap-4">
-                                <div class="w-10/12 mx-auto bg-green-500/20 rounded-lg p-4">
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-medium">Qualified</span>
-                                        <span class="text-2xl font-bold" id="funnel-qualified">0</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="text-center text-slate-500 text-sm">↓ <span id="funnel-rate-3">0%</span></div>
-                        <div class="relative">
-                            <div class="flex items-center gap-4">
-                                <div class="w-9/12 mx-auto bg-tiger-500/20 rounded-lg p-4">
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-medium">Converted</span>
-                                        <span class="text-2xl font-bold" id="funnel-converted">0</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ROI Calculator -->
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <h3 class="text-xl font-semibold mb-6">ROI Calculator</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm text-slate-400 mb-2">Avg. Deal Value ($)</label>
-                            <input type="number" id="roi-deal-value" value="500" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:border-tiger-500 outline-none" onchange="calculateROI()">
-                        </div>
-                        <div>
-                            <label class="block text-sm text-slate-400 mb-2">Monthly Subscription ($)</label>
-                            <input type="number" id="roi-subscription" value="99" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2" disabled>
-                        </div>
-                        <div class="h-px bg-slate-800 my-4"></div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="bg-slate-800 rounded-xl p-4 text-center">
-                                <div class="text-sm text-slate-400 mb-1">Prospects Found</div>
-                                <div class="text-2xl font-bold" id="roi-prospects">0</div>
-                            </div>
-                            <div class="bg-slate-800 rounded-xl p-4 text-center">
-                                <div class="text-sm text-slate-400 mb-1">Conversions</div>
-                                <div class="text-2xl font-bold text-green-400" id="roi-conversions">0</div>
-                            </div>
-                            <div class="bg-slate-800 rounded-xl p-4 text-center">
-                                <div class="text-sm text-slate-400 mb-1">Revenue</div>
-                                <div class="text-2xl font-bold text-tiger-400">$<span id="roi-revenue">0</span></div>
-                            </div>
-                            <div class="bg-slate-800 rounded-xl p-4 text-center">
-                                <div class="text-sm text-slate-400 mb-1">ROI</div>
-                                <div class="text-2xl font-bold text-green-400" id="roi-percent">0%</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Prospects Over Time -->
-            <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6 mb-8">
-                <h3 class="text-xl font-semibold mb-6">Prospects Over Time</h3>
-                <div id="prospects-timeline" class="h-48">
-                    <div class="text-slate-500 text-center py-8">Loading...</div>
-                </div>
-            </div>
-
-            <!-- Score Distribution & Best Times -->
-            <div class="grid lg:grid-cols-2 gap-8">
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <h3 class="text-xl font-semibold mb-6">Score Distribution</h3>
-                    <div id="score-distribution" class="space-y-3">
-                        <div class="text-slate-500 text-center py-8">Loading...</div>
-                    </div>
-                </div>
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <h3 class="text-xl font-semibold mb-6">Best Sources</h3>
-                    <div id="best-sources" class="space-y-3">
-                        <div class="text-slate-500 text-center py-8">Loading...</div>
-                    </div>
-                </div>
+            <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                <h2 class="text-xl font-semibold mb-4">Analytics</h2>
+                <p class="text-slate-400">Coming soon...</p>
             </div>
         </section>
 
         <!-- ============ SETTINGS SECTION ============ -->
         <section id="section-settings" class="section-content hidden">
-            <div class="mb-8">
-                <h2 class="text-2xl font-bold">Settings</h2>
-                <p class="text-slate-400">Configure your Tiger Bot Scout</p>
-            </div>
-
-            <div class="grid lg:grid-cols-2 gap-8">
-                <!-- Bot Configuration -->
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <h3 class="text-xl font-semibold mb-6">Bot Configuration</h3>
-                    <div class="space-y-6">
-                        <div>
-                            <label class="block text-sm text-slate-400 mb-2">Daily Report Time (Bangkok)</label>
-                            <select id="settings-report-time" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3">
-                                <option value="6">6:00 AM</option>
-                                <option value="7" selected>7:00 AM</option>
-                                <option value="8">8:00 AM</option>
-                                <option value="9">9:00 AM</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm text-slate-400 mb-2">Discovery Schedule</label>
-                            <select id="settings-discovery-schedule" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3">
-                                <option value="2">Every 2 hours</option>
-                                <option value="4">Every 4 hours</option>
-                                <option value="6" selected>Every 6 hours</option>
-                                <option value="12">Every 12 hours</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm text-slate-400 mb-2">Minimum Score Threshold</label>
-                            <input type="number" id="settings-min-score" value="70" min="0" max="100" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3">
-                            <p class="text-xs text-slate-500 mt-1">Only show prospects with score above this</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Notification Preferences -->
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <h3 class="text-xl font-semibold mb-6">Notifications</h3>
-                    <div class="space-y-4">
-                        <label class="flex items-center justify-between p-4 bg-slate-800 rounded-xl cursor-pointer">
-                            <div>
-                                <div class="font-medium">Daily Report</div>
-                                <div class="text-sm text-slate-400">Receive morning prospect summary</div>
-                            </div>
-                            <input type="checkbox" id="notify-daily" checked class="w-5 h-5 rounded bg-slate-700 border-slate-600 text-tiger-500 focus:ring-tiger-500">
-                        </label>
-                        <label class="flex items-center justify-between p-4 bg-slate-800 rounded-xl cursor-pointer">
-                            <div>
-                                <div class="font-medium">High Score Alerts</div>
-                                <div class="text-sm text-slate-400">Alert when prospect scores 80+</div>
-                            </div>
-                            <input type="checkbox" id="notify-high-score" checked class="w-5 h-5 rounded bg-slate-700 border-slate-600 text-tiger-500 focus:ring-tiger-500">
-                        </label>
-                        <label class="flex items-center justify-between p-4 bg-slate-800 rounded-xl cursor-pointer">
-                            <div>
-                                <div class="font-medium">Weekly Digest</div>
-                                <div class="text-sm text-slate-400">Weekly performance summary</div>
-                            </div>
-                            <input type="checkbox" id="notify-weekly" class="w-5 h-5 rounded bg-slate-700 border-slate-600 text-tiger-500 focus:ring-tiger-500">
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Discovery Sources -->
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <h3 class="text-xl font-semibold mb-6">Discovery Sources</h3>
-                    <div class="space-y-4">
-                        <label class="flex items-center justify-between p-4 bg-slate-800 rounded-xl cursor-pointer">
-                            <div class="flex items-center gap-3">
-                                <span class="text-2xl">💚</span>
-                                <div>
-                                    <div class="font-medium">LINE OpenChat</div>
-                                    <div class="text-sm text-slate-400">Thai side-income groups</div>
-                                </div>
-                            </div>
-                            <input type="checkbox" id="source-line" checked class="w-5 h-5 rounded bg-slate-700 border-slate-600 text-green-500 focus:ring-green-500">
-                        </label>
-                        <label class="flex items-center justify-between p-4 bg-slate-800 rounded-xl cursor-pointer">
-                            <div class="flex items-center gap-3">
-                                <span class="text-2xl">📘</span>
-                                <div>
-                                    <div class="font-medium">Facebook Groups</div>
-                                    <div class="text-sm text-slate-400">Thai entrepreneur groups</div>
-                                </div>
-                            </div>
-                            <input type="checkbox" id="source-facebook" checked class="w-5 h-5 rounded bg-slate-700 border-slate-600 text-blue-500 focus:ring-blue-500">
-                        </label>
-                        <label class="flex items-center justify-between p-4 bg-slate-800 rounded-xl cursor-pointer opacity-50">
-                            <div class="flex items-center gap-3">
-                                <span class="text-2xl">💼</span>
-                                <div>
-                                    <div class="font-medium">LinkedIn</div>
-                                    <div class="text-sm text-slate-400">Coming soon</div>
-                                </div>
-                            </div>
-                            <input type="checkbox" id="source-linkedin" disabled class="w-5 h-5 rounded bg-slate-700 border-slate-600">
-                        </label>
-                    </div>
-                </div>
-
-                <!-- API Status -->
-                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                    <h3 class="text-xl font-semibold mb-6">System Status</h3>
-                    <div class="space-y-4" id="system-status">
-                        <div class="flex items-center justify-between p-4 bg-slate-800 rounded-xl">
-                            <div class="flex items-center gap-3">
-                                <span class="text-xl">🐯</span>
-                                <span>Tiger Bot API</span>
-                            </div>
-                            <span class="flex items-center gap-2 text-green-400">
-                                <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span> Connected
-                            </span>
-                        </div>
-                        <div class="flex items-center justify-between p-4 bg-slate-800 rounded-xl">
-                            <div class="flex items-center gap-3">
-                                <span class="text-xl">📱</span>
-                                <span>Telegram Bot</span>
-                            </div>
-                            <span class="flex items-center gap-2 text-green-400">
-                                <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span> Online
-                            </span>
-                        </div>
-                        <div class="flex items-center justify-between p-4 bg-slate-800 rounded-xl">
-                            <div class="flex items-center gap-3">
-                                <span class="text-xl">🤖</span>
-                                <span>AI Service (Claude)</span>
-                            </div>
-                            <span id="ai-status" class="flex items-center gap-2 text-green-400">
-                                <span class="w-2 h-2 bg-green-400 rounded-full"></span> Ready
-                            </span>
-                        </div>
-                        <div class="flex items-center justify-between p-4 bg-slate-800 rounded-xl">
-                            <div class="flex items-center gap-3">
-                                <span class="text-xl">🗄️</span>
-                                <span>Database</span>
-                            </div>
-                            <span class="flex items-center gap-2 text-green-400">
-                                <span class="w-2 h-2 bg-green-400 rounded-full"></span> Connected
-                            </span>
-                        </div>
-                    </div>
-                    <button onclick="testConnections()" class="w-full mt-4 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl transition">
-                        🔄 Test All Connections
-                    </button>
-                </div>
-            </div>
-
-            <!-- Save Button -->
-            <div class="mt-8 flex justify-end">
-                <button onclick="saveSettings()" class="px-8 py-3 bg-tiger-600 hover:bg-tiger-500 rounded-xl font-semibold transition">
-                    Save Settings
-                </button>
+            <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                <h2 class="text-xl font-semibold mb-4">Settings</h2>
+                <p class="text-slate-400">Coming soon...</p>
             </div>
         </section>
     </main>
 
-    <!-- LINE Setup Modal -->
-    <div id="line-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
-        <div class="bg-slate-900 rounded-2xl border border-slate-800 p-8 max-w-lg w-full mx-4">
-            <h3 class="text-xl font-semibold mb-4">Connect LINE Official Account</h3>
-            <p class="text-slate-400 mb-6">To connect LINE, you'll need a LINE Official Account and Messaging API credentials.</p>
-            <div class="space-y-4 mb-6">
-                <div>
-                    <label class="block text-sm text-slate-400 mb-2">Channel Access Token</label>
-                    <input type="text" id="line-token" placeholder="Enter your LINE channel access token" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 focus:border-line-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm text-slate-400 mb-2">Channel Secret</label>
-                    <input type="password" id="line-secret" placeholder="Enter your LINE channel secret" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 focus:border-line-500 outline-none">
-                </div>
-            </div>
-            <div class="flex gap-3">
-                <button onclick="connectLine()" class="flex-1 bg-line-500 hover:bg-line-600 py-3 rounded-xl font-semibold transition">Connect LINE</button>
-                <button onclick="closeLineSetup()" class="px-6 bg-slate-800 hover:bg-slate-700 py-3 rounded-xl transition">Cancel</button>
-            </div>
-            <p class="text-center text-slate-500 text-sm mt-4">
-                <a href="https://developers.line.biz/console/" target="_blank" class="text-line-500 hover:underline">Get credentials from LINE Developers Console →</a>
-            </p>
-        </div>
-    </div>
-
     <script>
-        const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:4000' : 'https://api.botcraftwrks.ai';
-        let allProspects = [];
+        // ============ CONFIGURATION ============
+        // Auto-detect API URL: localhost:3000 for dev, production otherwise
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:3000'
+            : 'https://api.botcraftwrks.ai';
+        
+        console.log('🐯 Tiger Bot Scout Dashboard');
+        console.log('📡 API Base:', API_BASE);
 
-        // Navigation
-        function showSection(section) {
-            document.querySelectorAll('.section-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`section-${section}`).classList.remove('hidden');
-            document.querySelectorAll('.nav-link').forEach(el => {
-                el.classList.remove('bg-tiger-500/10', 'text-tiger-400', 'font-medium');
-                el.classList.add('text-slate-400');
-            });
-            document.querySelector(`[data-section="${section}"]`).classList.add('bg-tiger-500/10', 'text-tiger-400', 'font-medium');
-            document.querySelector(`[data-section="${section}"]`).classList.remove('text-slate-400');
-        }
+        // ============ STATE ============
+        let currentProspects = [];
+        let currentPage = 1;
+        let totalProspects = 0;
+        let totalPages = 1;
+        let currentProspectId = null;
+        let filterTimeout = null;
+        let isRefreshing = false;
 
-        // Data fetching
-        async function refreshData() {
-            try {
-                const statsRes = await fetch(`${API_BASE}/ai-crm/stats`);
-                const stats = await statsRes.json();
-
-                document.getElementById('stat-total').textContent = stats.total || 0;
-                document.getElementById('stat-week').textContent = `+${stats.this_week || 0} this week`;
-
-                const byStatus = stats.by_status || {};
-                document.getElementById('pipe-new').textContent = byStatus.new || 0;
-                document.getElementById('pipe-contacted').textContent = byStatus.contacted || 0;
-                document.getElementById('pipe-qualified').textContent = byStatus.qualified || 0;
-                document.getElementById('pipe-converted').textContent = byStatus.converted || 0;
-
-                // Update funnel on analytics page
-                updateFunnel(stats);
-
-                const prospectsRes = await fetch(`${API_BASE}/ai-crm/leads?limit=50`);
-                const prospectsData = await prospectsRes.json();
-                allProspects = prospectsData.leads || [];
-
-                const qualified = allProspects.filter(p => p.ai_score >= 70).length;
-                document.getElementById('stat-qualified').textContent = qualified;
-                document.getElementById('stat-messages').textContent = Math.floor(Math.random() * 20) + 5; // Placeholder
-
-                renderProspects(allProspects.slice(0, 5), 'prospects-list');
-                renderProspects(allProspects, 'all-prospects-list');
-            } catch (err) {
-                console.error('Error:', err);
-            }
-        }
-
-        function renderProspects(prospects, containerId) {
-            const container = document.getElementById(containerId);
-            if (!prospects.length) {
-                container.innerHTML = '<div class="p-6 text-center text-slate-500">No prospects yet</div>';
-                return;
-            }
-            container.innerHTML = prospects.map(p => {
-                const scoreColor = p.ai_score >= 80 ? 'text-green-400' : p.ai_score >= 70 ? 'text-yellow-400' : 'text-slate-400';
-                const statusColors = { new: 'bg-blue-500/10 text-blue-400', contacted: 'bg-yellow-500/10 text-yellow-400', qualified: 'bg-green-500/10 text-green-400', converted: 'bg-tiger-500/10 text-tiger-400' };
-                const date = new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                return `
-                    <div class="p-4 hover:bg-slate-800/50 transition cursor-pointer">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center font-semibold text-tiger-400">${p.name.charAt(0).toUpperCase()}</div>
-                                <div>
-                                    <div class="font-medium">${p.name}</div>
-                                    <div class="text-sm text-slate-500">${p.source} · ${date}</div>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <span class="px-2 py-1 rounded-lg text-xs font-medium ${statusColors[p.status] || statusColors.new}">${p.status}</span>
-                                <span class="font-bold ${scoreColor}">${p.ai_score}</span>
-                            </div>
-                        </div>
-                        ${p.notes ? `<p class="text-sm text-slate-400 truncate">${p.notes}</p>` : ''}
-                    </div>`;
-            }).join('');
-        }
-
-        function filterProspects() {
-            const status = document.getElementById('filter-status').value;
-            const source = document.getElementById('filter-source').value;
-            let filtered = allProspects;
-            if (status !== 'all') filtered = filtered.filter(p => p.status === status);
-            if (source !== 'all') filtered = filtered.filter(p => p.source.includes(source));
-            renderProspects(filtered, 'all-prospects-list');
-        }
-
-        // Actions
-        function triggerDiscovery() {
-            alert('Triggering Agent Zero discovery scan...\n\nThis would call the Agent Zero API to run the prospect discovery task immediately.');
-        }
-
-        function sendDailyReport() {
-            window.open('https://t.me/TigerBotScout_bot?start=report', '_blank');
-        }
-
-        function openBroadcast() {
-            alert('Broadcast feature coming soon!\n\nSend a message to all connected channels (Telegram + LINE) at once.');
-        }
-
-        function sendTelegramMessage() {
-            const msg = document.getElementById('telegram-input').value;
-            if (msg) {
-                window.open(`https://t.me/TigerBotScout_bot?start=${encodeURIComponent(msg)}`, '_blank');
-                document.getElementById('telegram-input').value = '';
-            }
-        }
-
-        // LINE Setup
-        function openLineSetup() {
-            document.getElementById('line-modal').classList.remove('hidden');
-            document.getElementById('line-modal').classList.add('flex');
-        }
-
-        function closeLineSetup() {
-            document.getElementById('line-modal').classList.add('hidden');
-            document.getElementById('line-modal').classList.remove('flex');
-        }
-
-        function connectLine() {
-            const token = document.getElementById('line-token').value;
-            const secret = document.getElementById('line-secret').value;
-            if (token && secret) {
-                alert('LINE integration would be saved to the server.\n\nToken: ' + token.substring(0, 20) + '...');
-                closeLineSetup();
-            }
-        }
-
-        function openAddBot() {
-            alert('Add Bot wizard coming soon!\n\nThis will let you:\n- Create a new Telegram bot\n- Connect a LINE Official Account\n- Deploy an Agent Zero instance');
-        }
-
-        // Customer management functions
-        function openAddCustomer() {
-            alert('Add Customer form coming soon!\n\nCustomers will be auto-added when they:\n- Purchase via Stan Store\n- Sign up on BotCraftWrks.ai');
-        }
-
-        function setupCustomerBot(customerId) {
-            const customers = {
-                nancy: { name: 'Nancy Lim', email: 'nancylimsk@gmail.com' },
-                chana: { name: 'Chana Lohasaptawee', email: 'chana.loh@gmail.com' },
-                phaitoon: { name: 'Phaitoon S.', email: 'phaitoon2010@gmail.com' },
-                tarida: { name: 'Tarida Sukavanich', email: 'taridadew@gmail.com' },
-                lily: { name: 'Lily Vergara', email: 'lily.vergara@gmail.com' },
-                theera: { name: 'Theera Phetmalaigul', email: 'phetmalaigul@gmail.com' },
-                johnnoon: { name: 'John & Noon', email: 'vijohn@hotmail.com' }
+        // ============ UTILITY FUNCTIONS ============
+        
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const colors = {
+                info: 'bg-blue-500',
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                warning: 'bg-yellow-500'
             };
-            const customer = customers[customerId];
-            if (customer) {
-                alert(`Deploy Tiger Bot for ${customer.name}\n\nThis will:\n1. Create a dedicated Telegram bot via BotFather\n2. Configure their discovery preferences\n3. Set up daily report schedule\n4. Send welcome message with bot link\n\nEmail: ${customer.email}`);
-            }
+            const toast = document.createElement('div');
+            toast.className = `toast ${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2`;
+            toast.innerHTML = `
+                <span>${message}</span>
+                <button onclick="this.parentElement.remove()" class="ml-2 hover:opacity-75">×</button>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
         }
 
-        function contactCustomer(email) {
-            window.open(`mailto:${email}?subject=Your Tiger Bot Setup&body=Hi! Your Tiger Bot is ready...`, '_blank');
+        // Format date
+        function formatDate(dateStr) {
+            if (!dateStr) return '--';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         }
 
-        // Fetch feedback stats
-        async function fetchFeedbackStats() {
+        // Format relative time
+        function formatRelativeTime(dateStr) {
+            if (!dateStr) return '--';
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+            
+            if (minutes < 1) return 'Just now';
+            if (minutes < 60) return `${minutes}m ago`;
+            if (hours < 24) return `${hours}h ago`;
+            if (days < 7) return `${days}d ago`;
+            return formatDate(dateStr);
+        }
+
+        // Get score badge class
+        function getScoreBadgeClass(score) {
+            if (score >= 70) return 'bg-green-500/20 text-green-400';
+            if (score >= 50) return 'bg-yellow-500/20 text-yellow-400';
+            return 'bg-red-500/20 text-red-400';
+        }
+
+        // Get status badge class
+        function getStatusBadgeClass(status) {
+            const classes = {
+                'new': 'bg-blue-500/20 text-blue-400',
+                'contacted': 'bg-yellow-500/20 text-yellow-400',
+                'qualified': 'bg-purple-500/20 text-purple-400',
+                'negotiating': 'bg-orange-500/20 text-orange-400',
+                'converted': 'bg-green-500/20 text-green-400',
+                'lost': 'bg-red-500/20 text-red-400'
+            };
+            return classes[status] || 'bg-slate-500/20 text-slate-400';
+        }
+
+        // Set card loading state
+        function setCardLoading(cardId, loading) {
+            const card = document.getElementById(cardId);
+            if (!card) return;
+            const loader = card.querySelector('.card-loading');
+            const content = card.querySelector('.card-content');
+            const error = card.querySelector('.card-error');
+            
+            if (loader) loader.classList.toggle('hidden', !loading);
+            if (content) content.classList.toggle('opacity-50', loading);
+            if (error) error.classList.add('hidden');
+        }
+
+        // Set card error state
+        function setCardError(cardId, hasError) {
+            const card = document.getElementById(cardId);
+            if (!card) return;
+            const error = card.querySelector('.card-error');
+            if (error) error.classList.toggle('hidden', !hasError);
+        }
+
+        // Debounce filter input
+        function debounceFilter() {
+            clearTimeout(filterTimeout);
+            filterTimeout = setTimeout(() => applyFilters(), 300);
+        }
+
+        // ============ API FUNCTIONS ============
+        
+        // Generic fetch with error handling
+        async function apiFetch(endpoint, options = {}) {
             try {
-                const res = await fetch(`${API_BASE}/ai-crm/feedback/stats`);
-                const data = await res.json();
-
-                document.getElementById('stat-scripts').textContent = data.total_scripts || 0;
-                document.getElementById('stat-converted').textContent = data.by_feedback?.converted || 0;
-                document.getElementById('stat-success-rate').textContent = (data.conversion_rate || 0) + '%';
-
-                // Hive stats page
-                document.getElementById('fb-total').textContent = data.total_scripts || 0;
-                document.getElementById('fb-with-feedback').textContent = data.with_feedback || 0;
-                document.getElementById('fb-conversion').textContent = (data.conversion_rate || 0) + '%';
-                document.getElementById('fb-no-response').textContent = data.by_feedback?.no_response || 0;
-                document.getElementById('fb-got-reply').textContent = data.by_feedback?.got_reply || 0;
-                document.getElementById('fb-converted').textContent = data.by_feedback?.converted || 0;
-            } catch (err) {
-                console.error('Feedback stats error:', err);
-            }
-        }
-
-        // Fetch hive leaderboard
-        async function fetchHiveLeaderboard() {
-            try {
-                const res = await fetch(`${API_BASE}/ai-crm/hive/leaderboard`);
-                const data = await res.json();
-                const leaderboard = data.leaderboard || [];
-
-                // Update hive count
-                document.getElementById('hive-count').textContent = leaderboard.length;
-
-                // Update top script preview on dashboard
-                if (leaderboard.length > 0) {
-                    const top = leaderboard[0];
-                    document.getElementById('hive-script-preview').textContent = top.content?.substring(0, 150) + '...' || 'No scripts yet';
-                    document.getElementById('hive-script-success').textContent = top.success_count || 0;
-                } else {
-                    document.getElementById('hive-script-preview').textContent = 'No winning scripts yet. Use /script in Telegram and give feedback!';
-                    document.getElementById('hive-script-success').textContent = '0';
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-
-                // Render leaderboard
-                const container = document.getElementById('hive-leaderboard');
-                if (leaderboard.length === 0) {
-                    container.innerHTML = '<div class="p-6 text-center text-slate-500">No learnings yet. Scripts with positive feedback will appear here.</div>';
-                    return;
-                }
-
-                container.innerHTML = leaderboard.map((item, i) => {
-                    const context = item.context || {};
-                    return `
-                        <div class="p-4 hover:bg-slate-800/50 transition">
-                            <div class="flex items-start gap-4">
-                                <div class="w-8 h-8 bg-tiger-500/20 rounded-lg flex items-center justify-center font-bold text-tiger-400">${i + 1}</div>
-                                <div class="flex-1">
-                                    <p class="text-sm text-slate-300 mb-2">${item.content?.substring(0, 200) || 'No content'}...</p>
-                                    <div class="flex items-center gap-3 text-xs">
-                                        <span class="bg-green-500/10 text-green-400 px-2 py-0.5 rounded">🎯 ${item.success_count} successes</span>
-                                        ${context.source ? `<span class="bg-slate-700 text-slate-400 px-2 py-0.5 rounded">${context.source}</span>` : ''}
-                                        <span class="text-slate-500">${item.learning_type?.replace('winning_', '') || 'script'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>`;
-                }).join('');
-            } catch (err) {
-                console.error('Hive leaderboard error:', err);
+                
+                return await response.json();
+            } catch (error) {
+                console.error(`API Error (${endpoint}):`, error);
+                throw error;
             }
         }
 
-        // Fetch recent feedback
-        async function fetchRecentFeedback() {
+        // Check API connection
+        async function checkConnection() {
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+            
             try {
-                const res = await fetch(`${API_BASE}/ai-crm/feedback/recent?limit=5`);
-                const data = await res.json();
-                const feedback = data.feedback || [];
-
-                const container = document.getElementById('recent-feedback');
-                if (feedback.length === 0) {
-                    container.innerHTML = '<div class="text-slate-500 text-sm">No feedback yet</div>';
-                    return;
-                }
-
-                const feedbackIcons = { no_response: '👎', got_reply: '👍', converted: '🎯' };
-                const feedbackColors = { no_response: 'text-red-400', got_reply: 'text-blue-400', converted: 'text-green-400' };
-
-                container.innerHTML = feedback.map(f => {
-                    const icon = feedbackIcons[f.feedback] || '❓';
-                    const color = feedbackColors[f.feedback] || 'text-slate-400';
-                    const name = f.prospect_name || 'Unknown';
-                    const time = f.feedback_at ? new Date(f.feedback_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
-                    return `
-                        <div class="flex items-center gap-3 text-sm">
-                            <span class="text-lg">${icon}</span>
-                            <div class="flex-1">
-                                <span class="${color}">${f.feedback?.replace('_', ' ')}</span>
-                                <span class="text-slate-500"> • ${name}</span>
-                            </div>
-                            <span class="text-slate-600 text-xs">${time}</span>
-                        </div>`;
-                }).join('');
-            } catch (err) {
-                console.error('Recent feedback error:', err);
+                await apiFetch('/health');
+                dot.className = 'w-2 h-2 rounded-full bg-green-500';
+                text.textContent = 'Connected';
+                text.className = 'text-green-400';
+                return true;
+            } catch (error) {
+                dot.className = 'w-2 h-2 rounded-full bg-red-500';
+                text.textContent = 'Disconnected';
+                text.className = 'text-red-400';
+                return false;
             }
         }
 
-        // Scripts data
-        let allScripts = [];
-
-        // Fetch scripts history (include pending = all scripts)
-        async function fetchScripts() {
+        // ============ OVERVIEW FUNCTIONS ============
+        
+        // Fetch dashboard overview data
+        async function fetchOverview() {
+            const cards = ['card-todays-prospects', 'card-script-performance', 'card-conversion-funnel', 'card-hive-pulse'];
+            cards.forEach(id => setCardLoading(id, true));
+            
             try {
-                const res = await fetch(`${API_BASE}/ai-crm/feedback/recent?limit=50&include_pending=true`);
-                const data = await res.json();
-                allScripts = data.feedback || [];
-                renderScripts(allScripts);
-                populateProspectDatalist();
-            } catch (err) {
-                console.error('Scripts fetch error:', err);
+                const data = await apiFetch('/dashboard/overview');
+                
+                // Today's Prospects Card
+                if (data.todaysProspects) {
+                    document.getElementById('todays-count').textContent = data.todaysProspects.count || 0;
+                    document.getElementById('todays-qualified').textContent = `${data.todaysProspects.qualified || 0} qualified`;
+                    const trend = data.todaysProspects.trend || 0;
+                    const trendEl = document.getElementById('todays-trend');
+                    trendEl.textContent = trend >= 0 ? `↑ ${trend}%` : `↓ ${Math.abs(trend)}%`;
+                    trendEl.className = `text-sm ${trend >= 0 ? 'text-green-400' : 'text-red-400'}`;
+                }
+                setCardLoading('card-todays-prospects', false);
+                
+                // Script Performance Card
+                if (data.scriptPerformance) {
+                    document.getElementById('scripts-generated').textContent = data.scriptPerformance.generated || 0;
+                    document.getElementById('scripts-pending').textContent = `${data.scriptPerformance.pendingFeedback || 0} pending`;
+                    document.getElementById('scripts-success-rate').textContent = `${data.scriptPerformance.successRate || 0}% success`;
+                }
+                setCardLoading('card-script-performance', false);
+                
+                // Conversion Funnel Card
+                if (data.conversionFunnel) {
+                    const funnel = data.conversionFunnel;
+                    const stages = funnel.stages || [];
+                    const funnelEl = document.getElementById('funnel-stages');
+                    if (stages.length > 0) {
+                        funnelEl.innerHTML = stages.map((stage, i) => {
+                            const isLast = i === stages.length - 1;
+                            const colorClass = isLast ? 'bg-green-500/20 text-green-400' : 'bg-slate-700';
+                            return `
+                                <span class="px-2 py-1 ${colorClass} rounded text-xs">
+                                    ${stage.count || 0}
+                                </span>
+                                ${!isLast ? '<span class="text-slate-600">→</span>' : ''}
+                            `;
+                        }).join('');
+                    }
+                }
+                setCardLoading('card-conversion-funnel', false);
+                
+                // Hive Pulse Card
+                if (data.hivePulse) {
+                    document.getElementById('hive-total-learnings').textContent = data.hivePulse.totalLearnings || 0;
+                    const topScript = data.hivePulse.topScript;
+                    if (topScript && topScript.preview) {
+                        document.getElementById('hive-top-script-preview').textContent = 
+                            topScript.preview.substring(0, 50) + (topScript.preview.length > 50 ? '...' : '');
+                    } else {
+                        document.getElementById('hive-top-script-preview').textContent = 'No winning scripts yet';
+                    }
+                }
+                setCardLoading('card-hive-pulse', false);
+                
+            } catch (error) {
+                console.error('Failed to fetch overview:', error);
+                cards.forEach(id => {
+                    setCardLoading(id, false);
+                    setCardError(id, true);
+                });
+                showToast('Failed to load dashboard overview', 'error');
             }
         }
 
-        // Filter scripts
-        function filterScripts() {
-            const filter = document.getElementById('script-filter').value;
-            let filtered = allScripts;
-            if (filter === 'pending') {
-                filtered = allScripts.filter(s => !s.feedback);
-            } else if (filter !== 'all') {
-                filtered = allScripts.filter(s => s.feedback === filter);
+        // Fetch quick stats
+        async function fetchQuickStats() {
+            try {
+                const data = await apiFetch('/ai-crm/stats');
+                
+                document.getElementById('stat-total-prospects').textContent = data.total || 0;
+                document.getElementById('nav-prospects-count').textContent = data.total || 0;
+                
+                const byStatus = data.by_status || {};
+                document.getElementById('stat-qualified-count').textContent = byStatus.qualified || 0;
+                document.getElementById('stat-contacted-count').textContent = byStatus.contacted || 0;
+                document.getElementById('stat-converted-count').textContent = byStatus.converted || 0;
+                
+            } catch (error) {
+                console.error('Failed to fetch stats:', error);
             }
-            renderScripts(filtered);
         }
 
-        // Render scripts list
-        function renderScripts(scripts) {
-            const container = document.getElementById('scripts-list');
-            if (!scripts.length) {
-                container.innerHTML = '<div class="p-6 text-center text-slate-500">No scripts found. Generate one using /script in Telegram!</div>';
+        // ============ PROSPECTS FUNCTIONS ============
+        
+        // Build query string from filters
+        function buildProspectsQuery() {
+            const params = new URLSearchParams();
+            
+            const search = document.getElementById('filter-search')?.value;
+            const status = document.getElementById('filter-status')?.value;
+            const scoreMin = document.getElementById('filter-score-min')?.value;
+            const scoreMax = document.getElementById('filter-score-max')?.value;
+            const source = document.getElementById('filter-source')?.value;
+            const dateFrom = document.getElementById('filter-date-from')?.value;
+            const dateTo = document.getElementById('filter-date-to')?.value;
+            const limit = document.getElementById('pagination-limit')?.value || 25;
+            
+            if (search) params.append('search', search);
+            if (status) params.append('status', status);
+            if (scoreMin) params.append('score_min', scoreMin);
+            if (scoreMax) params.append('score_max', scoreMax);
+            if (source) params.append('source', source);
+            if (dateFrom) params.append('created_after', dateFrom);
+            if (dateTo) params.append('created_before', dateTo);
+            
+            params.append('limit', limit);
+            params.append('offset', (currentPage - 1) * parseInt(limit));
+            
+            return params.toString();
+        }
+
+        // Fetch prospects with current filters
+        async function fetchProspects() {
+            const tbody = document.getElementById('prospects-table-body');
+            tbody.innerHTML = `
+                <tr><td colspan="7" class="px-6 py-8 text-center text-slate-500">
+                    <svg class="w-8 h-8 spinner text-tiger-500 mx-auto mb-2" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    Loading prospects...
+                </td></tr>
+            `;
+            
+            try {
+                const query = buildProspectsQuery();
+                const data = await apiFetch(`/ai-crm/leads?${query}`);
+                
+                currentProspects = data.leads || data.prospects || data || [];
+                totalProspects = data.total || currentProspects.length;
+                const limit = parseInt(document.getElementById('pagination-limit')?.value || 25);
+                totalPages = Math.ceil(totalProspects / limit);
+                
+                renderProspectsTable();
+                updatePagination();
+                
+            } catch (error) {
+                console.error('Failed to fetch prospects:', error);
+                tbody.innerHTML = `
+                    <tr><td colspan="7" class="px-6 py-8 text-center">
+                        <div class="text-red-400 mb-2">Failed to load prospects</div>
+                        <button onclick="fetchProspects()" class="text-tiger-400 hover:underline">Retry</button>
+                    </td></tr>
+                `;
+                showToast('Failed to load prospects', 'error');
+            }
+        }
+
+        // Render prospects table
+        function renderProspectsTable() {
+            const tbody = document.getElementById('prospects-table-body');
+            
+            if (!currentProspects || currentProspects.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="7" class="px-6 py-8 text-center text-slate-500">
+                        No prospects found matching your filters
+                    </td></tr>
+                `;
                 return;
             }
-
-            const feedbackIcons = { no_response: '👎', got_reply: '👍', converted: '🎯' };
-            const feedbackColors = { no_response: 'bg-red-500/10 text-red-400', got_reply: 'bg-blue-500/10 text-blue-400', converted: 'bg-green-500/10 text-green-400' };
-
-            container.innerHTML = scripts.map(s => {
-                const icon = s.feedback ? feedbackIcons[s.feedback] : '⏳';
-                const colorClass = s.feedback ? feedbackColors[s.feedback] : 'bg-yellow-500/10 text-yellow-400';
-                const statusText = s.feedback ? s.feedback.replace('_', ' ') : 'pending';
-                const date = s.created_at ? new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
-                const preview = s.script_text?.substring(0, 150) || 'No content';
-
+            
+            tbody.innerHTML = currentProspects.map(prospect => {
+                const score = prospect.ai_score || prospect.score || 0;
+                const scoreBadge = getScoreBadgeClass(score);
+                const status = prospect.status || 'new';
+                const statusBadge = getStatusBadgeClass(status);
+                
                 return `
-                    <div class="p-4 hover:bg-slate-800/50 transition cursor-pointer" onclick="openScriptModal('${s.id}')">
-                        <div class="flex items-start gap-4">
-                            <div class="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center text-xl">${icon}</div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-3 mb-1">
-                                    <span class="font-medium">${s.prospect_name || 'Unknown'}</span>
-                                    <span class="text-xs ${colorClass} px-2 py-0.5 rounded">${statusText}</span>
-                                    <span class="text-xs text-slate-500">${date}</span>
+                    <tr class="hover:bg-slate-800/50 cursor-pointer transition" onclick="openProspectModal('${prospect.id}')">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center text-lg">
+                                    ${(prospect.display_name || prospect.name || '?')[0].toUpperCase()}
                                 </div>
-                                <p class="text-sm text-slate-400 truncate">${preview}...</p>
+                                <div>
+                                    <div class="font-medium">${prospect.display_name || prospect.name || 'Unknown'}</div>
+                                    <div class="text-sm text-slate-400">@${prospect.username || '--'}</div>
+                                </div>
                             </div>
-                            ${!s.feedback ? `
-                                <div class="flex gap-1">
-                                    <button onclick="event.stopPropagation(); submitFeedback('${s.id}', 'no_response')" class="p-2 hover:bg-red-500/20 rounded-lg transition" title="No Response">👎</button>
-                                    <button onclick="event.stopPropagation(); submitFeedback('${s.id}', 'got_reply')" class="p-2 hover:bg-blue-500/20 rounded-lg transition" title="Got Reply">👍</button>
-                                    <button onclick="event.stopPropagation(); submitFeedback('${s.id}', 'converted')" class="p-2 hover:bg-green-500/20 rounded-lg transition" title="Converted!">🎯</button>
-                                </div>
-                            ` : ''}
-                        </div>
-                    </div>`;
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 rounded-full text-xs font-medium ${scoreBadge}">
+                                ${score}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 rounded-full text-xs font-medium ${statusBadge}">
+                                ${status.charAt(0).toUpperCase() + status.slice(1)}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-400">${prospect.source || '--'}</td>
+                        <td class="px-6 py-4 text-sm text-slate-400">${prospect.platform || '--'}</td>
+                        <td class="px-6 py-4 text-sm text-slate-400">${formatRelativeTime(prospect.created_at)}</td>
+                        <td class="px-6 py-4">
+                            <button onclick="event.stopPropagation(); openProspectModal('${prospect.id}')" 
+                                class="text-tiger-400 hover:text-tiger-300 text-sm">View →</button>
+                        </td>
+                    </tr>
+                `;
             }).join('');
         }
 
-        // Open script modal
-        function openScriptModal(scriptId) {
-            const script = allScripts.find(s => s.id === scriptId);
-            if (!script) return;
-
-            const feedbackIcons = { no_response: '👎', got_reply: '👍', converted: '🎯' };
-            const content = document.getElementById('script-modal-content');
-
-            content.innerHTML = `
-                <div class="mb-6">
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="text-sm text-slate-400">Prospect:</span>
-                        <span class="font-medium">${script.prospect_name || 'Unknown'}</span>
-                        ${script.source ? `<span class="text-xs bg-slate-700 px-2 py-0.5 rounded">${script.source}</span>` : ''}
-                    </div>
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="text-sm text-slate-400">Status:</span>
-                        <span class="text-lg">${script.feedback ? feedbackIcons[script.feedback] : '⏳'}</span>
-                        <span>${script.feedback ? script.feedback.replace('_', ' ') : 'Pending feedback'}</span>
-                    </div>
-                </div>
-                <div class="bg-slate-800 rounded-xl p-4 mb-6">
-                    <div class="text-xs text-slate-500 mb-2">GENERATED SCRIPT</div>
-                    <p class="text-slate-200 whitespace-pre-wrap">${script.script_text || 'No content'}</p>
-                </div>
-                ${!script.feedback ? `
-                    <div class="mb-6">
-                        <div class="text-sm text-slate-400 mb-3">How did this script perform?</div>
-                        <div class="flex gap-3">
-                            <button onclick="submitFeedback('${script.id}', 'no_response'); closeScriptModal();" class="flex-1 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition">👎 No Response</button>
-                            <button onclick="submitFeedback('${script.id}', 'got_reply'); closeScriptModal();" class="flex-1 py-3 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-xl transition">👍 Got Reply</button>
-                            <button onclick="submitFeedback('${script.id}', 'converted'); closeScriptModal();" class="flex-1 py-3 bg-green-500/10 hover:bg-green-500/20 text-green-400 rounded-xl transition">🎯 Converted!</button>
-                        </div>
-                    </div>
-                ` : ''}
-                <div class="flex gap-3">
-                    <button onclick="copyScript('${script.id}')" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl transition">📋 Copy Script</button>
-                    <button onclick="closeScriptModal()" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl transition">Close</button>
-                </div>
-            `;
-
-            document.getElementById('script-modal').classList.remove('hidden');
-            document.getElementById('script-modal').classList.add('flex');
+        // Update pagination display
+        function updatePagination() {
+            const limit = parseInt(document.getElementById('pagination-limit')?.value || 25);
+            const from = totalProspects === 0 ? 0 : (currentPage - 1) * limit + 1;
+            const to = Math.min(currentPage * limit, totalProspects);
+            
+            document.getElementById('pagination-from').textContent = from;
+            document.getElementById('pagination-to').textContent = to;
+            document.getElementById('pagination-total').textContent = totalProspects;
+            document.getElementById('pagination-current').textContent = currentPage;
+            document.getElementById('pagination-pages').textContent = totalPages;
+            
+            document.getElementById('btn-prev-page').disabled = currentPage <= 1;
+            document.getElementById('btn-next-page').disabled = currentPage >= totalPages;
         }
 
-        function closeScriptModal() {
-            document.getElementById('script-modal').classList.add('hidden');
-            document.getElementById('script-modal').classList.remove('flex');
-        }
-
-        function copyScript(scriptId) {
-            const script = allScripts.find(s => s.id === scriptId);
-            if (script?.script_text) {
-                navigator.clipboard.writeText(script.script_text);
-                alert('Script copied to clipboard!');
+        // Change page
+        function changePage(delta) {
+            const newPage = currentPage + delta;
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                fetchProspects();
             }
         }
 
-        // Submit feedback from dashboard
-        async function submitFeedback(scriptId, feedback) {
-            try {
-                const res = await fetch(`${API_BASE}/ai-crm/feedback/${scriptId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ feedback })
-                });
+        // Apply filters
+        function applyFilters() {
+            currentPage = 1;
+            fetchProspects();
+        }
 
-                if (res.ok) {
-                    // Refresh data
-                    await fetchScripts();
-                    await fetchFeedbackStats();
-                    await fetchHiveLeaderboard();
-                    await fetchRecentFeedback();
-                } else {
-                    alert('Error submitting feedback');
-                }
-            } catch (err) {
-                console.error('Feedback submit error:', err);
-                alert('Error submitting feedback');
+        // Clear filters
+        function clearFilters() {
+            document.getElementById('filter-search').value = '';
+            document.getElementById('filter-status').value = '';
+            document.getElementById('filter-score-min').value = '';
+            document.getElementById('filter-score-max').value = '';
+            document.getElementById('filter-source').value = '';
+            document.getElementById('filter-date-from').value = '';
+            document.getElementById('filter-date-to').value = '';
+            currentPage = 1;
+            fetchProspects();
+        }
+
+        // ============ PROSPECT MODAL FUNCTIONS ============
+        
+        // Open prospect detail modal
+        async function openProspectModal(prospectId) {
+            currentProspectId = prospectId;
+            const modal = document.getElementById('prospect-modal');
+            modal.classList.remove('hidden');
+            
+            // Reset modal content
+            document.getElementById('modal-prospect-name').textContent = 'Loading...';
+            document.getElementById('modal-prospect-source').textContent = '';
+            document.getElementById('modal-score').textContent = '--';
+            document.getElementById('modal-platform').textContent = '--';
+            document.getElementById('modal-username').textContent = '--';
+            document.getElementById('modal-phone').textContent = '--';
+            document.getElementById('modal-email').textContent = '--';
+            document.getElementById('modal-reasoning').textContent = 'Loading...';
+            document.getElementById('modal-scripts').innerHTML = '<div class="loading-skeleton h-16 rounded"></div>';
+            document.getElementById('modal-activities').innerHTML = '<div class="loading-skeleton h-12 rounded"></div>';
+            document.getElementById('modal-notes').innerHTML = '<div class="text-slate-500 text-sm">Loading notes...</div>';
+            
+            try {
+                // Fetch prospect details
+                const prospect = await apiFetch(`/ai-crm/leads/${prospectId}`);
+                
+                // Populate basic info
+                document.getElementById('modal-prospect-name').textContent = prospect.display_name || prospect.name || 'Unknown';
+                document.getElementById('modal-prospect-source').textContent = `Source: ${prospect.source || 'Unknown'} • Added ${formatDate(prospect.created_at)}`;
+                document.getElementById('modal-score').textContent = prospect.ai_score || prospect.score || 0;
+                document.getElementById('modal-score').className = `text-4xl font-bold ${getScoreBadgeClass(prospect.ai_score || prospect.score || 0).replace('bg-', 'text-').split(' ')[1]}`;
+                document.getElementById('modal-status-select').value = prospect.status || 'new';
+                document.getElementById('modal-platform').textContent = prospect.platform || '--';
+                document.getElementById('modal-username').textContent = prospect.username ? `@${prospect.username}` : '--';
+                document.getElementById('modal-phone').textContent = prospect.phone || '--';
+                document.getElementById('modal-email').textContent = prospect.email || '--';
+                document.getElementById('modal-reasoning').textContent = prospect.ai_reasoning || prospect.reasoning || 'No AI analysis available';
+                
+                // Fetch related data in parallel
+                await Promise.all([
+                    fetchProspectScripts(prospectId),
+                    fetchProspectActivities(prospectId),
+                    fetchProspectNotes(prospectId)
+                ]);
+                
+            } catch (error) {
+                console.error('Failed to load prospect:', error);
+                document.getElementById('modal-prospect-name').textContent = 'Error loading prospect';
+                showToast('Failed to load prospect details', 'error');
             }
         }
 
-        // Fetch winning scripts for gallery
-        async function fetchWinningScripts() {
-            try {
-                const res = await fetch(`${API_BASE}/ai-crm/hive/learnings?limit=5`);
-                const data = await res.json();
-                const learnings = data.learnings || [];
+        // Close prospect modal
+        function closeProspectModal() {
+            document.getElementById('prospect-modal').classList.add('hidden');
+            currentProspectId = null;
+        }
 
-                const container = document.getElementById('winning-scripts');
-                if (!learnings.length) {
-                    container.innerHTML = '<div class="text-slate-500 text-sm">No winning scripts yet. Keep using and rating scripts!</div>';
+        // Close modal on backdrop click
+        document.getElementById('prospect-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeProspectModal();
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeProspectModal();
+        });
+
+        // Fetch prospect scripts
+        async function fetchProspectScripts(prospectId) {
+            const container = document.getElementById('modal-scripts');
+            try {
+                const data = await apiFetch(`/ai-crm/leads/${prospectId}/scripts`);
+                const scripts = data.scripts || data || [];
+                
+                if (scripts.length === 0) {
+                    container.innerHTML = '<div class="text-slate-500 text-sm">No scripts generated yet</div>';
                     return;
                 }
-
-                container.innerHTML = learnings.map(l => `
-                    <div class="bg-slate-800 rounded-xl p-3">
-                        <p class="text-sm text-slate-300 mb-2">${l.content?.substring(0, 100) || ''}...</p>
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs bg-green-500/10 text-green-400 px-2 py-0.5 rounded">🎯 ${l.success_count}x</span>
-                            <button onclick="useWinningScript(\`${encodeURIComponent(l.content || '')}\`)" class="text-xs text-tiger-400 hover:underline">Use this</button>
+                
+                container.innerHTML = scripts.map(script => `
+                    <div class="bg-slate-700/50 rounded-lg p-3 text-sm">
+                        <p class="text-slate-300 mb-2">${(script.content || script.script_text || '').substring(0, 150)}${(script.content || script.script_text || '').length > 150 ? '...' : ''}</p>
+                        <div class="flex items-center gap-2 text-xs text-slate-400">
+                            <span>${formatRelativeTime(script.created_at)}</span>
+                            ${script.feedback ? `<span class="px-2 py-0.5 rounded ${script.feedback === 'converted' ? 'bg-green-500/20 text-green-400' : 'bg-slate-600'}">📝 ${script.feedback}</span>` : ''}
                         </div>
                     </div>
                 `).join('');
-            } catch (err) {
-                console.error('Winning scripts error:', err);
+                
+            } catch (error) {
+                console.error('Failed to load scripts:', error);
+                container.innerHTML = '<div class="text-red-400 text-sm">Failed to load scripts</div>';
             }
         }
 
-        function useWinningScript(encodedContent) {
-            const content = decodeURIComponent(encodedContent);
-            navigator.clipboard.writeText(content);
-            alert('Winning script copied to clipboard!');
-        }
-
-        // Populate prospect datalist for script generation
-        function populateProspectDatalist() {
-            const datalist = document.getElementById('prospect-datalist');
-            datalist.innerHTML = allProspects.map(p => `<option value="${p.name}">`).join('');
-        }
-
-        // Generate script from dashboard
-        async function generateScript() {
-            const name = document.getElementById('gen-prospect-name').value.trim();
-            if (!name) {
-                alert('Please enter a prospect name');
-                return;
-            }
-
-            const btn = event.target;
-            btn.disabled = true;
-            btn.innerHTML = '⏳ Generating...';
-
+        // Fetch prospect activities
+        async function fetchProspectActivities(prospectId) {
+            const container = document.getElementById('modal-activities');
             try {
-                const res = await fetch(`${API_BASE}/ai-crm/scripts/generate`, {
+                const data = await apiFetch(`/ai-crm/leads/${prospectId}/activities`);
+                const activities = data.activities || data || [];
+                
+                if (activities.length === 0) {
+                    container.innerHTML = '<div class="text-slate-500 text-sm">No activities recorded</div>';
+                    return;
+                }
+                
+                container.innerHTML = activities.slice(0, 10).map(activity => `
+                    <div class="flex items-start gap-2 text-sm">
+                        <span class="text-slate-500">${formatRelativeTime(activity.created_at || activity.timestamp)}</span>
+                        <span class="text-slate-300">${activity.description || activity.action || activity.type || 'Activity'}</span>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Failed to load activities:', error);
+                container.innerHTML = '<div class="text-red-400 text-sm">Failed to load activities</div>';
+            }
+        }
+
+        // Fetch prospect notes
+        async function fetchProspectNotes(prospectId) {
+            const container = document.getElementById('modal-notes');
+            try {
+                const data = await apiFetch(`/ai-crm/leads/${prospectId}/notes`);
+                const notes = data.notes || data || [];
+                
+                if (notes.length === 0) {
+                    container.innerHTML = '<div class="text-slate-500 text-sm">No notes yet</div>';
+                    return;
+                }
+                
+                container.innerHTML = notes.map(note => `
+                    <div class="bg-slate-700/50 rounded p-2 text-sm">
+                        <p class="text-slate-300">${note.content || note.text || note.note || ''}</p>
+                        <span class="text-xs text-slate-500">${formatRelativeTime(note.created_at)}</span>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Failed to load notes:', error);
+                container.innerHTML = '<div class="text-red-400 text-sm">Failed to load notes</div>';
+            }
+        }
+
+        // Add note to prospect
+        async function addNote() {
+            if (!currentProspectId) return;
+            
+            const input = document.getElementById('modal-note-input');
+            const noteText = input.value.trim();
+            if (!noteText) return;
+            
+            try {
+                await apiFetch(`/ai-crm/leads/${currentProspectId}/notes`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prospect_name: name })
+                    body: JSON.stringify({ content: noteText, note: noteText })
                 });
+                
+                input.value = '';
+                showToast('Note added successfully', 'success');
+                await fetchProspectNotes(currentProspectId);
+                
+            } catch (error) {
+                console.error('Failed to add note:', error);
+                showToast('Failed to add note', 'error');
+            }
+        }
 
-                const data = await res.json();
+        // Update prospect status
+        async function updateProspectStatus() {
+            if (!currentProspectId) return;
+            
+            const newStatus = document.getElementById('modal-status-select').value;
+            
+            try {
+                await apiFetch(`/ai-crm/leads/${currentProspectId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ status: newStatus })
+                });
+                
+                showToast(`Status updated to ${newStatus}`, 'success');
+                
+                // Update the table row if visible
+                const prospect = currentProspects.find(p => p.id === currentProspectId);
+                if (prospect) {
+                    prospect.status = newStatus;
+                    renderProspectsTable();
+                }
+                
+            } catch (error) {
+                console.error('Failed to update status:', error);
+                showToast('Failed to update status', 'error');
+            }
+        }
 
-                if (res.ok && data.script) {
-                    // Show the generated script in a modal
-                    const content = document.getElementById('script-modal-content');
-                    content.innerHTML = `
-                        <div class="mb-6">
-                            <div class="flex items-center gap-3 mb-4">
-                                <span class="text-sm text-slate-400">Prospect:</span>
-                                <span class="font-medium">${data.prospect?.name || name}</span>
+        // ============ RECENT PROSPECTS PREVIEW ============
+        
+        async function fetchRecentProspectsPreview() {
+            const container = document.getElementById('recent-prospects-preview');
+            try {
+                const data = await apiFetch('/ai-crm/leads?limit=5&sort=created_at&order=desc');
+                const prospects = data.leads || data.prospects || data || [];
+                
+                if (prospects.length === 0) {
+                    container.innerHTML = '<div class="text-slate-500 text-sm text-center py-4">No prospects yet</div>';
+                    return;
+                }
+                
+                container.innerHTML = prospects.slice(0, 5).map(prospect => {
+                    const score = prospect.ai_score || prospect.score || 0;
+                    const scoreBadge = getScoreBadgeClass(score);
+                    return `
+                        <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl hover:bg-slate-800 cursor-pointer transition" onclick="showSection('prospects'); setTimeout(() => openProspectModal('${prospect.id}'), 100);">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center text-sm">
+                                    ${(prospect.display_name || prospect.name || '?')[0].toUpperCase()}
+                                </div>
+                                <div>
+                                    <div class="font-medium text-sm">${prospect.display_name || prospect.name || 'Unknown'}</div>
+                                    <div class="text-xs text-slate-400">${prospect.source || '--'} • ${formatRelativeTime(prospect.created_at)}</div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="bg-slate-800 rounded-xl p-4 mb-6">
-                            <div class="text-xs text-slate-500 mb-2">GENERATED SCRIPT</div>
-                            <p class="text-slate-200 whitespace-pre-wrap">${data.script}</p>
-                        </div>
-                        <div class="flex gap-3">
-                            <button onclick="navigator.clipboard.writeText(\`${data.script.replace(/`/g, '\\`')}\`); alert('Copied!');" class="flex-1 py-3 bg-tiger-600 hover:bg-tiger-500 rounded-xl transition">📋 Copy Script</button>
-                            <button onclick="closeScriptModal()" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl transition">Close</button>
+                            <span class="px-2 py-1 rounded-full text-xs font-medium ${scoreBadge}">${score}</span>
                         </div>
                     `;
-                    document.getElementById('script-modal').classList.remove('hidden');
-                    document.getElementById('script-modal').classList.add('flex');
+                }).join('');
+                
+            } catch (error) {
+                console.error('Failed to load recent prospects:', error);
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <div class="text-red-400 text-sm mb-2">Failed to load</div>
+                        <button onclick="fetchRecentProspectsPreview()" class="text-tiger-400 text-sm hover:underline">Retry</button>
+                    </div>
+                `;
+            }
+        }
 
-                    // Refresh scripts list
-                    await fetchScripts();
+        // ============ NAVIGATION ============
+        
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section-content').forEach(section => {
+                section.classList.add('hidden');
+            });
+            
+            // Show target section
+            const targetSection = document.getElementById(`section-${sectionName}`);
+            if (targetSection) {
+                targetSection.classList.remove('hidden');
+            }
+            
+            // Update nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                const linkSection = link.getAttribute('data-section');
+                if (linkSection === sectionName) {
+                    link.classList.remove('text-slate-400', 'hover:bg-slate-800');
+                    link.classList.add('bg-tiger-500/10', 'text-tiger-400', 'font-medium');
                 } else {
-                    alert(data.error || 'Error generating script');
-                }
-            } catch (err) {
-                console.error('Generate script error:', err);
-                alert('Error generating script');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<span>🐯</span> Generate Script';
-            }
-        }
-
-        // Fetch source performance
-        async function fetchSourcePerformance() {
-            try {
-                const res = await fetch(`${API_BASE}/ai-crm/hive/source-performance`);
-                const data = await res.json();
-                renderSourcePerformance(data.sources || []);
-            } catch (err) {
-                console.error('Source performance error:', err);
-            }
-        }
-
-        // Render source performance bars
-        function renderSourcePerformance(sources) {
-            const container = document.getElementById('source-performance');
-            if (!sources.length) {
-                container.innerHTML = '<div class="text-slate-500 text-center py-8">No source data yet. Generate scripts and provide feedback!</div>';
-                return;
-            }
-
-            // Find max for scaling
-            const maxProspects = Math.max(...sources.map(s => parseInt(s.prospects_found) || 1));
-
-            // Update best source
-            const best = sources[0];
-            if (best) {
-                document.getElementById('hive-best-source').textContent = best.source || '--';
-            }
-
-            container.innerHTML = sources.map(s => {
-                const prospects = parseInt(s.prospects_found) || 0;
-                const conversions = parseInt(s.conversions) || 0;
-                const replies = parseInt(s.replies) || 0;
-                const successRate = parseFloat(s.success_rate) || 0;
-                const barWidth = Math.max(5, (prospects / maxProspects) * 100);
-
-                const sourceColors = {
-                    'LINE': 'bg-green-500',
-                    'Facebook': 'bg-blue-500',
-                    'Telegram': 'bg-sky-500',
-                    'LinkedIn': 'bg-indigo-500'
-                };
-                const barColor = Object.entries(sourceColors).find(([key]) => s.source?.includes(key))?.[1] || 'bg-tiger-500';
-
-                return `
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="font-medium">${s.source || 'Unknown'}</span>
-                            <div class="flex items-center gap-4 text-sm">
-                                <span class="text-slate-400">${prospects} prospects</span>
-                                <span class="text-green-400">${conversions} converted</span>
-                                <span class="text-blue-400">${replies} replies</span>
-                                <span class="${successRate >= 50 ? 'text-green-400' : successRate >= 25 ? 'text-yellow-400' : 'text-slate-400'}">${successRate}%</span>
-                            </div>
-                        </div>
-                        <div class="h-3 bg-slate-800 rounded-full overflow-hidden">
-                            <div class="h-full ${barColor} rounded-full transition-all" style="width: ${barWidth}%"></div>
-                        </div>
-                    </div>`;
-            }).join('');
-        }
-
-        // Fetch hive trends
-        async function fetchHiveTrends() {
-            try {
-                const res = await fetch(`${API_BASE}/ai-crm/hive/trends?days=30`);
-                const data = await res.json();
-
-                // Update summary cards
-                if (data.summary) {
-                    document.getElementById('hive-total-learnings').textContent = data.summary.total_learnings || 0;
-                    document.getElementById('hive-total-successes').textContent = data.summary.total_successes || 0;
-                    document.getElementById('hive-this-week').textContent = data.summary.this_week || 0;
-                }
-
-                renderTrendsChart(data.script_trends || [], data.hive_trends || []);
-            } catch (err) {
-                console.error('Hive trends error:', err);
-            }
-        }
-
-        // Render trends as a simple bar chart
-        function renderTrendsChart(scriptTrends, hiveTrends) {
-            const container = document.getElementById('trends-chart');
-
-            if (!scriptTrends.length && !hiveTrends.length) {
-                container.innerHTML = '<div class="text-slate-500 text-center py-8">No trend data yet. Start generating scripts!</div>';
-                return;
-            }
-
-            // Combine data by date
-            const dateMap = new Map();
-            scriptTrends.forEach(d => {
-                const date = d.date?.split('T')[0];
-                if (date) {
-                    dateMap.set(date, {
-                        ...dateMap.get(date),
-                        scripts: parseInt(d.scripts_created) || 0,
-                        converted: parseInt(d.converted) || 0,
-                        got_reply: parseInt(d.got_reply) || 0
-                    });
+                    link.classList.add('text-slate-400', 'hover:bg-slate-800');
+                    link.classList.remove('bg-tiger-500/10', 'text-tiger-400', 'font-medium');
                 }
             });
-
-            const sortedDates = Array.from(dateMap.entries())
-                .sort((a, b) => a[0].localeCompare(b[0]))
-                .slice(-14); // Last 14 days
-
-            if (!sortedDates.length) {
-                container.innerHTML = '<div class="text-slate-500 text-center py-8">No recent activity</div>';
-                return;
-            }
-
-            const maxScripts = Math.max(...sortedDates.map(([, d]) => d.scripts || 1));
-
-            container.innerHTML = `
-                <div class="flex items-end justify-between h-48 gap-1">
-                    ${sortedDates.map(([date, d]) => {
-                        const height = Math.max(5, ((d.scripts || 0) / maxScripts) * 100);
-                        const converted = d.converted || 0;
-                        const replies = d.got_reply || 0;
-                        const day = new Date(date).toLocaleDateString('en-US', { weekday: 'short' });
-
-                        return `
-                            <div class="flex-1 flex flex-col items-center gap-1">
-                                <div class="w-full bg-slate-800 rounded-t relative" style="height: ${height}%">
-                                    ${converted > 0 ? `<div class="absolute bottom-0 w-full bg-green-500 rounded-t" style="height: ${(converted / (d.scripts || 1)) * 100}%"></div>` : ''}
-                                    ${replies > 0 ? `<div class="absolute bottom-0 w-full bg-blue-500/50 rounded-t" style="height: ${(replies / (d.scripts || 1)) * 100}%"></div>` : ''}
-                                </div>
-                                <span class="text-xs text-slate-500">${day}</span>
-                            </div>`;
-                    }).join('')}
-                </div>
-                <div class="flex items-center justify-center gap-6 mt-4 text-xs">
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 bg-slate-700 rounded"></span>Scripts</div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 bg-blue-500 rounded"></span>Replies</div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 bg-green-500 rounded"></span>Converted</div>
-                </div>
-            `;
-        }
-
-        // Fetch top signals
-        async function fetchTopSignals() {
-            try {
-                const res = await fetch(`${API_BASE}/ai-crm/hive/top-signals`);
-                const data = await res.json();
-                renderTopSignals(data.signals || []);
-            } catch (err) {
-                console.error('Top signals error:', err);
-            }
-        }
-
-        // Render top signals
-        function renderTopSignals(signals) {
-            const container = document.getElementById('top-signals');
-
-            if (!signals.length) {
-                container.innerHTML = '<div class="text-slate-500 text-sm">No successful signals yet. Keep using scripts!</div>';
-                return;
-            }
-
-            container.innerHTML = signals.slice(0, 5).map(s => {
-                const preview = (s.signal || '').substring(0, 60);
-                return `
-                    <div class="bg-slate-800 rounded-lg p-3">
-                        <p class="text-sm text-slate-300 mb-1">"${preview}${s.signal?.length > 60 ? '...' : ''}"</p>
-                        <div class="flex items-center gap-2 text-xs">
-                            <span class="text-green-400">🎯 ${s.conversions || 0}</span>
-                            <span class="text-slate-500">${s.source || ''}</span>
-                        </div>
-                    </div>`;
-            }).join('');
-        }
-
-        // Calculate ROI
-        function calculateROI() {
-            const dealValue = parseFloat(document.getElementById('roi-deal-value').value) || 500;
-            const subscription = 99;
-
-            // Get current stats
-            const total = parseInt(document.getElementById('stat-total').textContent) || 0;
-            const converted = parseInt(document.getElementById('pipe-converted').textContent) || 0;
-
-            document.getElementById('roi-prospects').textContent = total;
-            document.getElementById('roi-conversions').textContent = converted;
-
-            const revenue = converted * dealValue;
-            document.getElementById('roi-revenue').textContent = revenue.toLocaleString();
-
-            const roi = subscription > 0 ? Math.round(((revenue - subscription) / subscription) * 100) : 0;
-            document.getElementById('roi-percent').textContent = roi + '%';
-        }
-
-        // Update funnel display
-        function updateFunnel(stats) {
-            const byStatus = stats.by_status || {};
-            const newCount = byStatus.new || 0;
-            const contacted = byStatus.contacted || 0;
-            const qualified = byStatus.qualified || 0;
-            const converted = byStatus.converted || 0;
-
-            document.getElementById('funnel-new').textContent = newCount;
-            document.getElementById('funnel-contacted').textContent = contacted;
-            document.getElementById('funnel-qualified').textContent = qualified;
-            document.getElementById('funnel-converted').textContent = converted;
-
-            // Calculate rates
-            document.getElementById('funnel-rate-1').textContent = newCount > 0 ? Math.round((contacted / newCount) * 100) + '%' : '0%';
-            document.getElementById('funnel-rate-2').textContent = contacted > 0 ? Math.round((qualified / contacted) * 100) + '%' : '0%';
-            document.getElementById('funnel-rate-3').textContent = qualified > 0 ? Math.round((converted / qualified) * 100) + '%' : '0%';
-        }
-
-        // Update analytics based on period
-        async function updateAnalytics() {
-            const period = document.getElementById('analytics-period').value;
-            await fetchAnalyticsData(period);
-        }
-
-        // Fetch analytics data
-        async function fetchAnalyticsData(days = 30) {
-            try {
-                // Get stats
-                const statsRes = await fetch(`${API_BASE}/ai-crm/stats`);
-                const stats = await statsRes.json();
-
-                // Update key metrics
-                document.getElementById('analytics-total').textContent = stats.total || 0;
-                document.getElementById('analytics-total-change').textContent = `+${stats.this_week || 0} this week`;
-                document.getElementById('analytics-avg-score').textContent = stats.avg_score || 0;
-
-                const byStatus = stats.by_status || {};
-                const total = stats.total || 1;
-                const converted = byStatus.converted || 0;
-                const convRate = Math.round((converted / total) * 100);
-                document.getElementById('analytics-conversion').textContent = convRate + '%';
-
-                // Get feedback stats for script success
-                const fbRes = await fetch(`${API_BASE}/ai-crm/feedback/stats`);
-                const fbStats = await fbRes.json();
-                const successRate = Math.round(
-                    ((fbStats.by_feedback?.got_reply || 0) + (fbStats.by_feedback?.converted || 0)) /
-                    Math.max(fbStats.with_feedback || 1, 1) * 100
-                );
-                document.getElementById('analytics-script-success').textContent = successRate + '%';
-
-                // Render score distribution
-                renderScoreDistribution(allProspects);
-
-                // Render best sources
-                const sourcesRes = await fetch(`${API_BASE}/ai-crm/hive/source-performance`);
-                const sourcesData = await sourcesRes.json();
-                renderBestSources(sourcesData.sources || []);
-
-                // Render prospects timeline
-                const trendsRes = await fetch(`${API_BASE}/ai-crm/hive/trends?days=${days === 'all' ? 365 : days}`);
-                const trendsData = await trendsRes.json();
-                renderProspectsTimeline(trendsData.script_trends || []);
-
-            } catch (err) {
-                console.error('Analytics error:', err);
-            }
-        }
-
-        // Render score distribution
-        function renderScoreDistribution(prospects) {
-            const container = document.getElementById('score-distribution');
-            if (!prospects.length) {
-                container.innerHTML = '<div class="text-slate-500 text-center py-4">No data yet</div>';
-                return;
-            }
-
-            const ranges = [
-                { label: '90-100', min: 90, max: 100, color: 'bg-green-500' },
-                { label: '70-89', min: 70, max: 89, color: 'bg-tiger-500' },
-                { label: '50-69', min: 50, max: 69, color: 'bg-yellow-500' },
-                { label: '0-49', min: 0, max: 49, color: 'bg-red-500' }
-            ];
-
-            const total = prospects.length;
-            const distribution = ranges.map(r => ({
-                ...r,
-                count: prospects.filter(p => p.ai_score >= r.min && p.ai_score <= r.max).length
-            }));
-
-            container.innerHTML = distribution.map(d => {
-                const pct = Math.round((d.count / total) * 100);
-                return `
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-sm">
-                            <span>${d.label}</span>
-                            <span class="text-slate-400">${d.count} (${pct}%)</span>
-                        </div>
-                        <div class="h-2 bg-slate-800 rounded-full overflow-hidden">
-                            <div class="h-full ${d.color} rounded-full" style="width: ${pct}%"></div>
-                        </div>
-                    </div>`;
-            }).join('');
-        }
-
-        // Render best sources
-        function renderBestSources(sources) {
-            const container = document.getElementById('best-sources');
-            if (!sources.length) {
-                container.innerHTML = '<div class="text-slate-500 text-center py-4">No data yet</div>';
-                return;
-            }
-
-            container.innerHTML = sources.slice(0, 5).map((s, i) => {
-                const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '📊';
-                return `
-                    <div class="flex items-center justify-between p-3 bg-slate-800 rounded-xl">
-                        <div class="flex items-center gap-3">
-                            <span>${medal}</span>
-                            <span class="font-medium">${s.source || 'Unknown'}</span>
-                        </div>
-                        <div class="text-sm">
-                            <span class="text-green-400">${s.conversions || 0} conv</span>
-                            <span class="text-slate-500 mx-1">·</span>
-                            <span class="text-slate-400">${s.prospects_found || 0} total</span>
-                        </div>
-                    </div>`;
-            }).join('');
-        }
-
-        // Render prospects timeline
-        function renderProspectsTimeline(trends) {
-            const container = document.getElementById('prospects-timeline');
-            if (!trends.length) {
-                container.innerHTML = '<div class="text-slate-500 text-center py-8">No timeline data yet</div>';
-                return;
-            }
-
-            const last14 = trends.slice(-14);
-            const maxVal = Math.max(...last14.map(t => parseInt(t.scripts_created) || 1));
-
-            container.innerHTML = `
-                <div class="flex items-end justify-between h-40 gap-1">
-                    ${last14.map(t => {
-                        const val = parseInt(t.scripts_created) || 0;
-                        const height = Math.max(5, (val / maxVal) * 100);
-                        const day = new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                        return `
-                            <div class="flex-1 flex flex-col items-center gap-1">
-                                <div class="text-xs text-slate-500">${val}</div>
-                                <div class="w-full bg-tiger-500/50 hover:bg-tiger-500 rounded-t transition cursor-pointer" style="height: ${height}%" title="${day}: ${val} scripts"></div>
-                                <span class="text-xs text-slate-600 truncate w-full text-center">${day.split(' ')[1]}</span>
-                            </div>`;
-                    }).join('')}
-                </div>
-            `;
-        }
-
-        // Test connections
-        async function testConnections() {
-            const btn = event.target;
-            btn.disabled = true;
-            btn.textContent = '🔄 Testing...';
-
-            try {
-                const res = await fetch(`${API_BASE}/health`);
-                if (res.ok) {
-                    alert('✅ All systems operational!');
-                } else {
-                    alert('⚠️ Some services may be unavailable');
-                }
-            } catch (err) {
-                alert('❌ Connection failed: ' + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '🔄 Test All Connections';
-            }
-        }
-
-        // Save settings
-        function saveSettings() {
-            const settings = {
-                reportTime: document.getElementById('settings-report-time').value,
-                discoverySchedule: document.getElementById('settings-discovery-schedule').value,
-                minScore: document.getElementById('settings-min-score').value,
-                notifications: {
-                    daily: document.getElementById('notify-daily').checked,
-                    highScore: document.getElementById('notify-high-score').checked,
-                    weekly: document.getElementById('notify-weekly').checked
-                },
-                sources: {
-                    line: document.getElementById('source-line').checked,
-                    facebook: document.getElementById('source-facebook').checked
-                }
+            
+            // Update page title
+            const titles = {
+                'dashboard': 'Command Center',
+                'prospects': 'Prospects',
+                'scripts': 'Generated Scripts',
+                'hive': 'Hive Learnings',
+                'analytics': 'Analytics',
+                'settings': 'Settings'
             };
-
-            // Save to localStorage for now (would save to API in production)
-            localStorage.setItem('tigerbot-settings', JSON.stringify(settings));
-            alert('✅ Settings saved!');
-        }
-
-        // Load settings
-        function loadSettings() {
-            const saved = localStorage.getItem('tigerbot-settings');
-            if (saved) {
-                try {
-                    const settings = JSON.parse(saved);
-                    if (settings.reportTime) document.getElementById('settings-report-time').value = settings.reportTime;
-                    if (settings.discoverySchedule) document.getElementById('settings-discovery-schedule').value = settings.discoverySchedule;
-                    if (settings.minScore) document.getElementById('settings-min-score').value = settings.minScore;
-                    if (settings.notifications) {
-                        document.getElementById('notify-daily').checked = settings.notifications.daily ?? true;
-                        document.getElementById('notify-high-score').checked = settings.notifications.highScore ?? true;
-                        document.getElementById('notify-weekly').checked = settings.notifications.weekly ?? false;
-                    }
-                    if (settings.sources) {
-                        document.getElementById('source-line').checked = settings.sources.line ?? true;
-                        document.getElementById('source-facebook').checked = settings.sources.facebook ?? true;
-                    }
-                } catch (e) {
-                    console.error('Error loading settings:', e);
-                }
+            document.getElementById('page-title').textContent = titles[sectionName] || 'Command Center';
+            
+            // Load section-specific data
+            if (sectionName === 'prospects') {
+                fetchProspects();
             }
         }
 
-        // Enhanced refresh
-        async function refreshAll() {
-            await refreshData();
-            await fetchFeedbackStats();
-            await fetchHiveLeaderboard();
-            await fetchRecentFeedback();
-            await fetchScripts();
-            await fetchWinningScripts();
-            await fetchSourcePerformance();
-            await fetchHiveTrends();
-            await fetchTopSignals();
-            await fetchAnalyticsData();
-            calculateROI();
+        // ============ REFRESH ============
+        
+        async function refreshData() {
+            if (isRefreshing) return;
+            isRefreshing = true;
+            
+            const refreshBtn = document.getElementById('refresh-btn');
+            const refreshIcon = document.getElementById('refresh-icon');
+            refreshBtn.disabled = true;
+            refreshIcon.classList.add('spinner');
+            
+            try {
+                await checkConnection();
+                
+                // Refresh based on current section
+                const visibleSection = document.querySelector('.section-content:not(.hidden)');
+                const sectionId = visibleSection?.id || 'section-dashboard';
+                
+                if (sectionId === 'section-dashboard') {
+                    await Promise.all([
+                        fetchOverview(),
+                        fetchQuickStats(),
+                        fetchRecentProspectsPreview()
+                    ]);
+                } else if (sectionId === 'section-prospects') {
+                    await fetchProspects();
+                }
+                
+                showToast('Data refreshed', 'success');
+                
+            } catch (error) {
+                console.error('Refresh failed:', error);
+                showToast('Failed to refresh data', 'error');
+            } finally {
+                isRefreshing = false;
+                refreshBtn.disabled = false;
+                refreshIcon.classList.remove('spinner');
+            }
         }
 
-        // Initialize
-        loadSettings();
-        refreshAll();
-        setInterval(refreshAll, 60000);
+        // ============ INITIALIZATION ============
+        
+        async function initialize() {
+            console.log('🚀 Initializing dashboard...');
+            
+            // Check connection first
+            const connected = await checkConnection();
+            
+            if (connected) {
+                // Load initial data
+                await Promise.all([
+                    fetchOverview(),
+                    fetchQuickStats(),
+                    fetchRecentProspectsPreview()
+                ]);
+            } else {
+                // Show error state on cards
+                ['card-todays-prospects', 'card-script-performance', 'card-conversion-funnel', 'card-hive-pulse'].forEach(id => {
+                    setCardLoading(id, false);
+                    setCardError(id, true);
+                });
+                showToast('Unable to connect to API. Check if server is running.', 'error');
+            }
+            
+            // Handle hash navigation
+            const hash = window.location.hash.replace('#', '');
+            if (hash && ['dashboard', 'prospects', 'scripts', 'hive', 'analytics', 'settings'].includes(hash)) {
+                showSection(hash);
+            }
+            
+            // Auto-refresh every 60 seconds
+            setInterval(() => {
+                if (!document.hidden) {
+                    refreshData();
+                }
+            }, 60000);
+            
+            console.log('✅ Dashboard initialized');
+        }
+
+        // Start initialization when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initialize);
+        } else {
+            initialize();
+        }
     </script>
 </body>
 </html>
