@@ -104,6 +104,79 @@
         </div>
     </div>
 
+    <!-- Script Detail Modal -->
+    <div id="script-modal" class="fixed inset-0 modal-backdrop z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 rounded-2xl border border-slate-700 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="flex items-center justify-between p-6 border-b border-slate-700">
+                <div>
+                    <h2 class="text-xl font-bold" id="script-modal-title">Script Details</h2>
+                    <p class="text-slate-400 text-sm" id="script-modal-subtitle"></p>
+                </div>
+                <button onclick="closeScriptModal()" class="text-slate-400 hover:text-white p-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6">
+                <!-- Script Content -->
+                <div class="bg-slate-800/50 rounded-xl p-4 mb-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-sm text-slate-400">Script Content</span>
+                        <button onclick="copyScriptFromModal()" class="flex items-center gap-2 px-3 py-1.5 bg-tiger-500 hover:bg-tiger-600 rounded-lg text-sm transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            Copy Script
+                        </button>
+                    </div>
+                    <p id="script-modal-content" class="text-slate-200 whitespace-pre-wrap leading-relaxed">Loading...</p>
+                </div>
+                
+                <!-- Script Metadata -->
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="bg-slate-800/50 rounded-xl p-4">
+                        <span class="text-xs text-slate-500 block mb-1">Type</span>
+                        <span id="script-modal-type" class="text-sm font-medium">--</span>
+                    </div>
+                    <div class="bg-slate-800/50 rounded-xl p-4">
+                        <span class="text-xs text-slate-500 block mb-1">Feedback Status</span>
+                        <span id="script-modal-feedback" class="text-sm font-medium">--</span>
+                    </div>
+                    <div class="bg-slate-800/50 rounded-xl p-4">
+                        <span class="text-xs text-slate-500 block mb-1">Created</span>
+                        <span id="script-modal-created" class="text-sm font-medium">--</span>
+                    </div>
+                    <div class="bg-slate-800/50 rounded-xl p-4">
+                        <span class="text-xs text-slate-500 block mb-1">Prospect</span>
+                        <span id="script-modal-prospect" class="text-sm font-medium">--</span>
+                    </div>
+                </div>
+                
+                <!-- Signal Context -->
+                <div id="script-modal-signals-container" class="hidden">
+                    <span class="text-sm text-slate-400 block mb-2">Signal Context</span>
+                    <div id="script-modal-signals" class="flex flex-wrap gap-2"></div>
+                </div>
+                
+                <!-- Update Feedback -->
+                <div class="mt-6 pt-4 border-t border-slate-700">
+                    <span class="text-sm text-slate-400 block mb-3">Update Feedback Status</span>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="updateScriptFeedback('pending')" class="feedback-btn px-4 py-2 bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 rounded-lg text-sm transition" data-status="pending">
+                            ⏳ Pending
+                        </button>
+                        <button onclick="updateScriptFeedback('no_response')" class="feedback-btn px-4 py-2 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-lg text-sm transition" data-status="no_response">
+                            ❌ No Response
+                        </button>
+                        <button onclick="updateScriptFeedback('got_reply')" class="feedback-btn px-4 py-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg text-sm transition" data-status="got_reply">
+                            💬 Got Reply
+                        </button>
+                        <button onclick="updateScriptFeedback('converted')" class="feedback-btn px-4 py-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-lg text-sm transition" data-status="converted">
+                            ✅ Converted
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Sidebar -->
     <aside class="fixed left-0 top-0 h-full w-64 bg-slate-900 border-r border-slate-800 p-6 flex flex-col z-40">
         <div class="flex items-center gap-3 mb-10">
@@ -418,11 +491,183 @@
 
         <!-- ============ SCRIPTS SECTION ============ -->
         <section id="section-scripts" class="section-content hidden">
-            <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                <h2 class="text-xl font-semibold mb-4">Generated Scripts</h2>
-                <div id="scripts-list" class="space-y-4">
-                    <div class="loading-skeleton h-24 rounded-lg"></div>
-                    <div class="loading-skeleton h-24 rounded-lg"></div>
+            <!-- Scripts Sub-Navigation Tabs -->
+            <div class="flex items-center gap-4 mb-6 border-b border-slate-800">
+                <button onclick="showScriptsTab('history')" class="scripts-tab px-4 py-3 text-tiger-400 border-b-2 border-tiger-500 font-medium" data-tab="history">
+                    📜 Script History
+                </button>
+                <button onclick="showScriptsTab('winning')" class="scripts-tab px-4 py-3 text-slate-400 hover:text-white border-b-2 border-transparent" data-tab="winning">
+                    🏆 Winning Scripts
+                </button>
+                <button onclick="showScriptsTab('generate')" class="scripts-tab px-4 py-3 text-slate-400 hover:text-white border-b-2 border-transparent" data-tab="generate">
+                    ✨ Generate New
+                </button>
+            </div>
+
+            <!-- Scripts History Tab -->
+            <div id="scripts-tab-history" class="scripts-tab-content">
+                <!-- Filters Bar -->
+                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-4 mb-6">
+                    <div class="flex flex-wrap items-center gap-4">
+                        <div class="flex-1 min-w-[200px]">
+                            <div class="relative">
+                                <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                <input type="text" id="scripts-filter-search" placeholder="Search scripts..."
+                                    class="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-tiger-500"
+                                    oninput="debounceScriptsFilter()">
+                            </div>
+                        </div>
+                        
+                        <select id="scripts-filter-type" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-tiger-500" onchange="applyScriptsFilters()">
+                            <option value="">All Types</option>
+                            <option value="approach">Approach</option>
+                            <option value="follow_up">Follow-up</option>
+                            <option value="objection">Objection Handler</option>
+                        </select>
+                        
+                        <select id="scripts-filter-feedback" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-tiger-500" onchange="applyScriptsFilters()">
+                            <option value="">All Feedback</option>
+                            <option value="pending">⏳ Pending</option>
+                            <option value="no_response">❌ No Response</option>
+                            <option value="got_reply">💬 Got Reply</option>
+                            <option value="converted">✅ Converted</option>
+                        </select>
+                        
+                        <button onclick="clearScriptsFilters()" class="text-slate-400 hover:text-white text-sm px-3 py-2">
+                            Clear
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Scripts History Table -->
+                <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-slate-800/50">
+                                <tr>
+                                    <th class="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-4">Prospect</th>
+                                    <th class="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-4">Script Preview</th>
+                                    <th class="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-4">Type</th>
+                                    <th class="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-4">Feedback</th>
+                                    <th class="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-4">Created</th>
+                                    <th class="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scripts-history-tbody" class="divide-y divide-slate-800">
+                                <tr><td colspan="6" class="px-6 py-8 text-center text-slate-500">
+                                    <svg class="w-8 h-8 spinner text-tiger-500 mx-auto mb-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                    Loading scripts...
+                                </td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Scripts Pagination -->
+                    <div class="flex items-center justify-between px-6 py-4 border-t border-slate-800">
+                        <div class="text-sm text-slate-400">
+                            Showing <span id="scripts-pagination-from">0</span> to <span id="scripts-pagination-to">0</span> of <span id="scripts-pagination-total">0</span> scripts
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="changeScriptsPage(-1)" id="btn-prev-scripts-page" disabled
+                                class="px-3 py-1 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm">
+                                ← Prev
+                            </button>
+                            <span class="text-sm text-slate-400">Page <span id="scripts-pagination-current">1</span></span>
+                            <button onclick="changeScriptsPage(1)" id="btn-next-scripts-page" disabled
+                                class="px-3 py-1 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm">
+                                Next →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Winning Scripts Tab -->
+            <div id="scripts-tab-winning" class="scripts-tab-content hidden">
+                <!-- Category Tabs -->
+                <div class="flex items-center gap-2 mb-6">
+                    <button onclick="filterWinningScripts('')" class="winning-category-btn px-4 py-2 bg-tiger-500 text-white rounded-lg text-sm font-medium" data-category="">
+                        All
+                    </button>
+                    <button onclick="filterWinningScripts('approach')" class="winning-category-btn px-4 py-2 bg-slate-800 text-slate-400 hover:bg-slate-700 rounded-lg text-sm" data-category="approach">
+                        Approaches
+                    </button>
+                    <button onclick="filterWinningScripts('follow_up')" class="winning-category-btn px-4 py-2 bg-slate-800 text-slate-400 hover:bg-slate-700 rounded-lg text-sm" data-category="follow_up">
+                        Follow-ups
+                    </button>
+                    <button onclick="filterWinningScripts('objection')" class="winning-category-btn px-4 py-2 bg-slate-800 text-slate-400 hover:bg-slate-700 rounded-lg text-sm" data-category="objection">
+                        Objection Handlers
+                    </button>
+                </div>
+
+                <!-- Winning Scripts Gallery -->
+                <div id="winning-scripts-gallery" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="loading-skeleton h-48 rounded-2xl"></div>
+                    <div class="loading-skeleton h-48 rounded-2xl"></div>
+                    <div class="loading-skeleton h-48 rounded-2xl"></div>
+                </div>
+            </div>
+
+            <!-- Generate Script Tab -->
+            <div id="scripts-tab-generate" class="scripts-tab-content hidden">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Generate Form -->
+                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2"><span>✨</span> Generate New Script</h3>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm text-slate-400 mb-2">Select Prospect</label>
+                                <select id="generate-prospect-select" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-tiger-500">
+                                    <option value="">Loading prospects...</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm text-slate-400 mb-2">Script Type</label>
+                                <select id="generate-script-type" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-tiger-500">
+                                    <option value="approach">🎯 Initial Approach</option>
+                                    <option value="follow_up">🔄 Follow-up Message</option>
+                                    <option value="objection">🛡️ Objection Handler</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm text-slate-400 mb-2">Additional Context (optional)</label>
+                                <textarea id="generate-context" rows="3" placeholder="Any specific details or objections to address..."
+                                    class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-tiger-500 resize-none"></textarea>
+                            </div>
+                            
+                            <button onclick="generateScript()" id="generate-script-btn"
+                                class="w-full bg-gradient-to-r from-tiger-500 to-orange-600 hover:from-tiger-600 hover:to-orange-700 py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition">
+                                <span>✨</span> Generate Script
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Generated Script Output -->
+                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold flex items-center gap-2"><span>📝</span> Generated Script</h3>
+                            <button onclick="copyGeneratedScript()" id="copy-generated-btn" disabled
+                                class="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                Copy
+                            </button>
+                        </div>
+                        
+                        <div id="generated-script-output" class="bg-slate-800/50 rounded-xl p-4 min-h-[200px] max-h-[400px] overflow-y-auto">
+                            <div class="text-slate-500 text-center py-8">
+                                <span class="text-4xl block mb-2">🤖</span>
+                                <p>Select a prospect and click Generate to create a personalized script</p>
+                            </div>
+                        </div>
+                        
+                        <div id="generated-script-meta" class="hidden mt-4 flex items-center justify-between text-sm text-slate-400">
+                            <span id="generated-script-type-label"></span>
+                            <span id="generated-script-time"></span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -1143,6 +1388,11 @@
             // Load section-specific data
             if (sectionName === 'prospects') {
                 fetchProspects();
+            } else if (sectionName === 'scripts') {
+                // Load scripts history by default
+                const activeTab = document.querySelector('.scripts-tab.text-tiger-400');
+                const tabName = activeTab?.getAttribute('data-tab') || 'history';
+                showScriptsTab(tabName);
             }
         }
 
@@ -1172,6 +1422,12 @@
                     ]);
                 } else if (sectionId === 'section-prospects') {
                     await fetchProspects();
+                } else if (sectionId === 'section-scripts') {
+                    const activeTab = document.querySelector('.scripts-tab.text-tiger-400');
+                    const tabName = activeTab?.getAttribute('data-tab') || 'history';
+                    if (tabName === 'history') await fetchScriptsHistory();
+                    else if (tabName === 'winning') await fetchWinningScripts();
+                    else if (tabName === 'generate') await loadProspectsForGenerator();
                 }
                 
                 showToast('Data refreshed', 'success');
@@ -1185,6 +1441,513 @@
                 refreshIcon.classList.remove('spinner');
             }
         }
+
+        
+        // ============ SCRIPTS SECTION STATE ============
+        let scriptsHistory = [];
+        let winningScripts = [];
+        let scriptsCurrentPage = 1;
+        let scriptsTotalPages = 1;
+        let scriptsTotalCount = 0;
+        let currentScriptId = null;
+        let currentGeneratedScript = null;
+        let scriptsFilterTimeout = null;
+        let currentWinningCategory = '';
+
+        // Utility: escape HTML
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============ SCRIPTS TAB NAVIGATION ============
+
+        function showScriptsTab(tabName) {
+            document.querySelectorAll('.scripts-tab-content').forEach(c => c.classList.add('hidden'));
+            const target = document.getElementById(`scripts-tab-${tabName}`);
+            if (target) target.classList.remove('hidden');
+
+            document.querySelectorAll('.scripts-tab').forEach(tab => {
+                const isActive = tab.getAttribute('data-tab') === tabName;
+                tab.classList.toggle('text-tiger-400', isActive);
+                tab.classList.toggle('border-tiger-500', isActive);
+                tab.classList.toggle('font-medium', isActive);
+                tab.classList.toggle('text-slate-400', !isActive);
+                tab.classList.toggle('border-transparent', !isActive);
+            });
+
+            if (tabName === 'history') fetchScriptsHistory();
+            else if (tabName === 'winning') fetchWinningScripts();
+            else if (tabName === 'generate') loadProspectsForGenerator();
+        }
+
+        // ============ SCRIPTS HISTORY ============
+
+        function debounceScriptsFilter() {
+            clearTimeout(scriptsFilterTimeout);
+            scriptsFilterTimeout = setTimeout(() => applyScriptsFilters(), 300);
+        }
+
+        function applyScriptsFilters() {
+            scriptsCurrentPage = 1;
+            fetchScriptsHistory();
+        }
+
+        function clearScriptsFilters() {
+            document.getElementById('scripts-filter-search').value = '';
+            document.getElementById('scripts-filter-type').value = '';
+            document.getElementById('scripts-filter-feedback').value = '';
+            scriptsCurrentPage = 1;
+            fetchScriptsHistory();
+        }
+
+        async function fetchScriptsHistory() {
+            const tbody = document.getElementById('scripts-history-tbody');
+            tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-slate-500">
+                <svg class="w-8 h-8 spinner text-tiger-500 mx-auto mb-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                Loading scripts...</td></tr>`;
+
+            try {
+                const search = document.getElementById('scripts-filter-search')?.value || '';
+                const typeFilter = document.getElementById('scripts-filter-type')?.value || '';
+                const feedbackFilter = document.getElementById('scripts-filter-feedback')?.value || '';
+
+                const params = new URLSearchParams();
+                if (search) params.append('search', search);
+                if (typeFilter) params.append('type', typeFilter);
+                if (feedbackFilter) params.append('feedback', feedbackFilter);
+                params.append('limit', '20');
+                params.append('offset', String((scriptsCurrentPage - 1) * 20));
+
+                const data = await apiFetch(`/ai-crm/feedback/recent?${params.toString()}`);
+                scriptsHistory = data.scripts || data.feedback || data || [];
+                scriptsTotalCount = data.total || scriptsHistory.length;
+                scriptsTotalPages = Math.ceil(scriptsTotalCount / 20) || 1;
+
+                renderScriptsHistoryTable();
+                updateScriptsPagination();
+            } catch (error) {
+                console.error('Failed to fetch scripts:', error);
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center">
+                    <div class="text-red-400 mb-2">Failed to load scripts</div>
+                    <button onclick="fetchScriptsHistory()" class="text-tiger-400 hover:underline">Retry</button></td></tr>`;
+                showToast('Failed to load scripts history', 'error');
+            }
+        }
+
+        function getFeedbackBadgeClass(feedback) {
+            const classes = { 'pending': 'bg-yellow-500/20 text-yellow-400', 'no_response': 'bg-red-500/20 text-red-400', 'got_reply': 'bg-blue-500/20 text-blue-400', 'converted': 'bg-green-500/20 text-green-400' };
+            return classes[feedback] || 'bg-slate-500/20 text-slate-400';
+        }
+
+        function getFeedbackIcon(feedback) {
+            const icons = { 'pending': '⏳', 'no_response': '❌', 'got_reply': '💬', 'converted': '✅' };
+            return icons[feedback] || '❓';
+        }
+
+        function getScriptTypeBadgeClass(type) {
+            const classes = { 'approach': 'bg-purple-500/20 text-purple-400', 'follow_up': 'bg-blue-500/20 text-blue-400', 'objection': 'bg-orange-500/20 text-orange-400' };
+            return classes[type] || 'bg-slate-500/20 text-slate-400';
+        }
+
+        function getScriptTypeLabel(type) {
+            const labels = { 'approach': 'Approach', 'follow_up': 'Follow-up', 'objection': 'Objection' };
+            return labels[type] || type || 'Unknown';
+        }
+
+        function renderScriptsHistoryTable() {
+            const tbody = document.getElementById('scripts-history-tbody');
+            if (!scriptsHistory || scriptsHistory.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-slate-500">No scripts found</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = scriptsHistory.map(script => {
+                const content = script.script_text || script.content || '';
+                const preview = content.substring(0, 100) + (content.length > 100 ? '...' : '');
+                const feedback = script.feedback_status || script.feedback || 'pending';
+                const scriptType = script.script_type || script.type || 'approach';
+                const prospectName = script.prospect_name || script.lead_name || 'Unknown';
+                return `<tr class="hover:bg-slate-800/50 transition">
+                    <td class="px-6 py-4"><div class="font-medium text-sm">${escapeHtml(prospectName)}</div></td>
+                    <td class="px-6 py-4"><div class="text-sm text-slate-300 max-w-xs truncate">${escapeHtml(preview)}</div></td>
+                    <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs font-medium ${getScriptTypeBadgeClass(scriptType)}">${getScriptTypeLabel(scriptType)}</span></td>
+                    <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs font-medium ${getFeedbackBadgeClass(feedback)}">${getFeedbackIcon(feedback)} ${feedback.replace('_', ' ')}</span></td>
+                    <td class="px-6 py-4 text-sm text-slate-400">${formatRelativeTime(script.created_at)}</td>
+                    <td class="px-6 py-4"><div class="flex items-center gap-2">
+                        <button onclick="copyScriptContent('${script.id}')" class="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg" title="Copy">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        </button>
+                        <button onclick="openScriptModal('${script.id}')" class="p-2 text-tiger-400 hover:text-tiger-300 hover:bg-slate-700 rounded-lg" title="Expand">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                        </button>
+                    </div></td>
+                </tr>`;
+            }).join('');
+        }
+
+        function updateScriptsPagination() {
+            const from = scriptsTotalCount === 0 ? 0 : (scriptsCurrentPage - 1) * 20 + 1;
+            const to = Math.min(scriptsCurrentPage * 20, scriptsTotalCount);
+            document.getElementById('scripts-pagination-from').textContent = from;
+            document.getElementById('scripts-pagination-to').textContent = to;
+            document.getElementById('scripts-pagination-total').textContent = scriptsTotalCount;
+            document.getElementById('scripts-pagination-current').textContent = scriptsCurrentPage;
+            document.getElementById('btn-prev-scripts-page').disabled = scriptsCurrentPage <= 1;
+            document.getElementById('btn-next-scripts-page').disabled = scriptsCurrentPage >= scriptsTotalPages;
+        }
+
+        function changeScriptsPage(delta) {
+            const newPage = scriptsCurrentPage + delta;
+            if (newPage >= 1 && newPage <= scriptsTotalPages) {
+                scriptsCurrentPage = newPage;
+                fetchScriptsHistory();
+            }
+        }
+
+        // ============ SCRIPT MODAL ============
+
+        async function openScriptModal(scriptId) {
+            currentScriptId = scriptId;
+            const modal = document.getElementById('script-modal');
+            modal.classList.remove('hidden');
+
+            document.getElementById('script-modal-title').textContent = 'Loading...';
+            document.getElementById('script-modal-content').textContent = 'Loading script content...';
+
+            const script = scriptsHistory.find(s => s.id === scriptId);
+            if (script) {
+                populateScriptModal(script);
+            } else {
+                try {
+                    const data = await apiFetch(`/ai-crm/scripts/${scriptId}`);
+                    populateScriptModal(data);
+                } catch (error) {
+                    console.error('Failed to load script:', error);
+                    document.getElementById('script-modal-content').textContent = 'Failed to load script';
+                    showToast('Failed to load script details', 'error');
+                }
+            }
+        }
+
+        function populateScriptModal(script) {
+            const content = script.script_text || script.content || '';
+            const feedback = script.feedback_status || script.feedback || 'pending';
+            const scriptType = script.script_type || script.type || 'approach';
+            const prospectName = script.prospect_name || script.lead_name || 'Unknown';
+
+            document.getElementById('script-modal-title').textContent = `Script for ${prospectName}`;
+            document.getElementById('script-modal-subtitle').textContent = `${getScriptTypeLabel(scriptType)} Script`;
+            document.getElementById('script-modal-content').textContent = content;
+            document.getElementById('script-modal-type').innerHTML = `<span class="px-2 py-1 rounded ${getScriptTypeBadgeClass(scriptType)}">${getScriptTypeLabel(scriptType)}</span>`;
+            document.getElementById('script-modal-feedback').innerHTML = `<span class="px-2 py-1 rounded ${getFeedbackBadgeClass(feedback)}">${getFeedbackIcon(feedback)} ${feedback.replace('_', ' ')}</span>`;
+            document.getElementById('script-modal-created').textContent = formatDate(script.created_at);
+            document.getElementById('script-modal-prospect').textContent = prospectName;
+
+            // Show signals if available
+            const signals = script.signals || script.context?.signals || [];
+            const signalsContainer = document.getElementById('script-modal-signals-container');
+            const signalsDiv = document.getElementById('script-modal-signals');
+            if (signals.length > 0) {
+                signalsContainer.classList.remove('hidden');
+                signalsDiv.innerHTML = signals.map(s => `<span class="px-2 py-1 bg-slate-700 rounded-full text-xs">${escapeHtml(s)}</span>`).join('');
+            } else {
+                signalsContainer.classList.add('hidden');
+            }
+
+            // Highlight active feedback button
+            document.querySelectorAll('.feedback-btn').forEach(btn => {
+                const isActive = btn.getAttribute('data-status') === feedback;
+                btn.classList.toggle('ring-2', isActive);
+                btn.classList.toggle('ring-white', isActive);
+            });
+        }
+
+        function closeScriptModal() {
+            document.getElementById('script-modal').classList.add('hidden');
+            currentScriptId = null;
+        }
+
+        // Close modal on backdrop click
+        document.getElementById('script-modal')?.addEventListener('click', function(e) {
+            if (e.target === this) closeScriptModal();
+        });
+
+        async function copyScriptContent(scriptId) {
+            const script = scriptsHistory.find(s => s.id === scriptId);
+            if (script) {
+                const content = script.script_text || script.content || '';
+                await copyToClipboard(content);
+            }
+        }
+
+        async function copyScriptFromModal() {
+            const content = document.getElementById('script-modal-content').textContent;
+            await copyToClipboard(content);
+        }
+
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast('Script copied to clipboard!', 'success');
+            } catch (err) {
+                console.error('Copy failed:', err);
+                showToast('Failed to copy', 'error');
+            }
+        }
+
+        async function updateScriptFeedback(status) {
+            if (!currentScriptId) return;
+            try {
+                await apiFetch(`/ai-crm/feedback/${currentScriptId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ feedback_status: status, feedback: status })
+                });
+                showToast(`Feedback updated to ${status.replace('_', ' ')}`, 'success');
+
+                // Update local data
+                const script = scriptsHistory.find(s => s.id === currentScriptId);
+                if (script) {
+                    script.feedback_status = status;
+                    script.feedback = status;
+                    renderScriptsHistoryTable();
+                    populateScriptModal(script);
+                }
+            } catch (error) {
+                console.error('Failed to update feedback:', error);
+                showToast('Failed to update feedback', 'error');
+            }
+        }
+
+        // ============ WINNING SCRIPTS ============
+
+        function filterWinningScripts(category) {
+            currentWinningCategory = category;
+
+            document.querySelectorAll('.winning-category-btn').forEach(btn => {
+                const isActive = btn.getAttribute('data-category') === category;
+                btn.classList.toggle('bg-tiger-500', isActive);
+                btn.classList.toggle('text-white', isActive);
+                btn.classList.toggle('bg-slate-800', !isActive);
+                btn.classList.toggle('text-slate-400', !isActive);
+            });
+
+            renderWinningScriptsGallery();
+        }
+
+        async function fetchWinningScripts() {
+            const gallery = document.getElementById('winning-scripts-gallery');
+            gallery.innerHTML = `
+                <div class="loading-skeleton h-48 rounded-2xl"></div>
+                <div class="loading-skeleton h-48 rounded-2xl"></div>
+                <div class="loading-skeleton h-48 rounded-2xl"></div>
+            `;
+
+            try {
+                const data = await apiFetch('/ai-crm/hive/leaderboard');
+                winningScripts = data.scripts || data.leaderboard || data || [];
+                renderWinningScriptsGallery();
+            } catch (error) {
+                console.error('Failed to fetch winning scripts:', error);
+                gallery.innerHTML = `
+                    <div class="col-span-full text-center py-8">
+                        <div class="text-red-400 mb-2">Failed to load winning scripts</div>
+                        <button onclick="fetchWinningScripts()" class="text-tiger-400 hover:underline">Retry</button>
+                    </div>
+                `;
+                showToast('Failed to load winning scripts', 'error');
+            }
+        }
+
+        function renderWinningScriptsGallery() {
+            const gallery = document.getElementById('winning-scripts-gallery');
+            let filtered = winningScripts;
+
+            if (currentWinningCategory) {
+                filtered = winningScripts.filter(s => (s.script_type || s.type) === currentWinningCategory);
+            }
+
+            if (!filtered || filtered.length === 0) {
+                gallery.innerHTML = `<div class="col-span-full text-center py-8 text-slate-500">No winning scripts in this category yet</div>`;
+                return;
+            }
+
+            gallery.innerHTML = filtered.map(script => {
+                const content = script.script_text || script.content || '';
+                const preview = content.substring(0, 150) + (content.length > 150 ? '...' : '');
+                const scriptType = script.script_type || script.type || 'approach';
+                const successCount = script.success_count || script.conversions || 0;
+                const signals = script.signals || script.context?.signals || [];
+
+                return `
+                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-5 hover:border-tiger-500/50 transition cursor-pointer" onclick="useWinningScript('${script.id}')">
+                        <div class="flex items-start justify-between mb-3">
+                            <span class="px-2 py-1 rounded text-xs font-medium ${getScriptTypeBadgeClass(scriptType)}">${getScriptTypeLabel(scriptType)}</span>
+                            <span class="flex items-center gap-1 text-green-400 text-sm font-medium">
+                                <span>✅</span> ${successCount} wins
+                            </span>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-4">${escapeHtml(preview)}</p>
+                        ${signals.length > 0 ? `
+                            <div class="flex flex-wrap gap-1 mb-4">
+                                ${signals.slice(0, 3).map(s => `<span class="px-2 py-0.5 bg-slate-800 rounded-full text-xs text-slate-400">${escapeHtml(s)}</span>`).join('')}
+                                ${signals.length > 3 ? `<span class="px-2 py-0.5 bg-slate-800 rounded-full text-xs text-slate-400">+${signals.length - 3}</span>` : ''}
+                            </div>
+                        ` : ''}
+                        <button onclick="event.stopPropagation(); useWinningScript('${script.id}')" 
+                            class="w-full py-2 bg-tiger-500/20 text-tiger-400 hover:bg-tiger-500/30 rounded-lg text-sm font-medium transition">
+                            Use This Script
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function useWinningScript(scriptId) {
+            const script = winningScripts.find(s => s.id === scriptId);
+            if (script) {
+                const content = script.script_text || script.content || '';
+                copyToClipboard(content);
+                showToast('Winning script copied! Ready to use.', 'success');
+            }
+        }
+
+        // ============ GENERATE SCRIPT ============
+
+        async function loadProspectsForGenerator() {
+            const select = document.getElementById('generate-prospect-select');
+            select.innerHTML = '<option value="">Loading prospects...</option>';
+
+            try {
+                const data = await apiFetch('/ai-crm/leads?limit=100');
+                const prospects = data.leads || data.prospects || data || [];
+
+                if (prospects.length === 0) {
+                    select.innerHTML = '<option value="">No prospects available</option>';
+                    return;
+                }
+
+                select.innerHTML = '<option value="">Select a prospect...</option>' + 
+                    prospects.map(p => {
+                        const name = p.display_name || p.name || 'Unknown';
+                        const source = p.source || '';
+                        return `<option value="${p.id}">${escapeHtml(name)}${source ? ` (${source})` : ''}</option>`;
+                    }).join('');
+            } catch (error) {
+                console.error('Failed to load prospects:', error);
+                select.innerHTML = '<option value="">Failed to load - click to retry</option>';
+                showToast('Failed to load prospects', 'error');
+            }
+        }
+
+        async function generateScript() {
+            const prospectId = document.getElementById('generate-prospect-select').value;
+            const scriptType = document.getElementById('generate-script-type').value;
+            const context = document.getElementById('generate-context').value;
+            const btn = document.getElementById('generate-script-btn');
+            const output = document.getElementById('generated-script-output');
+            const copyBtn = document.getElementById('copy-generated-btn');
+            const meta = document.getElementById('generated-script-meta');
+
+            if (!prospectId) {
+                showToast('Please select a prospect', 'error');
+                return;
+            }
+
+            // Show loading
+            btn.disabled = true;
+            btn.innerHTML = '<svg class="w-5 h-5 spinner" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Generating...';
+            output.innerHTML = '<div class="text-slate-500 text-center py-8"><svg class="w-8 h-8 spinner text-tiger-500 mx-auto mb-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg><p>AI is crafting your personalized script...</p></div>';
+
+            try {
+                const payload = {
+                    lead_id: prospectId,
+                    prospect_id: prospectId,
+                    script_type: scriptType,
+                    type: scriptType
+                };
+                if (context) {
+                    payload.context = context;
+                    payload.additional_context = context;
+                }
+
+                const data = await apiFetch('/ai-crm/scripts/generate-v2', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                const scriptContent = data.script || data.script_text || data.content || 'No script generated';
+                currentGeneratedScript = scriptContent;
+
+                output.innerHTML = `<p class="text-slate-200 whitespace-pre-wrap leading-relaxed">${escapeHtml(scriptContent)}</p>`;
+                copyBtn.disabled = false;
+                meta.classList.remove('hidden');
+                document.getElementById('generated-script-type-label').textContent = getScriptTypeLabel(scriptType);
+                document.getElementById('generated-script-time').textContent = 'Just now';
+
+                showToast('Script generated successfully!', 'success');
+
+                // Refresh history to show new script
+                if (document.getElementById('scripts-tab-history') && !document.getElementById('scripts-tab-history').classList.contains('hidden')) {
+                    fetchScriptsHistory();
+                }
+            } catch (error) {
+                console.error('Failed to generate script:', error);
+                output.innerHTML = `<div class="text-center py-8">
+                    <div class="text-red-400 mb-2">Failed to generate script</div>
+                    <p class="text-slate-500 text-sm mb-4">${error.message || 'Unknown error'}</p>
+                    <button onclick="generateScript()" class="text-tiger-400 hover:underline">Try Again</button>
+                </div>`;
+                showToast('Failed to generate script', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>✨</span> Generate Script';
+            }
+        }
+
+        async function copyGeneratedScript() {
+            if (currentGeneratedScript) {
+                await copyToClipboard(currentGeneratedScript);
+            }
+        }
+
+        // ============ SCRIPTS SECTION INITIALIZATION ============
+
+        function initScriptsSection() {
+            // Load scripts when section is shown
+            const scriptsSection = document.getElementById('section-scripts');
+            if (scriptsSection) {
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                            if (!scriptsSection.classList.contains('hidden')) {
+                                // Section became visible
+                                const activeTab = document.querySelector('.scripts-tab.text-tiger-400');
+                                const tabName = activeTab?.getAttribute('data-tab') || 'history';
+                                if (tabName === 'history' && scriptsHistory.length === 0) {
+                                    fetchScriptsHistory();
+                                } else if (tabName === 'winning' && winningScripts.length === 0) {
+                                    fetchWinningScripts();
+                                } else if (tabName === 'generate') {
+                                    loadProspectsForGenerator();
+                                }
+                            }
+                        }
+                    });
+                });
+                observer.observe(scriptsSection, { attributes: true });
+            }
+        }
+
+        // Initialize scripts section when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initScriptsSection);
+        } else {
+            initScriptsSection();
+        }
+
 
         // ============ INITIALIZATION ============
         
