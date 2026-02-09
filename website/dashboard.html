@@ -30,7 +30,129 @@
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
         .toast { animation: slideIn 0.3s ease-out; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-    </style>
+    
+        /* Analytics Styles */
+        .timeline-bar-group:hover .timeline-tooltip {
+            display: block;
+        }
+
+        .timeline-tooltip {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 10;
+            margin-bottom: 8px;
+        }
+
+        .timeline-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: #475569;
+        }
+
+        .timeline-bar {
+            transition: height 0.3s ease;
+        }
+
+        .timeline-bar-group:hover .timeline-bar {
+            filter: brightness(1.2);
+        }
+
+        .heatmap-cell {
+            cursor: pointer;
+            transition: transform 0.1s ease, filter 0.1s ease;
+        }
+
+        .heatmap-cell:hover {
+            transform: scale(1.1);
+            filter: brightness(1.2);
+            z-index: 1;
+        }
+
+        .grid-cols-17 {
+            grid-template-columns: repeat(17, minmax(0, 1fr));
+        }
+
+        /* ROI Gauge */
+        .roi-gauge {
+            position: relative;
+            width: 200px;
+            height: 100px;
+            overflow: visible;
+        }
+
+        .roi-gauge-bg {
+            position: absolute;
+            width: 200px;
+            height: 100px;
+            background: #374151;
+            border-radius: 100px 100px 0 0;
+            overflow: hidden;
+        }
+
+        .roi-gauge-fill {
+            position: absolute;
+            width: 100%;
+            height: 200%;
+            background: linear-gradient(90deg, #ef4444 0%, #f59e0b 25%, #eab308 50%, #22c55e 75%, #10b981 100%);
+            transform-origin: center bottom;
+            transition: transform 0.5s ease-out;
+        }
+
+        .roi-gauge-mask {
+            position: absolute;
+            width: 140px;
+            height: 70px;
+            background: #0f172a;
+            border-radius: 70px 70px 0 0;
+            left: 30px;
+            top: 30px;
+        }
+
+        .roi-gauge-needle {
+            position: absolute;
+            width: 4px;
+            height: 70px;
+            background: #f8fafc;
+            left: calc(50% - 2px);
+            bottom: 0;
+            transform-origin: center bottom;
+            border-radius: 2px;
+            transition: transform 0.5s ease-out;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+
+        .roi-gauge-center {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: #f8fafc;
+            border-radius: 50%;
+            left: calc(50% - 8px);
+            bottom: -8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+
+        .funnel-stage {
+            transition: transform 0.2s ease;
+        }
+
+        .funnel-stage:hover {
+            transform: translateX(5px);
+        }
+</style>
 </head>
 <body class="bg-slate-950 text-white font-sans">
     <!-- Toast Container -->
@@ -686,11 +808,330 @@
 
         <!-- ============ ANALYTICS SECTION ============ -->
         <section id="section-analytics" class="section-content hidden">
-            <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                <h2 class="text-xl font-semibold mb-4">Analytics</h2>
-                <p class="text-slate-400">Coming soon...</p>
+            <!-- Analytics Header -->
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold">Analytics</h1>
+                    <p class="text-slate-400">Track your prospecting performance and ROI</p>
+                </div>
+                <button onclick="refreshAnalytics()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Refresh Data
+                </button>
+            </div>
+
+            <!-- Analytics Sub-Navigation -->
+            <div class="flex gap-2 mb-6 border-b border-slate-800 pb-4">
+                <button onclick="showAnalyticsTab('funnel')" class="analytics-tab px-4 py-2 rounded-lg bg-tiger-500 text-white font-medium transition" data-tab="funnel">📊 Funnel</button>
+                <button onclick="showAnalyticsTab('timeline')" class="analytics-tab px-4 py-2 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 transition" data-tab="timeline">📈 Timeline</button>
+                <button onclick="showAnalyticsTab('response-rates')" class="analytics-tab px-4 py-2 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 transition" data-tab="response-rates">🔥 Response Rates</button>
+                <button onclick="showAnalyticsTab('roi')" class="analytics-tab px-4 py-2 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 transition" data-tab="roi">💰 ROI Calculator</button>
+            </div>
+
+            <!-- ===== FUNNEL TAB ===== -->
+            <div id="analytics-tab-funnel" class="analytics-tab-content">
+                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold">Conversion Funnel</h2>
+                        <div id="funnel-loading" class="hidden">
+                            <svg class="w-5 h-5 spinner text-tiger-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                        </div>
+                    </div>
+
+                    <!-- Funnel Error State -->
+                    <div id="funnel-error" class="hidden text-center py-8">
+                        <div class="text-red-400 mb-2">Failed to load funnel data</div>
+                        <button onclick="fetchFunnelData()" class="text-tiger-400 hover:underline">Retry</button>
+                    </div>
+
+                    <!-- Funnel Visualization -->
+                    <div id="funnel-container" class="max-w-2xl mx-auto">
+                        <!-- Funnel stages will be rendered here -->
+                        <div class="space-y-3" id="funnel-stages">
+                            <div class="loading-skeleton h-16 rounded-xl"></div>
+                            <div class="loading-skeleton h-16 rounded-xl"></div>
+                            <div class="loading-skeleton h-16 rounded-xl"></div>
+                            <div class="loading-skeleton h-16 rounded-xl"></div>
+                        </div>
+                    </div>
+
+                    <!-- Conversion Rates -->
+                    <div id="funnel-rates" class="mt-8 grid grid-cols-3 gap-4">
+                        <div class="loading-skeleton h-20 rounded-xl"></div>
+                        <div class="loading-skeleton h-20 rounded-xl"></div>
+                        <div class="loading-skeleton h-20 rounded-xl"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TIMELINE TAB ===== -->
+            <div id="analytics-tab-timeline" class="analytics-tab-content hidden">
+                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold">Prospects Over Time</h2>
+                        <div class="flex items-center gap-4">
+                            <!-- Period Toggle -->
+                            <div class="flex gap-1 bg-slate-800 rounded-lg p-1">
+                                <button onclick="setTimelinePeriod('daily')" class="timeline-period-btn px-3 py-1.5 rounded-md text-sm bg-tiger-500 text-white" data-period="daily">Daily</button>
+                                <button onclick="setTimelinePeriod('weekly')" class="timeline-period-btn px-3 py-1.5 rounded-md text-sm text-slate-400 hover:text-white" data-period="weekly">Weekly</button>
+                                <button onclick="setTimelinePeriod('monthly')" class="timeline-period-btn px-3 py-1.5 rounded-md text-sm text-slate-400 hover:text-white" data-period="monthly">Monthly</button>
+                            </div>
+                            <div id="timeline-loading" class="hidden">
+                                <svg class="w-5 h-5 spinner text-tiger-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Date Range Picker -->
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="flex items-center gap-2">
+                            <label class="text-sm text-slate-400">From:</label>
+                            <input type="date" id="timeline-since" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm" onchange="fetchTimelineData()">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label class="text-sm text-slate-400">To:</label>
+                            <input type="date" id="timeline-until" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm" onchange="fetchTimelineData()">
+                        </div>
+                    </div>
+
+                    <!-- Timeline Error State -->
+                    <div id="timeline-error" class="hidden text-center py-8">
+                        <div class="text-red-400 mb-2">Failed to load timeline data</div>
+                        <button onclick="fetchTimelineData()" class="text-tiger-400 hover:underline">Retry</button>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="flex items-center gap-6 mb-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                            <span class="text-sm text-slate-400">New</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 rounded-full bg-orange-500"></div>
+                            <span class="text-sm text-slate-400">Qualified</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                            <span class="text-sm text-slate-400">Converted</span>
+                        </div>
+                    </div>
+
+                    <!-- Timeline Chart Container -->
+                    <div class="relative">
+                        <div id="timeline-chart" class="flex items-end gap-1 h-64 border-b border-l border-slate-700 p-4">
+                            <!-- Chart bars will be rendered here -->
+                            <div class="flex-1 flex items-end justify-center gap-1">
+                                <div class="loading-skeleton w-4 h-32 rounded-t"></div>
+                                <div class="loading-skeleton w-4 h-24 rounded-t"></div>
+                                <div class="loading-skeleton w-4 h-16 rounded-t"></div>
+                            </div>
+                        </div>
+                        <!-- Y-axis labels -->
+                        <div id="timeline-y-axis" class="absolute left-0 top-4 bottom-4 w-8 flex flex-col justify-between text-xs text-slate-500">
+                            <span>--</span>
+                            <span>--</span>
+                            <span>0</span>
+                        </div>
+                    </div>
+
+                    <!-- X-axis labels -->
+                    <div id="timeline-x-axis" class="flex justify-between mt-2 text-xs text-slate-500 px-4">
+                        <span>Loading...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== RESPONSE RATES TAB ===== -->
+            <div id="analytics-tab-response-rates" class="analytics-tab-content hidden">
+                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 class="text-xl font-semibold">Response Rate Heatmap</h2>
+                            <p class="text-slate-400 text-sm mt-1">Best times to contact prospects</p>
+                        </div>
+                        <div id="heatmap-loading" class="hidden">
+                            <svg class="w-5 h-5 spinner text-tiger-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                        </div>
+                    </div>
+
+                    <!-- Heatmap Error State -->
+                    <div id="heatmap-error" class="hidden text-center py-8">
+                        <div class="text-red-400 mb-2">Failed to load response rate data</div>
+                        <button onclick="fetchResponseRates()" class="text-tiger-400 hover:underline">Retry</button>
+                    </div>
+
+                    <!-- Heatmap Container -->
+                    <div class="overflow-x-auto">
+                        <div class="min-w-[700px]">
+                            <!-- Hour Headers -->
+                            <div class="flex mb-2">
+                                <div class="w-16"></div>
+                                <div id="heatmap-hours" class="flex-1 grid grid-cols-17 gap-1 text-xs text-slate-400 text-center">
+                                    <span>6am</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12pm</span>
+                                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10pm</span>
+                                </div>
+                            </div>
+
+                            <!-- Heatmap Grid -->
+                            <div id="heatmap-grid" class="space-y-1">
+                                <!-- Loading skeleton -->
+                                <div class="flex items-center"><div class="w-16 text-sm text-slate-400">Mon</div><div class="flex-1 grid grid-cols-17 gap-1"><div class="loading-skeleton h-8 rounded"></div></div></div>
+                                <div class="flex items-center"><div class="w-16 text-sm text-slate-400">Tue</div><div class="flex-1 grid grid-cols-17 gap-1"><div class="loading-skeleton h-8 rounded"></div></div></div>
+                                <div class="flex items-center"><div class="w-16 text-sm text-slate-400">Wed</div><div class="flex-1 grid grid-cols-17 gap-1"><div class="loading-skeleton h-8 rounded"></div></div></div>
+                                <div class="flex items-center"><div class="w-16 text-sm text-slate-400">Thu</div><div class="flex-1 grid grid-cols-17 gap-1"><div class="loading-skeleton h-8 rounded"></div></div></div>
+                                <div class="flex items-center"><div class="w-16 text-sm text-slate-400">Fri</div><div class="flex-1 grid grid-cols-17 gap-1"><div class="loading-skeleton h-8 rounded"></div></div></div>
+                                <div class="flex items-center"><div class="w-16 text-sm text-slate-400">Sat</div><div class="flex-1 grid grid-cols-17 gap-1"><div class="loading-skeleton h-8 rounded"></div></div></div>
+                                <div class="flex items-center"><div class="w-16 text-sm text-slate-400">Sun</div><div class="flex-1 grid grid-cols-17 gap-1"><div class="loading-skeleton h-8 rounded"></div></div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="flex items-center justify-center gap-2 mt-6">
+                        <span class="text-xs text-slate-400">0%</span>
+                        <div class="flex gap-0.5">
+                            <div class="w-6 h-4 rounded" style="background: #374151;"></div>
+                            <div class="w-6 h-4 rounded" style="background: #065f46;"></div>
+                            <div class="w-6 h-4 rounded" style="background: #047857;"></div>
+                            <div class="w-6 h-4 rounded" style="background: #059669;"></div>
+                            <div class="w-6 h-4 rounded" style="background: #10b981;"></div>
+                            <div class="w-6 h-4 rounded" style="background: #34d399;"></div>
+                        </div>
+                        <span class="text-xs text-slate-400">100%</span>
+                    </div>
+
+                    <!-- Heatmap Tooltip (hidden, shown on hover) -->
+                    <div id="heatmap-tooltip" class="fixed hidden bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm z-50 pointer-events-none">
+                        <div class="font-medium" id="tooltip-time">Monday 9am</div>
+                        <div class="text-green-400" id="tooltip-rate">Response Rate: 45%</div>
+                        <div class="text-slate-400 text-xs" id="tooltip-sample">Sample: 120 contacts</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== ROI CALCULATOR TAB ===== -->
+            <div id="analytics-tab-roi" class="analytics-tab-content hidden">
+                <div class="grid lg:grid-cols-2 gap-6">
+                    <!-- Input Panel -->
+                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                        <h2 class="text-xl font-semibold mb-6">ROI Calculator</h2>
+
+                        <div class="space-y-6">
+                            <!-- Monthly Subscription Cost -->
+                            <div>
+                                <label class="block text-sm text-slate-400 mb-2">Monthly Subscription Cost</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                                    <input type="number" id="roi-subscription" value="99" min="0" step="1"
+                                        class="w-full bg-slate-800 border border-slate-700 rounded-lg pl-8 pr-4 py-3 text-lg"
+                                        oninput="calculateROI()">
+                                </div>
+                            </div>
+
+                            <!-- Average Deal Value -->
+                            <div>
+                                <label class="block text-sm text-slate-400 mb-2">Average Deal Value</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                                    <input type="number" id="roi-deal-value" value="500" min="0" step="10"
+                                        class="w-full bg-slate-800 border border-slate-700 rounded-lg pl-8 pr-4 py-3 text-lg"
+                                        oninput="calculateROI()">
+                                </div>
+                            </div>
+
+                            <!-- Manual Time Per Prospect -->
+                            <div>
+                                <label class="block text-sm text-slate-400 mb-2">Manual Time Per Prospect (minutes)</label>
+                                <input type="number" id="roi-manual-time" value="30" min="1" step="1"
+                                    class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-lg"
+                                    oninput="calculateROI()">
+                            </div>
+
+                            <!-- Hourly Rate -->
+                            <div>
+                                <label class="block text-sm text-slate-400 mb-2">Your Hourly Rate (for time savings)</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                                    <input type="number" id="roi-hourly-rate" value="50" min="0" step="5"
+                                        class="w-full bg-slate-800 border border-slate-700 rounded-lg pl-8 pr-4 py-3 text-lg"
+                                        oninput="calculateROI()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- API Data Info -->
+                        <div class="mt-6 p-4 bg-slate-800/50 rounded-xl">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-slate-400">Data from your account:</span>
+                                <div id="roi-api-loading" class="hidden">
+                                    <svg class="w-4 h-4 spinner text-tiger-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 text-sm">
+                                <div><span class="text-slate-500">Total Prospects:</span> <span id="roi-total-prospects" class="text-white font-medium">--</span></div>
+                                <div><span class="text-slate-500">Conversion Rate:</span> <span id="roi-conversion-rate" class="text-white font-medium">--</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results Panel -->
+                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                        <h2 class="text-xl font-semibold mb-6">Your ROI Results</h2>
+
+                        <!-- ROI Gauge -->
+                        <div class="flex justify-center mb-8">
+                            <div class="roi-gauge">
+                                <div class="roi-gauge-bg">
+                                    <div id="roi-gauge-fill" class="roi-gauge-fill" style="clip-path: polygon(0 100%, 0 0, 50% 0, 50% 100%);"></div>
+                                </div>
+                                <div class="roi-gauge-mask"></div>
+                                <div id="roi-gauge-needle" class="roi-gauge-needle" style="transform: rotate(-90deg);"></div>
+                                <div class="roi-gauge-center"></div>
+                                <div class="absolute -bottom-8 left-0 right-0 text-center">
+                                    <span id="roi-percentage" class="text-3xl font-bold text-green-400">0%</span>
+                                    <span class="text-slate-400 text-sm block">Return on Investment</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Results Grid -->
+                        <div class="grid grid-cols-2 gap-4 mt-12">
+                            <div class="bg-slate-800/50 rounded-xl p-4 text-center">
+                                <div class="text-2xl font-bold text-blue-400" id="roi-prospects-found">--</div>
+                                <div class="text-sm text-slate-400">Prospects Found</div>
+                            </div>
+                            <div class="bg-slate-800/50 rounded-xl p-4 text-center">
+                                <div class="text-2xl font-bold text-purple-400" id="roi-time-saved">--</div>
+                                <div class="text-sm text-slate-400">Hours Saved</div>
+                            </div>
+                            <div class="bg-slate-800/50 rounded-xl p-4 text-center">
+                                <div class="text-2xl font-bold text-orange-400" id="roi-est-conversions">--</div>
+                                <div class="text-sm text-slate-400">Est. Conversions</div>
+                            </div>
+                            <div class="bg-slate-800/50 rounded-xl p-4 text-center">
+                                <div class="text-2xl font-bold text-green-400" id="roi-est-revenue">--</div>
+                                <div class="text-sm text-slate-400">Est. Revenue</div>
+                            </div>
+                        </div>
+
+                        <!-- Net Value -->
+                        <div class="mt-6 p-4 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-xl">
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-300">Net Value (Revenue - Cost)</span>
+                                <span id="roi-net-value" class="text-2xl font-bold text-green-400">$0</span>
+                            </div>
+                        </div>
+
+                        <!-- Share Button -->
+                        <button onclick="shareROIResults()" class="w-full mt-6 py-3 bg-tiger-500 hover:bg-tiger-600 rounded-xl font-medium transition flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                            Share Results
+                        </button>
+                    </div>
+                </div>
             </div>
         </section>
+
 
         <!-- ============ SETTINGS SECTION ============ -->
         <section id="section-settings" class="section-content hidden">
@@ -1393,6 +1834,9 @@
                 const activeTab = document.querySelector('.scripts-tab.text-tiger-400');
                 const tabName = activeTab?.getAttribute('data-tab') || 'history';
                 showScriptsTab(tabName);
+            } else if (sectionName === 'analytics') {
+                // Load analytics - show funnel by default
+                showAnalyticsTab('funnel');
             }
         }
 
@@ -1995,6 +2439,486 @@
         } else {
             initialize();
         }
-    </script>
+    
+        // ============ ANALYTICS SECTION ============
+
+        let analyticsData = {
+            funnel: null,
+            timeline: null,
+            responseRates: null,
+            roi: null
+        };
+        let currentTimelinePeriod = 'daily';
+
+        function showAnalyticsTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.analytics-tab').forEach(btn => {
+                const isActive = btn.getAttribute('data-tab') === tabName;
+                btn.classList.toggle('bg-tiger-500', isActive);
+                btn.classList.toggle('text-white', isActive);
+                btn.classList.toggle('bg-slate-800', !isActive);
+                btn.classList.toggle('text-slate-400', !isActive);
+            });
+
+            // Show/hide tab content
+            document.querySelectorAll('.analytics-tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            const targetContent = document.getElementById(`analytics-tab-${tabName}`);
+            if (targetContent) {
+                targetContent.classList.remove('hidden');
+            }
+
+            // Load data for the tab if not already loaded
+            if (tabName === 'funnel' && !analyticsData.funnel) {
+                fetchFunnelData();
+            } else if (tabName === 'timeline' && !analyticsData.timeline) {
+                initTimelineDatePickers();
+                fetchTimelineData();
+            } else if (tabName === 'response-rates' && !analyticsData.responseRates) {
+                fetchResponseRates();
+            } else if (tabName === 'roi' && !analyticsData.roi) {
+                fetchROIData();
+            }
+        }
+
+        function refreshAnalytics() {
+            // Clear cached data
+            analyticsData = { funnel: null, timeline: null, responseRates: null, roi: null };
+
+            // Reload current tab
+            const activeTab = document.querySelector('.analytics-tab.bg-tiger-500');
+            const tabName = activeTab?.getAttribute('data-tab') || 'funnel';
+            showAnalyticsTab(tabName);
+            showToast('Analytics data refreshed', 'success');
+        }
+
+        // ============ FUNNEL ============
+
+        async function fetchFunnelData() {
+            const loading = document.getElementById('funnel-loading');
+            const error = document.getElementById('funnel-error');
+            const stages = document.getElementById('funnel-stages');
+            const rates = document.getElementById('funnel-rates');
+
+            loading?.classList.remove('hidden');
+            error?.classList.add('hidden');
+
+            try {
+                const data = await apiFetch('/analytics/funnel');
+                analyticsData.funnel = data;
+                renderFunnel(data);
+            } catch (err) {
+                console.error('Failed to fetch funnel data:', err);
+                error?.classList.remove('hidden');
+                stages.innerHTML = `<div class="text-center py-8 text-slate-500">No data available</div>`;
+                rates.innerHTML = '';
+            } finally {
+                loading?.classList.add('hidden');
+            }
+        }
+
+        function renderFunnel(data) {
+            const stages = document.getElementById('funnel-stages');
+            const rates = document.getElementById('funnel-rates');
+
+            const funnelStages = data.stages || [
+                { name: 'New', count: data.new || 0, color: 'bg-blue-500' },
+                { name: 'Contacted', count: data.contacted || 0, color: 'bg-yellow-500' },
+                { name: 'Qualified', count: data.qualified || 0, color: 'bg-orange-500' },
+                { name: 'Converted', count: data.converted || 0, color: 'bg-green-500' }
+            ];
+
+            const maxCount = Math.max(...funnelStages.map(s => s.count), 1);
+            const colors = ['bg-blue-500', 'bg-yellow-500', 'bg-orange-500', 'bg-green-500'];
+
+            stages.innerHTML = funnelStages.map((stage, i) => {
+                const width = Math.max(20, (stage.count / maxCount) * 100);
+                const percentage = i === 0 ? 100 : Math.round((stage.count / funnelStages[0].count) * 100) || 0;
+                const color = stage.color || colors[i] || 'bg-slate-500';
+
+                return `
+                    <div class="funnel-stage flex items-center gap-4">
+                        <div class="w-24 text-right">
+                            <div class="font-semibold">${stage.name}</div>
+                            <div class="text-xs text-slate-400">${percentage}%</div>
+                        </div>
+                        <div class="flex-1 h-14 ${color} rounded-lg flex items-center justify-center relative overflow-hidden" style="width: ${width}%; margin-left: ${(100-width)/2}%;">
+                            <span class="text-white font-bold text-lg z-10">${stage.count.toLocaleString()}</span>
+                            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Conversion rates between stages
+            const conversionRates = [];
+            for (let i = 0; i < funnelStages.length - 1; i++) {
+                const from = funnelStages[i];
+                const to = funnelStages[i + 1];
+                const rate = from.count > 0 ? Math.round((to.count / from.count) * 100) : 0;
+                conversionRates.push({ from: from.name, to: to.name, rate });
+            }
+
+            rates.innerHTML = conversionRates.map(cr => `
+                <div class="bg-slate-800/50 rounded-xl p-4 text-center">
+                    <div class="text-2xl font-bold ${cr.rate >= 50 ? 'text-green-400' : cr.rate >= 25 ? 'text-yellow-400' : 'text-red-400'}">${cr.rate}%</div>
+                    <div class="text-xs text-slate-400 mt-1">${cr.from} → ${cr.to}</div>
+                </div>
+            `).join('');
+        }
+
+        // ============ TIMELINE ============
+
+        function initTimelineDatePickers() {
+            const sinceInput = document.getElementById('timeline-since');
+            const untilInput = document.getElementById('timeline-until');
+
+            // Default: last 30 days
+            const until = new Date();
+            const since = new Date();
+            since.setDate(since.getDate() - 30);
+
+            if (sinceInput) sinceInput.value = since.toISOString().split('T')[0];
+            if (untilInput) untilInput.value = until.toISOString().split('T')[0];
+        }
+
+        function setTimelinePeriod(period) {
+            currentTimelinePeriod = period;
+
+            document.querySelectorAll('.timeline-period-btn').forEach(btn => {
+                const isActive = btn.getAttribute('data-period') === period;
+                btn.classList.toggle('bg-tiger-500', isActive);
+                btn.classList.toggle('text-white', isActive);
+                btn.classList.toggle('text-slate-400', !isActive);
+            });
+
+            fetchTimelineData();
+        }
+
+        async function fetchTimelineData() {
+            const loading = document.getElementById('timeline-loading');
+            const error = document.getElementById('timeline-error');
+            const chart = document.getElementById('timeline-chart');
+
+            const since = document.getElementById('timeline-since')?.value || '';
+            const until = document.getElementById('timeline-until')?.value || '';
+
+            loading?.classList.remove('hidden');
+            error?.classList.add('hidden');
+
+            try {
+                const params = new URLSearchParams({
+                    period: currentTimelinePeriod,
+                    ...(since && { since }),
+                    ...(until && { until })
+                });
+
+                const data = await apiFetch(`/analytics/timeline?${params}`);
+                analyticsData.timeline = data;
+                renderTimeline(data);
+            } catch (err) {
+                console.error('Failed to fetch timeline data:', err);
+                error?.classList.remove('hidden');
+                chart.innerHTML = `<div class="flex-1 flex items-center justify-center text-slate-500">No data available</div>`;
+            } finally {
+                loading?.classList.add('hidden');
+            }
+        }
+
+        function renderTimeline(data) {
+            const chart = document.getElementById('timeline-chart');
+            const xAxis = document.getElementById('timeline-x-axis');
+            const yAxis = document.getElementById('timeline-y-axis');
+
+            const points = data.data || data.points || data || [];
+            if (!Array.isArray(points) || points.length === 0) {
+                chart.innerHTML = `<div class="flex-1 flex items-center justify-center text-slate-500">No data for this period</div>`;
+                xAxis.innerHTML = '';
+                return;
+            }
+
+            // Find max value for scaling
+            let maxVal = 0;
+            points.forEach(p => {
+                const newVal = p.new || p.new_count || 0;
+                const qualVal = p.qualified || p.qualified_count || 0;
+                const convVal = p.converted || p.converted_count || 0;
+                maxVal = Math.max(maxVal, newVal, qualVal, convVal);
+            });
+            maxVal = maxVal || 1;
+
+            // Y-axis labels
+            yAxis.innerHTML = `
+                <span>${maxVal}</span>
+                <span>${Math.round(maxVal/2)}</span>
+                <span>0</span>
+            `;
+
+            // Render bars
+            chart.innerHTML = points.map((p, i) => {
+                const newVal = p.new || p.new_count || 0;
+                const qualVal = p.qualified || p.qualified_count || 0;
+                const convVal = p.converted || p.converted_count || 0;
+
+                const newH = (newVal / maxVal) * 100;
+                const qualH = (qualVal / maxVal) * 100;
+                const convH = (convVal / maxVal) * 100;
+
+                const label = p.date || p.period || p.label || `${i+1}`;
+
+                return `
+                    <div class="timeline-bar-group flex-1 flex items-end justify-center gap-0.5 relative min-w-[30px]">
+                        <div class="timeline-bar w-2 bg-blue-500 rounded-t" style="height: ${Math.max(newH, 2)}%" title="New: ${newVal}"></div>
+                        <div class="timeline-bar w-2 bg-orange-500 rounded-t" style="height: ${Math.max(qualH, 2)}%" title="Qualified: ${qualVal}"></div>
+                        <div class="timeline-bar w-2 bg-green-500 rounded-t" style="height: ${Math.max(convH, 2)}%" title="Converted: ${convVal}"></div>
+                        <div class="timeline-tooltip">
+                            <div class="font-medium mb-1">${label}</div>
+                            <div class="text-blue-400">New: ${newVal}</div>
+                            <div class="text-orange-400">Qualified: ${qualVal}</div>
+                            <div class="text-green-400">Converted: ${convVal}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // X-axis labels (show first, middle, last)
+            const labels = points.map(p => p.date || p.period || p.label || '');
+            if (labels.length <= 7) {
+                xAxis.innerHTML = labels.map(l => `<span>${formatTimelineLabel(l)}</span>`).join('');
+            } else {
+                const mid = Math.floor(labels.length / 2);
+                xAxis.innerHTML = `
+                    <span>${formatTimelineLabel(labels[0])}</span>
+                    <span>${formatTimelineLabel(labels[mid])}</span>
+                    <span>${formatTimelineLabel(labels[labels.length-1])}</span>
+                `;
+            }
+        }
+
+        function formatTimelineLabel(label) {
+            if (!label) return '';
+            // Try to parse as date
+            const d = new Date(label);
+            if (!isNaN(d.getTime())) {
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+            return label.substring(0, 10);
+        }
+
+        // ============ RESPONSE RATES HEATMAP ============
+
+        async function fetchResponseRates() {
+            const loading = document.getElementById('heatmap-loading');
+            const error = document.getElementById('heatmap-error');
+            const grid = document.getElementById('heatmap-grid');
+
+            loading?.classList.remove('hidden');
+            error?.classList.add('hidden');
+
+            try {
+                const data = await apiFetch('/analytics/response-rates');
+                analyticsData.responseRates = data;
+                renderHeatmap(data);
+            } catch (err) {
+                console.error('Failed to fetch response rates:', err);
+                error?.classList.remove('hidden');
+            } finally {
+                loading?.classList.add('hidden');
+            }
+        }
+
+        function renderHeatmap(data) {
+            const grid = document.getElementById('heatmap-grid');
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const hours = Array.from({length: 17}, (_, i) => i + 6); // 6am to 10pm
+
+            // Get rates from data - expects { heatmap: { "Mon": { "6": { rate: 0.5, sample: 10 }, ... }, ... } }
+            const heatmapData = data.heatmap || data.data || data || {};
+
+            grid.innerHTML = days.map(day => {
+                const dayData = heatmapData[day] || heatmapData[day.toLowerCase()] || {};
+
+                const cells = hours.map(hour => {
+                    const hourKey = String(hour);
+                    const cellData = dayData[hourKey] || dayData[`${hour}:00`] || { rate: 0, sample: 0 };
+                    const rate = typeof cellData === 'number' ? cellData : (cellData.rate || 0);
+                    const sample = cellData.sample || cellData.count || 0;
+                    const percentage = Math.round(rate * 100);
+                    const bgColor = getHeatmapColor(rate);
+
+                    return `
+                        <div class="heatmap-cell h-8 rounded" 
+                             style="background: ${bgColor};" 
+                             onmouseenter="showHeatmapTooltip(event, '${day}', ${hour}, ${percentage}, ${sample})"
+                             onmouseleave="hideHeatmapTooltip()"
+                             title="${day} ${hour > 12 ? hour-12 : hour}${hour >= 12 ? 'pm' : 'am'}: ${percentage}%"></div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="flex items-center">
+                        <div class="w-16 text-sm text-slate-400">${day}</div>
+                        <div class="flex-1 grid grid-cols-17 gap-1">${cells}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getHeatmapColor(rate) {
+            // Scale from gray (0%) to green (100%)
+            if (rate <= 0) return '#374151';
+            if (rate < 0.2) return '#065f46';
+            if (rate < 0.4) return '#047857';
+            if (rate < 0.6) return '#059669';
+            if (rate < 0.8) return '#10b981';
+            return '#34d399';
+        }
+
+        function showHeatmapTooltip(event, day, hour, rate, sample) {
+            const tooltip = document.getElementById('heatmap-tooltip');
+            const timeStr = hour > 12 ? `${hour-12}pm` : (hour === 12 ? '12pm' : `${hour}am`);
+
+            document.getElementById('tooltip-time').textContent = `${day} ${timeStr}`;
+            document.getElementById('tooltip-rate').textContent = `Response Rate: ${rate}%`;
+            document.getElementById('tooltip-sample').textContent = `Sample: ${sample} contacts`;
+
+            tooltip.style.left = `${event.pageX + 10}px`;
+            tooltip.style.top = `${event.pageY - 60}px`;
+            tooltip.classList.remove('hidden');
+        }
+
+        function hideHeatmapTooltip() {
+            document.getElementById('heatmap-tooltip')?.classList.add('hidden');
+        }
+
+        // ============ ROI CALCULATOR ============
+
+        async function fetchROIData() {
+            const loading = document.getElementById('roi-api-loading');
+
+            loading?.classList.remove('hidden');
+
+            try {
+                const data = await apiFetch('/analytics/roi');
+                analyticsData.roi = data;
+
+                // Update UI with API data
+                document.getElementById('roi-total-prospects').textContent = (data.total_prospects || data.totalProspects || 0).toLocaleString();
+                document.getElementById('roi-conversion-rate').textContent = `${Math.round((data.conversion_rate || data.conversionRate || 0) * 100)}%`;
+
+                calculateROI();
+            } catch (err) {
+                console.error('Failed to fetch ROI data:', err);
+                document.getElementById('roi-total-prospects').textContent = '0';
+                document.getElementById('roi-conversion-rate').textContent = '0%';
+                calculateROI();
+            } finally {
+                loading?.classList.add('hidden');
+            }
+        }
+
+        function calculateROI() {
+            // Get inputs
+            const subscription = parseFloat(document.getElementById('roi-subscription')?.value) || 99;
+            const dealValue = parseFloat(document.getElementById('roi-deal-value')?.value) || 500;
+            const manualTime = parseFloat(document.getElementById('roi-manual-time')?.value) || 30;
+            const hourlyRate = parseFloat(document.getElementById('roi-hourly-rate')?.value) || 50;
+
+            // Get API data
+            const totalProspects = analyticsData.roi?.total_prospects || analyticsData.roi?.totalProspects || 0;
+            const conversionRate = analyticsData.roi?.conversion_rate || analyticsData.roi?.conversionRate || 0;
+
+            // Calculate values
+            const timeSavedMinutes = totalProspects * manualTime;
+            const timeSavedHours = timeSavedMinutes / 60;
+            const timeSavedValue = timeSavedHours * hourlyRate;
+
+            const estimatedConversions = Math.round(totalProspects * conversionRate);
+            const estimatedRevenue = estimatedConversions * dealValue;
+
+            const totalBenefit = estimatedRevenue + timeSavedValue;
+            const netValue = totalBenefit - subscription;
+            const roiPercentage = subscription > 0 ? Math.round((netValue / subscription) * 100) : 0;
+
+            // Update UI
+            document.getElementById('roi-prospects-found').textContent = totalProspects.toLocaleString();
+            document.getElementById('roi-time-saved').textContent = timeSavedHours.toFixed(1);
+            document.getElementById('roi-est-conversions').textContent = estimatedConversions.toLocaleString();
+            document.getElementById('roi-est-revenue').textContent = `$${estimatedRevenue.toLocaleString()}`;
+            document.getElementById('roi-net-value').textContent = `$${netValue.toLocaleString()}`;
+            document.getElementById('roi-percentage').textContent = `${roiPercentage}%`;
+
+            // Update gauge
+            updateROIGauge(roiPercentage);
+        }
+
+        function updateROIGauge(percentage) {
+            const gauge = document.getElementById('roi-gauge-fill');
+            const needle = document.getElementById('roi-gauge-needle');
+
+            // Clamp percentage to 0-1000 for display
+            const displayPct = Math.min(Math.max(percentage, 0), 1000);
+            const normalizedPct = displayPct / 1000; // 0 to 1 for 0-1000%
+
+            // Calculate fill (0% = left side, 100% = full semicircle)
+            const fillAngle = normalizedPct * 180; // degrees
+
+            // Update gauge fill using clip-path
+            if (gauge) {
+                // Semicircle fill from left to right
+                gauge.style.transform = `rotate(${fillAngle - 180}deg)`;
+            }
+
+            // Update needle rotation (-90deg = 0%, 90deg = 1000%)
+            if (needle) {
+                const needleAngle = -90 + (normalizedPct * 180);
+                needle.style.transform = `rotate(${needleAngle}deg)`;
+            }
+
+            // Update color based on percentage
+            const percentageEl = document.getElementById('roi-percentage');
+            if (percentageEl) {
+                if (percentage < 0) {
+                    percentageEl.className = 'text-3xl font-bold text-red-400';
+                } else if (percentage < 100) {
+                    percentageEl.className = 'text-3xl font-bold text-yellow-400';
+                } else {
+                    percentageEl.className = 'text-3xl font-bold text-green-400';
+                }
+            }
+        }
+
+        function shareROIResults() {
+            const subscription = document.getElementById('roi-subscription')?.value || '99';
+            const prospects = document.getElementById('roi-prospects-found')?.textContent || '0';
+            const timeSaved = document.getElementById('roi-time-saved')?.textContent || '0';
+            const conversions = document.getElementById('roi-est-conversions')?.textContent || '0';
+            const revenue = document.getElementById('roi-est-revenue')?.textContent || '$0';
+            const netValue = document.getElementById('roi-net-value')?.textContent || '$0';
+            const roiPct = document.getElementById('roi-percentage')?.textContent || '0%';
+
+            const summary = `🐯 Tiger Bot Scout ROI Report
+────────────────────────
+📊 Prospects Found: ${prospects}
+⏱️ Time Saved: ${timeSaved} hours
+💼 Est. Conversions: ${conversions}
+💰 Est. Revenue: ${revenue}
+
+📈 Net Value: ${netValue}
+🚀 ROI: ${roiPct}
+
+(Monthly cost: $${subscription})
+────────────────────────
+Powered by Tiger Bot Scout`;
+
+            navigator.clipboard.writeText(summary).then(() => {
+                showToast('ROI results copied to clipboard!', 'success');
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                showToast('Failed to copy results', 'error');
+            });
+        }
+</script>
 </body>
 </html>
