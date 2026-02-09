@@ -6414,6 +6414,942 @@ if (document.readyState === 'loading') {
 
 console.log('[TBS] Data Caching, Context Menu, Undo System, and Batch Actions loaded');
 
+
+
+// ============================================================================
+// USER PREFERENCES & PERSISTENCE SYSTEM
+// Implements: Filter persistence, Recently viewed, View preferences,
+//             Pinned prospects, Search history
+// ============================================================================
+
+// ===== USER PREFERENCES & PERSISTENCE SYSTEM =====
+// Implements filter persistence, recently viewed, view preferences, pinned prospects, and search history
+
+// ===== FILTER PREFERENCES =====
+const FilterPreferences = {
+    storageKey: 'tbs_filters',
+    
+    save(section, filters) {
+        const prefs = this.loadAll();
+        prefs[section] = { ...filters, savedAt: Date.now() };
+        try {
+            localStorage.setItem(this.storageKey, JSON.stringify(prefs));
+            console.log(`[FilterPrefs] Saved ${section} filters`);
+        } catch (e) {
+            console.warn('[FilterPrefs] Failed to save:', e);
+        }
+    },
+    
+    load(section) {
+        const prefs = this.loadAll();
+        return prefs[section] || {};
+    },
+    
+    loadAll() {
+        try {
+            return JSON.parse(localStorage.getItem(this.storageKey)) || {};
+        } catch {
+            return {};
+        }
+    },
+    
+    clear(section = null) {
+        if (section) {
+            const prefs = this.loadAll();
+            delete prefs[section];
+            localStorage.setItem(this.storageKey, JSON.stringify(prefs));
+        } else {
+            localStorage.removeItem(this.storageKey);
+        }
+        console.log(`[FilterPrefs] Cleared ${section || 'all'} filters`);
+    },
+    
+    saveProspectsFilters() {
+        const filters = {
+            search: document.getElementById('filter-search')?.value || '',
+            status: document.getElementById('filter-status')?.value || '',
+            scoreMin: document.getElementById('filter-score-min')?.value || '',
+            scoreMax: document.getElementById('filter-score-max')?.value || '',
+            source: document.getElementById('filter-source')?.value || '',
+            dateFrom: document.getElementById('filter-date-from')?.value || '',
+            dateTo: document.getElementById('filter-date-to')?.value || '',
+            pageSize: document.getElementById('pagination-limit')?.value || '25'
+        };
+        const hasFilter = Object.values(filters).some(v => v && v !== '25');
+        if (hasFilter) this.save('prospects', filters);
+    },
+    
+    restoreProspectsFilters() {
+        const filters = this.load('prospects');
+        if (!filters || Object.keys(filters).length === 0) return false;
+        
+        const el = (id) => document.getElementById(id);
+        if (filters.search && el('filter-search')) el('filter-search').value = filters.search;
+        if (filters.status && el('filter-status')) el('filter-status').value = filters.status;
+        if (filters.scoreMin && el('filter-score-min')) el('filter-score-min').value = filters.scoreMin;
+        if (filters.scoreMax && el('filter-score-max')) el('filter-score-max').value = filters.scoreMax;
+        if (filters.source && el('filter-source')) el('filter-source').value = filters.source;
+        if (filters.dateFrom && el('filter-date-from')) el('filter-date-from').value = filters.dateFrom;
+        if (filters.dateTo && el('filter-date-to')) el('filter-date-to').value = filters.dateTo;
+        if (filters.pageSize && el('pagination-limit')) el('pagination-limit').value = filters.pageSize;
+        
+        console.log('[FilterPrefs] Restored prospects filters');
+        return true;
+    },
+    
+    saveScriptsFilters() {
+        const filters = {
+            search: document.getElementById('scripts-filter-search')?.value || '',
+            type: document.getElementById('scripts-filter-type')?.value || '',
+            feedback: document.getElementById('scripts-filter-feedback')?.value || ''
+        };
+        const hasFilter = Object.values(filters).some(v => v);
+        if (hasFilter) this.save('scripts', filters);
+    },
+    
+    restoreScriptsFilters() {
+        const filters = this.load('scripts');
+        if (!filters || Object.keys(filters).length === 0) return false;
+        
+        const el = (id) => document.getElementById(id);
+        if (filters.search && el('scripts-filter-search')) el('scripts-filter-search').value = filters.search;
+        if (filters.type && el('scripts-filter-type')) el('scripts-filter-type').value = filters.type;
+        if (filters.feedback && el('scripts-filter-feedback')) el('scripts-filter-feedback').value = filters.feedback;
+        
+        console.log('[FilterPrefs] Restored scripts filters');
+        return true;
+    }
+};
+window.FilterPreferences = FilterPreferences;
+// ===== RECENTLY VIEWED PROSPECTS =====
+const RecentlyViewed = {
+    storageKey: 'tbs_recent',
+    maxItems: 10,
+    
+    add(prospect) {
+        if (!prospect || !prospect.id) return;
+        
+        let items = this.getAll();
+        items = items.filter(p => p.id !== prospect.id);
+        items.unshift({
+            id: prospect.id,
+            name: prospect.display_name || prospect.name || prospect.username || 'Unknown',
+            score: prospect.ai_score || prospect.score || 0,
+            source: prospect.source || prospect.platform || '--',
+            viewedAt: Date.now()
+        });
+        items = items.slice(0, this.maxItems);
+        
+        try {
+            localStorage.setItem(this.storageKey, JSON.stringify(items));
+            this.updateUI();
+            console.log(`[RecentlyViewed] Added ${prospect.id}`);
+        } catch (e) {
+            console.warn('[RecentlyViewed] Failed to save:', e);
+        }
+    },
+    
+    getAll() {
+        try {
+            return JSON.parse(localStorage.getItem(this.storageKey)) || [];
+        } catch {
+            return [];
+        }
+    },
+    
+    clear() {
+        localStorage.removeItem(this.storageKey);
+        this.updateUI();
+        if (typeof showToast === 'function') showToast('Recent history cleared', 'success');
+    },
+    
+    formatTimeAgo(timestamp) {
+        const seconds = Math.floor((Date.now() - timestamp) / 1000);
+        if (seconds < 60) return 'Just now';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes}m ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours}h ago`;
+        const days = Math.floor(hours / 24);
+        return `${days}d ago`;
+    },
+    
+    getScoreBadgeClass(score) {
+        if (score >= 80) return 'bg-green-500/20 text-green-400';
+        if (score >= 60) return 'bg-yellow-500/20 text-yellow-400';
+        if (score >= 40) return 'bg-orange-500/20 text-orange-400';
+        return 'bg-red-500/20 text-red-400';
+    },
+    
+    updateUI() {
+        const container = document.getElementById('recently-viewed-list');
+        if (!container) return;
+        
+        const items = this.getAll();
+        const countBadge = document.getElementById('recently-viewed-count');
+        if (countBadge) countBadge.textContent = items.length;
+        
+        if (items.length === 0) {
+            container.innerHTML = '<div class="text-center py-4 text-slate-500 text-sm"><span class="text-2xl block mb-2">👀</span>No recently viewed prospects</div>';
+            return;
+        }
+        
+        container.innerHTML = items.map(item => `
+            <div class="flex items-center justify-between p-2 hover:bg-slate-800/50 rounded-lg cursor-pointer transition group" onclick="if(typeof openProspectModal === 'function') openProspectModal('${item.id}')">
+                <div class="flex items-center gap-2 min-w-0">
+                    <div class="w-7 h-7 rounded-full bg-gradient-to-br from-tiger-500 to-tiger-600 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">${(item.name || '?')[0].toUpperCase()}</div>
+                    <div class="min-w-0">
+                        <div class="text-sm font-medium truncate">${item.name}</div>
+                        <div class="text-xs text-slate-500">${this.formatTimeAgo(item.viewedAt)}</div>
+                    </div>
+                </div>
+                <span class="px-1.5 py-0.5 rounded text-xs font-medium ${this.getScoreBadgeClass(item.score)}">${item.score}</span>
+            </div>
+        `).join('');
+    },
+    
+    toggle() {
+        const panel = document.getElementById('recently-viewed-panel');
+        if (panel) {
+            panel.classList.toggle('collapsed');
+            const icon = document.getElementById('recently-viewed-toggle-icon');
+            if (icon) icon.style.transform = panel.classList.contains('collapsed') ? 'rotate(-90deg)' : '';
+        }
+    }
+};
+window.RecentlyViewed = RecentlyViewed;
+
+// ===== VIEW PREFERENCES =====
+const ViewPreferences = {
+    storageKey: 'tbs_view_prefs',
+    
+    defaults: {
+        prospectsColumns: ['checkbox', 'name', 'source', 'score', 'status', 'platform', 'created', 'actions'],
+        prospectsPageSize: 25,
+        compactMode: false,
+        showPinnedSection: true
+    },
+    
+    getAll() {
+        try {
+            const stored = JSON.parse(localStorage.getItem(this.storageKey)) || {};
+            return { ...this.defaults, ...stored };
+        } catch {
+            return { ...this.defaults };
+        }
+    },
+    
+    get(key) {
+        const prefs = this.getAll();
+        return prefs[key] !== undefined ? prefs[key] : this.defaults[key];
+    },
+    
+    set(key, value) {
+        const prefs = this.getAll();
+        prefs[key] = value;
+        try {
+            localStorage.setItem(this.storageKey, JSON.stringify(prefs));
+            this.applyPreferences();
+            console.log(`[ViewPrefs] Set ${key} = ${value}`);
+        } catch (e) {
+            console.warn('[ViewPrefs] Failed to save:', e);
+        }
+    },
+    
+    clear() {
+        localStorage.removeItem(this.storageKey);
+        this.applyPreferences();
+    },
+    
+    toggleCompactMode() {
+        const current = this.get('compactMode');
+        this.set('compactMode', !current);
+        if (typeof showToast === 'function') showToast(`Compact mode ${!current ? 'enabled' : 'disabled'}`, 'info');
+    },
+    
+    setPageSize(size) {
+        this.set('prospectsPageSize', parseInt(size));
+    },
+    
+    applyPreferences() {
+        const prefs = this.getAll();
+        document.body.classList.toggle('compact-mode', prefs.compactMode);
+        
+        const compactToggle = document.getElementById('compact-mode-toggle');
+        if (compactToggle) compactToggle.checked = prefs.compactMode;
+        
+        const pageSizeSelect = document.getElementById('pagination-limit');
+        if (pageSizeSelect && prefs.prospectsPageSize) {
+            pageSizeSelect.value = prefs.prospectsPageSize.toString();
+        }
+    }
+};
+window.ViewPreferences = ViewPreferences;
+// ===== PINNED PROSPECTS =====
+const PinnedProspects = {
+    storageKey: 'tbs_pinned',
+    
+    getAll() {
+        try {
+            return JSON.parse(localStorage.getItem(this.storageKey)) || [];
+        } catch {
+            return [];
+        }
+    },
+    
+    toggle(prospectId) {
+        let pinned = this.getAll();
+        const index = pinned.indexOf(prospectId);
+        
+        if (index === -1) {
+            pinned.push(prospectId);
+            if (typeof showToast === 'function') showToast('Prospect pinned ⭐', 'success');
+        } else {
+            pinned.splice(index, 1);
+            if (typeof showToast === 'function') showToast('Prospect unpinned', 'info');
+        }
+        
+        try {
+            localStorage.setItem(this.storageKey, JSON.stringify(pinned));
+            if (typeof fetchProspects === 'function') fetchProspects();
+        } catch (e) {
+            console.warn('[PinnedProspects] Failed to save:', e);
+        }
+    },
+    
+    isPinned(prospectId) {
+        return this.getAll().includes(prospectId);
+    },
+    
+    clear() {
+        localStorage.removeItem(this.storageKey);
+        if (typeof showToast === 'function') showToast('All pins cleared', 'info');
+        if (typeof fetchProspects === 'function') fetchProspects();
+    }
+};
+window.PinnedProspects = PinnedProspects;
+
+// ===== SEARCH HISTORY =====
+const SearchHistory = {
+    storageKey: 'tbs_searches',
+    maxItems: 10,
+    
+    add(query, section = 'prospects') {
+        if (!query || query.trim().length < 2) return;
+        
+        let items = this.getAll();
+        items = items.filter(item => !(item.query === query && item.section === section));
+        items.unshift({
+            query: query.trim(),
+            section,
+            searchedAt: Date.now()
+        });
+        items = items.slice(0, this.maxItems);
+        
+        try {
+            localStorage.setItem(this.storageKey, JSON.stringify(items));
+            this.updateUI(section);
+        } catch (e) {
+            console.warn('[SearchHistory] Failed to save:', e);
+        }
+    },
+    
+    getAll() {
+        try {
+            return JSON.parse(localStorage.getItem(this.storageKey)) || [];
+        } catch {
+            return [];
+        }
+    },
+    
+    getBySection(section) {
+        return this.getAll().filter(item => item.section === section);
+    },
+    
+    clear(section = null) {
+        if (section) {
+            let items = this.getAll();
+            items = items.filter(item => item.section !== section);
+            localStorage.setItem(this.storageKey, JSON.stringify(items));
+        } else {
+            localStorage.removeItem(this.storageKey);
+        }
+        this.updateUI('prospects');
+        this.updateUI('scripts');
+        if (typeof showToast === 'function') showToast('Search history cleared', 'success');
+    },
+    
+    applySearch(query, section) {
+        const inputId = section === 'scripts' ? 'scripts-filter-search' : 'filter-search';
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.value = query;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        this.hideDropdown(section);
+    },
+    
+    showDropdown(section) {
+        const dropdownId = section === 'scripts' ? 'scripts-search-history-dropdown' : 'search-history-dropdown';
+        const dropdown = document.getElementById(dropdownId);
+        if (dropdown) {
+            this.updateUI(section);
+            dropdown.classList.remove('hidden');
+        }
+    },
+    
+    hideDropdown(section) {
+        const dropdownId = section === 'scripts' ? 'scripts-search-history-dropdown' : 'search-history-dropdown';
+        const dropdown = document.getElementById(dropdownId);
+        if (dropdown) dropdown.classList.add('hidden');
+    },
+    
+    updateUI(section) {
+        const dropdownId = section === 'scripts' ? 'scripts-search-history-dropdown' : 'search-history-dropdown';
+        const dropdown = document.getElementById(dropdownId);
+        if (!dropdown) return;
+        
+        const items = this.getBySection(section);
+        const listContainer = dropdown.querySelector('.search-history-list');
+        if (!listContainer) return;
+        
+        if (items.length === 0) {
+            listContainer.innerHTML = '<div class="px-3 py-2 text-slate-500 text-sm text-center">No recent searches</div>';
+            return;
+        }
+        
+        listContainer.innerHTML = items.map(item => `
+            <div class="px-3 py-2 hover:bg-slate-700 cursor-pointer text-sm flex items-center justify-between group" onclick="SearchHistory.applySearch('${item.query.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', '${section}')">
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="truncate">${item.query}</span>
+                </div>
+                <span class="text-xs text-slate-500">${this.formatTimeAgo(item.searchedAt)}</span>
+            </div>
+        `).join('');
+    },
+    
+    formatTimeAgo(timestamp) {
+        const seconds = Math.floor((Date.now() - timestamp) / 1000);
+        if (seconds < 60) return 'now';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes}m`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours}h`;
+        const days = Math.floor(hours / 24);
+        return `${days}d`;
+    }
+};
+window.SearchHistory = SearchHistory;
+
+// ===== MASTER PREFERENCES MANAGER =====
+const PreferencesManager = {
+    resetAll() {
+        if (!confirm('This will reset all your preferences including filters, recently viewed, pinned prospects, and search history. Continue?')) {
+            return;
+        }
+        
+        FilterPreferences.clear();
+        RecentlyViewed.clear();
+        ViewPreferences.clear();
+        PinnedProspects.clear();
+        SearchHistory.clear();
+        
+        // Reset UI
+        if (typeof clearFilters === 'function') clearFilters();
+        if (typeof clearScriptsFilters === 'function') clearScriptsFilters();
+        
+        if (typeof showToast === 'function') showToast('All preferences reset', 'success');
+        console.log('[PreferencesManager] All preferences reset');
+    },
+    
+    exportPreferences() {
+        const data = {
+            filters: FilterPreferences.loadAll(),
+            recentlyViewed: RecentlyViewed.getAll(),
+            viewPrefs: ViewPreferences.getAll(),
+            pinned: PinnedProspects.getAll(),
+            searchHistory: SearchHistory.getAll(),
+            exportedAt: new Date().toISOString()
+        };
+        
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `tbs-preferences-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        if (typeof showToast === 'function') showToast('Preferences exported', 'success');
+    },
+    
+    importPreferences(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (data.filters) localStorage.setItem(FilterPreferences.storageKey, JSON.stringify(data.filters));
+                if (data.recentlyViewed) localStorage.setItem(RecentlyViewed.storageKey, JSON.stringify(data.recentlyViewed));
+                if (data.viewPrefs) localStorage.setItem(ViewPreferences.storageKey, JSON.stringify(data.viewPrefs));
+                if (data.pinned) localStorage.setItem(PinnedProspects.storageKey, JSON.stringify(data.pinned));
+                if (data.searchHistory) localStorage.setItem(SearchHistory.storageKey, JSON.stringify(data.searchHistory));
+                
+                // Apply restored preferences
+                ViewPreferences.applyPreferences();
+                FilterPreferences.restoreProspectsFilters();
+                FilterPreferences.restoreScriptsFilters();
+                RecentlyViewed.updateUI();
+                
+                if (typeof showToast === 'function') showToast('Preferences imported', 'success');
+                if (typeof fetchProspects === 'function') fetchProspects();
+            } catch (err) {
+                console.error('[PreferencesManager] Import failed:', err);
+                if (typeof showToast === 'function') showToast('Failed to import preferences', 'error');
+            }
+        };
+        reader.readAsText(file);
+    }
+};
+window.PreferencesManager = PreferencesManager;
+// ===== INITIALIZATION & UI INJECTION =====
+
+// CSS for compact mode and preferences UI
+const prefsStyles = document.createElement('style');
+prefsStyles.textContent = `
+    /* Compact Mode */
+    .compact-mode .prospect-row td { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .compact-mode table th { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .compact-mode .prospect-row .w-9 { width: 1.75rem; height: 1.75rem; }
+    .compact-mode .prospect-row .w-7 { width: 1.5rem; height: 1.5rem; }
+    .compact-mode .text-sm { font-size: 0.8125rem; }
+
+    /* Recently Viewed Panel */
+    #recently-viewed-panel { transition: max-height 0.3s ease, opacity 0.3s ease; max-height: 400px; overflow: hidden; }
+    #recently-viewed-panel.collapsed { max-height: 0; opacity: 0; }
+    #recently-viewed-toggle-icon { transition: transform 0.2s ease; }
+
+    /* Search History Dropdown */
+    .search-history-dropdown { position: absolute; top: 100%; left: 0; right: 0; z-index: 50; margin-top: 4px; background: #1e293b; border: 1px solid #334155; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); max-height: 280px; overflow-y: auto; }
+    .search-history-dropdown.hidden { display: none; }
+
+    /* Pin indicator */
+    .pin-indicator { color: #f97316; }
+    .pin-btn { opacity: 0.5; transition: opacity 0.2s, transform 0.2s; }
+    .pin-btn:hover, .pin-btn.pinned { opacity: 1; }
+    .pin-btn.pinned { color: #f97316; transform: rotate(-45deg); }
+
+    /* View options panel */
+    .view-options-dropdown { position: absolute; top: 100%; right: 0; z-index: 50; margin-top: 4px; min-width: 200px; background: #1e293b; border: 1px solid #334155; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
+    .view-options-dropdown.hidden { display: none; }
+`;
+document.head.appendChild(prefsStyles);
+
+// Inject Recently Viewed Panel into Prospects Section
+function injectRecentlyViewedPanel() {
+    const prospectsSection = document.getElementById('section-prospects');
+    if (!prospectsSection || document.getElementById('recently-viewed-wrapper')) return;
+
+    const panel = document.createElement('div');
+    panel.id = 'recently-viewed-wrapper';
+    panel.className = 'bg-slate-900 rounded-2xl border border-slate-800 p-4 mb-6';
+    panel.innerHTML = `
+        <div class="flex items-center justify-between cursor-pointer" onclick="RecentlyViewed.toggle()">
+            <h3 class="text-sm font-semibold flex items-center gap-2">
+                <span>👀</span> Recently Viewed
+                <span id="recently-viewed-count" class="px-1.5 py-0.5 bg-slate-700 rounded text-xs">0</span>
+            </h3>
+            <div class="flex items-center gap-2">
+                <button onclick="event.stopPropagation(); RecentlyViewed.clear()" class="text-xs text-slate-500 hover:text-white px-2 py-1 hover:bg-slate-800 rounded" title="Clear history">Clear</button>
+                <svg id="recently-viewed-toggle-icon" class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+        </div>
+        <div id="recently-viewed-panel" class="mt-3">
+            <div id="recently-viewed-list" class="space-y-1 max-h-48 overflow-y-auto"></div>
+        </div>
+    `;
+
+    const filtersBar = prospectsSection.querySelector('.bg-slate-900.rounded-2xl');
+    if (filtersBar && filtersBar.nextSibling) {
+        filtersBar.parentNode.insertBefore(panel, filtersBar.nextSibling);
+    } else {
+        prospectsSection.insertBefore(panel, prospectsSection.firstChild);
+    }
+
+    RecentlyViewed.updateUI();
+}
+
+// Inject Search History Dropdown
+function injectSearchHistoryDropdown(section) {
+    const inputId = section === 'scripts' ? 'scripts-filter-search' : 'filter-search';
+    const dropdownId = section === 'scripts' ? 'scripts-search-history-dropdown' : 'search-history-dropdown';
+    const input = document.getElementById(inputId);
+
+    if (!input || document.getElementById(dropdownId)) return;
+
+    const wrapper = input.parentElement;
+    wrapper.style.position = 'relative';
+
+    const dropdown = document.createElement('div');
+    dropdown.id = dropdownId;
+    dropdown.className = 'search-history-dropdown hidden';
+    dropdown.innerHTML = `
+        <div class="flex items-center justify-between px-3 py-2 border-b border-slate-700">
+            <span class="text-xs text-slate-400 font-medium">Recent Searches</span>
+            <button onclick="SearchHistory.clear('${section}')" class="text-xs text-slate-500 hover:text-white">Clear</button>
+        </div>
+        <div class="search-history-list"></div>
+    `;
+    wrapper.appendChild(dropdown);
+
+    input.addEventListener('focus', () => SearchHistory.showDropdown(section));
+    input.addEventListener('blur', () => setTimeout(() => SearchHistory.hideDropdown(section), 200));
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && input.value.trim()) {
+            SearchHistory.add(input.value.trim(), section);
+        }
+    });
+}
+// Inject View Options Button
+function injectViewOptionsButton() {
+    const prospectsSection = document.getElementById('section-prospects');
+    if (!prospectsSection || document.getElementById('view-options-btn')) return;
+
+    const filtersBar = prospectsSection.querySelector('.flex.flex-wrap.gap-3');
+    if (!filtersBar) return;
+
+    const viewOptionsWrapper = document.createElement('div');
+    viewOptionsWrapper.className = 'relative';
+    viewOptionsWrapper.innerHTML = `
+        <button id="view-options-btn" onclick="toggleViewOptions()" class="flex items-center gap-1 px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg text-sm transition" title="View Options">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+            View
+        </button>
+        <div id="view-options-dropdown" class="view-options-dropdown hidden p-3">
+            <div class="text-xs text-slate-400 font-medium mb-2">Display Options</div>
+            <label class="flex items-center justify-between p-2 hover:bg-slate-800 rounded cursor-pointer">
+                <span class="text-sm">Compact Mode</span>
+                <input type="checkbox" id="compact-mode-toggle" onchange="ViewPreferences.toggleCompactMode()" class="w-4 h-4 accent-tiger-500">
+            </label>
+            <div class="border-t border-slate-700 my-2"></div>
+            <div class="text-xs text-slate-400 font-medium mb-2">Page Size</div>
+            <select id="view-page-size" onchange="ViewPreferences.setPageSize(this.value); if(typeof applyFilters === 'function') applyFilters();" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm">
+                <option value="10">10 per page</option>
+                <option value="25">25 per page</option>
+                <option value="50">50 per page</option>
+                <option value="100">100 per page</option>
+            </select>
+        </div>
+    `;
+
+    const clearBtn = filtersBar.querySelector('button[onclick*="clearFilters"]');
+    if (clearBtn) {
+        clearBtn.parentNode.insertBefore(viewOptionsWrapper, clearBtn);
+    } else {
+        filtersBar.appendChild(viewOptionsWrapper);
+    }
+}
+
+function toggleViewOptions() {
+    const dropdown = document.getElementById('view-options-dropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('hidden');
+        const compactToggle = document.getElementById('compact-mode-toggle');
+        if (compactToggle) compactToggle.checked = ViewPreferences.get('compactMode');
+        const pageSizeSelect = document.getElementById('view-page-size');
+        if (pageSizeSelect) pageSizeSelect.value = ViewPreferences.get('prospectsPageSize').toString();
+    }
+}
+window.toggleViewOptions = toggleViewOptions;
+
+// Close view options on outside click
+document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('view-options-dropdown');
+    const btn = document.getElementById('view-options-btn');
+    if (dropdown && !dropdown.classList.contains('hidden') && !dropdown.contains(e.target) && !btn?.contains(e.target)) {
+        dropdown.classList.add('hidden');
+    }
+});
+
+// Inject Reset Preferences button in Settings
+function injectResetPreferencesButton() {
+    const settingsSection = document.getElementById('section-settings');
+    if (!settingsSection || document.getElementById('reset-preferences-section')) return;
+
+    const integrationsTab = document.getElementById('settings-tab-integrations');
+    if (!integrationsTab) return;
+
+    const resetSection = document.createElement('div');
+    resetSection.id = 'reset-preferences-section';
+    resetSection.className = 'mt-6 bg-slate-900 rounded-2xl border border-slate-800 p-6';
+    resetSection.innerHTML = `
+        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2"><span>⚙️</span> User Preferences</h3>
+        <p class="text-sm text-slate-400 mb-4">Manage your dashboard preferences including filters, recently viewed prospects, pinned items, and search history.</p>
+        <div class="flex flex-wrap gap-3">
+            <button onclick="PreferencesManager.exportPreferences()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                Export
+            </button>
+            <label class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium transition flex items-center gap-2 cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Import
+                <input type="file" accept=".json" class="hidden" onchange="PreferencesManager.importPreferences(this.files[0])">
+            </label>
+            <button onclick="PreferencesManager.resetAll()" class="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                Reset All
+            </button>
+        </div>
+    `;
+
+    integrationsTab.appendChild(resetSection);
+}
+
+// Hook into existing functions to save/track preferences
+function hookExistingFunctions() {
+    // Hook applyFilters to save filter preferences
+    if (typeof window.applyFilters === 'function') {
+        const origApplyFilters = window.applyFilters;
+        window.applyFilters = function() {
+            origApplyFilters.apply(this, arguments);
+            FilterPreferences.saveProspectsFilters();
+            const searchInput = document.getElementById('filter-search');
+            if (searchInput && searchInput.value.trim()) {
+                SearchHistory.add(searchInput.value.trim(), 'prospects');
+            }
+        };
+    }
+
+    // Hook clearFilters to clear saved preferences
+    if (typeof window.clearFilters === 'function') {
+        const origClearFilters = window.clearFilters;
+        window.clearFilters = function() {
+            origClearFilters.apply(this, arguments);
+            FilterPreferences.clear('prospects');
+        };
+    }
+
+    // Hook applyScriptsFilters
+    if (typeof window.applyScriptsFilters === 'function') {
+        const origApplyScriptsFilters = window.applyScriptsFilters;
+        window.applyScriptsFilters = function() {
+            origApplyScriptsFilters.apply(this, arguments);
+            FilterPreferences.saveScriptsFilters();
+            const searchInput = document.getElementById('scripts-filter-search');
+            if (searchInput && searchInput.value.trim()) {
+                SearchHistory.add(searchInput.value.trim(), 'scripts');
+            }
+        };
+    }
+
+    // Hook clearScriptsFilters
+    if (typeof window.clearScriptsFilters === 'function') {
+        const origClearScriptsFilters = window.clearScriptsFilters;
+        window.clearScriptsFilters = function() {
+            origClearScriptsFilters.apply(this, arguments);
+            FilterPreferences.clear('scripts');
+        };
+    }
+
+    // Hook openProspectModal to track recently viewed
+    if (typeof window.openProspectModal === 'function') {
+        const origOpenProspectModal = window.openProspectModal;
+        window.openProspectModal = async function(prospectId) {
+            const result = await origOpenProspectModal.apply(this, arguments);
+            // Try to get prospect data from cache or DOM
+            if (window.CacheManager) {
+                const cacheKey = `prospect_${prospectId}`;
+                const cached = CacheManager.get(cacheKey);
+                if (cached) {
+                    RecentlyViewed.add(cached);
+                }
+            }
+            return result;
+        };
+    }
+}
+// Add Reset Filters button with preference clearing
+function enhanceResetFiltersButton() {
+    const prospectsSection = document.getElementById('section-prospects');
+    if (!prospectsSection) return;
+
+    const clearBtn = prospectsSection.querySelector('button[onclick*="clearFilters"]');
+    if (clearBtn && !clearBtn.dataset.enhanced) {
+        clearBtn.dataset.enhanced = 'true';
+        const origOnclick = clearBtn.onclick;
+        clearBtn.onclick = function(e) {
+            if (origOnclick) origOnclick.call(this, e);
+            FilterPreferences.clear('prospects');
+        };
+        // Add visual indicator that filters can be saved
+        clearBtn.title = 'Clear filters and saved preferences';
+    }
+}
+
+// Add pin button to prospect rows
+function addPinButtonToRow(row, prospectId) {
+    if (!row || !prospectId || row.querySelector('.pin-btn')) return;
+
+    const actionsCell = row.querySelector('td:last-child .flex');
+    if (!actionsCell) return;
+
+    const isPinned = PinnedProspects.isPinned(prospectId);
+    const pinBtn = document.createElement('button');
+    pinBtn.className = `pin-btn p-1 rounded hover:bg-slate-700 ${isPinned ? 'pinned' : ''}`;
+    pinBtn.title = isPinned ? 'Unpin prospect' : 'Pin prospect';
+    pinBtn.innerHTML = `<svg class="w-4 h-4" fill="${isPinned ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>`;
+    pinBtn.onclick = (e) => {
+        e.stopPropagation();
+        PinnedProspects.toggle(prospectId);
+    };
+
+    actionsCell.insertBefore(pinBtn, actionsCell.firstChild);
+}
+
+// Sort prospects with pinned at top
+function sortProspectsWithPinned(prospects) {
+    if (!Array.isArray(prospects)) return prospects;
+
+    const pinned = PinnedProspects.getAll();
+    if (pinned.length === 0) return prospects;
+
+    const pinnedProspects = [];
+    const unpinnedProspects = [];
+
+    prospects.forEach(p => {
+        if (pinned.includes(p.id)) {
+            pinnedProspects.push({ ...p, _isPinned: true });
+        } else {
+            unpinnedProspects.push(p);
+        }
+    });
+
+    return [...pinnedProspects, ...unpinnedProspects];
+}
+window.sortProspectsWithPinned = sortProspectsWithPinned;
+
+// Override renderProspectsTable to add pin buttons and handle pinned section
+function enhanceProspectsRendering() {
+    if (typeof window.renderProspectsTable !== 'function') return;
+
+    const origRenderProspectsTable = window.renderProspectsTable;
+    window.renderProspectsTable = function(prospects) {
+        // Sort with pinned at top
+        const sorted = sortProspectsWithPinned(prospects);
+
+        // Call original render
+        origRenderProspectsTable.call(this, sorted);
+
+        // Add pin buttons to each row
+        setTimeout(() => {
+            const tbody = document.getElementById('prospects-table-body');
+            if (!tbody) return;
+
+            tbody.querySelectorAll('tr[data-prospect-id]').forEach(row => {
+                const prospectId = row.dataset.prospectId;
+                addPinButtonToRow(row, prospectId);
+
+                // Add visual indicator for pinned rows
+                if (PinnedProspects.isPinned(prospectId)) {
+                    row.classList.add('border-l-2', 'border-l-tiger-500');
+                }
+            });
+        }, 100);
+    };
+}
+
+// Track prospect views when modal opens successfully
+function trackProspectView(prospect) {
+    if (prospect && prospect.id) {
+        RecentlyViewed.add(prospect);
+    }
+}
+window.trackProspectView = trackProspectView;
+
+// Initialize all preference features
+function initializeUserPreferences() {
+    console.log('[UserPreferences] Initializing...');
+
+    // Apply saved view preferences
+    ViewPreferences.applyPreferences();
+
+    // Restore saved filters
+    const prospectsRestored = FilterPreferences.restoreProspectsFilters();
+    const scriptsRestored = FilterPreferences.restoreScriptsFilters();
+
+    // Inject UI components
+    injectRecentlyViewedPanel();
+    injectSearchHistoryDropdown('prospects');
+    injectSearchHistoryDropdown('scripts');
+    injectViewOptionsButton();
+    injectResetPreferencesButton();
+    enhanceResetFiltersButton();
+
+    // Hook existing functions
+    hookExistingFunctions();
+    enhanceProspectsRendering();
+
+    // Update UI
+    RecentlyViewed.updateUI();
+    SearchHistory.updateUI('prospects');
+    SearchHistory.updateUI('scripts');
+
+    // If filters were restored, trigger a fetch
+    if (prospectsRestored && typeof applyFilters === 'function') {
+        setTimeout(() => applyFilters(), 500);
+    }
+
+    console.log('[UserPreferences] Initialization complete');
+    if (typeof showToast === 'function' && (prospectsRestored || scriptsRestored)) {
+        showToast('Preferences restored', 'info');
+    }
+}
+
+// Run initialization when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeUserPreferences);
+} else {
+    // DOM already loaded, run after a short delay to ensure other scripts are ready
+    setTimeout(initializeUserPreferences, 100);
+}
+
+// Re-inject UI components when navigating sections (for SPAs)
+function reinjectOnSectionChange() {
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                const target = mutation.target;
+                if (target.id && target.id.startsWith('section-') && !target.classList.contains('hidden')) {
+                    if (target.id === 'section-prospects') {
+                        setTimeout(() => {
+                            injectRecentlyViewedPanel();
+                            injectSearchHistoryDropdown('prospects');
+                            injectViewOptionsButton();
+                            RecentlyViewed.updateUI();
+                        }, 100);
+                    } else if (target.id === 'section-scripts') {
+                        setTimeout(() => {
+                            injectSearchHistoryDropdown('scripts');
+                        }, 100);
+                    } else if (target.id === 'section-settings') {
+                        setTimeout(() => {
+                            injectResetPreferencesButton();
+                        }, 100);
+                    }
+                }
+            }
+        });
+    });
+
+    document.querySelectorAll('[id^="section-"]').forEach(section => {
+        observer.observe(section, { attributes: true });
+    });
+}
+reinitializeOnSectionChange = reinjectOnSectionChange;
+setTimeout(reinjectOnSectionChange, 500);
+
+console.log('[UserPreferences] Module loaded');
+
 </script>
 
 </body>
