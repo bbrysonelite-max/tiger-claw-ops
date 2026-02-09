@@ -671,4 +671,224 @@ describe('GET /integrations/brevo/stats', () => {
 
 // ==================== EXPORT ====================
 
+
+// ==================== ADMIN API ENDPOINTS ====================
+
+// Admin API - Tenants
+describe('Admin API - Tenants', () => {
+  describe('GET /admin/tenants', () => {
+    it('should return list of tenants with admin header', async () => {
+      const response = await request(API_BASE)
+        .get('/admin/tenants')
+        .set('x-admin-mode', 'true');
+      expect(response.status).toBe(200);
+      expect(response.body).toBeInstanceOf(Array);
+      expect(response.body.length).toBeGreaterThan(0);
+      expect(response.body[0]).toHaveProperty('id');
+      expect(response.body[0]).toHaveProperty('name');
+      expect(response.body[0]).toHaveProperty('email');
+      expect(response.body[0]).toHaveProperty('plan');
+      expect(response.body[0]).toHaveProperty('stats');
+      expect(response.body[0]).toHaveProperty('health');
+    });
+
+    it('should filter tenants by plan', async () => {
+      const response = await request(API_BASE)
+        .get('/admin/tenants?plan=Pro')
+        .set('x-admin-mode', 'true');
+      expect(response.status).toBe(200);
+      response.body.forEach((tenant: any) => {
+        expect(tenant.plan).toBe('Pro');
+      });
+    });
+
+    it('should filter tenants by health status', async () => {
+      const response = await request(API_BASE)
+        .get('/admin/tenants?health=warning')
+        .set('x-admin-mode', 'true');
+      expect(response.status).toBe(200);
+    });
+
+    it('should search tenants by name or email', async () => {
+      const response = await request(API_BASE)
+        .get('/admin/tenants?search=sarah')
+        .set('x-admin-mode', 'true');
+      expect(response.status).toBe(200);
+    });
+  });
+
+  describe('GET /admin/tenants/:id', () => {
+    it('should return detailed tenant info', async () => {
+      const response = await request(API_BASE)
+        .get('/admin/tenants/1')
+        .set('x-admin-mode', 'true');
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('tenant');
+      expect(response.body).toHaveProperty('recentActivity');
+      expect(response.body).toHaveProperty('billing');
+    });
+
+    it('should return 404 for non-existent tenant', async () => {
+      const response = await request(API_BASE)
+        .get('/admin/tenants/99999')
+        .set('x-admin-mode', 'true');
+      expect(response.status).toBe(404);
+    });
+  });
+});
+
+// Admin API - System Health
+describe('Admin API - System Health', () => {
+  describe('GET /admin/system-health', () => {
+    it('should return system health metrics', async () => {
+      const response = await request(API_BASE)
+        .get('/admin/system-health')
+        .set('x-admin-mode', 'true');
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('status');
+      expect(response.body).toHaveProperty('uptime');
+      expect(response.body).toHaveProperty('services');
+      expect(response.body).toHaveProperty('metrics');
+      expect(response.body).toHaveProperty('resources');
+      expect(response.body).toHaveProperty('version');
+    });
+
+    it('should return service statuses', async () => {
+      const response = await request(API_BASE)
+        .get('/admin/system-health')
+        .set('x-admin-mode', 'true');
+      expect(response.body.services).toHaveProperty('api');
+      expect(response.body.services).toHaveProperty('database');
+      expect(response.body.services).toHaveProperty('queue');
+      expect(response.body.services).toHaveProperty('cache');
+    });
+  });
+
+  describe('GET /admin/errors', () => {
+    it('should return error logs', async () => {
+      const response = await request(API_BASE)
+        .get('/admin/errors')
+        .set('x-admin-mode', 'true');
+      expect(response.status).toBe(200);
+      expect(response.body).toBeInstanceOf(Array);
+    });
+  });
+});
+
+// Admin API - Costs
+describe('Admin API - Costs', () => {
+  describe('GET /admin/costs', () => {
+    it('should return cost summary and breakdown', async () => {
+      const response = await request(API_BASE)
+        .get('/admin/costs')
+        .set('x-admin-mode', 'true');
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('summary');
+      expect(response.body).toHaveProperty('byService');
+      expect(response.body).toHaveProperty('byTenant');
+      expect(response.body).toHaveProperty('trend');
+    });
+
+    it('should include cost metrics', async () => {
+      const response = await request(API_BASE)
+        .get('/admin/costs')
+        .set('x-admin-mode', 'true');
+      expect(response.body.summary).toHaveProperty('thisMonth');
+      expect(response.body.summary).toHaveProperty('lastMonth');
+      expect(response.body.summary).toHaveProperty('projected');
+    });
+  });
+});
+
+// Admin API - Hive Management
+describe('Admin API - Hive Management', () => {
+  describe('GET /admin/hive/stats', () => {
+    it('should return hive statistics', async () => {
+      const response = await request(API_BASE)
+        .get('/admin/hive/stats')
+        .set('x-admin-mode', 'true');
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('totalLearnings');
+      expect(response.body).toHaveProperty('pendingReview');
+      expect(response.body).toHaveProperty('featured');
+      expect(response.body).toHaveProperty('flagged');
+    });
+  });
+
+  describe('GET /admin/hive/pending', () => {
+    it('should return pending scripts', async () => {
+      const response = await request(API_BASE)
+        .get('/admin/hive/pending')
+        .set('x-admin-mode', 'true');
+      expect(response.status).toBe(200);
+      expect(response.body).toBeInstanceOf(Array);
+    });
+  });
+
+  describe('POST /admin/hive/:id/approve', () => {
+    it('should approve a pending script', async () => {
+      const response = await request(API_BASE)
+        .post('/admin/hive/1/approve')
+        .set('x-admin-mode', 'true');
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+  });
+
+  describe('POST /admin/hive/:id/reject', () => {
+    it('should reject a pending script', async () => {
+      const response = await request(API_BASE)
+        .post('/admin/hive/1/reject')
+        .set('x-admin-mode', 'true');
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+  });
+
+  describe('POST /admin/hive/:id/feature', () => {
+    it('should feature a script', async () => {
+      const response = await request(API_BASE)
+        .post('/admin/hive/1/feature')
+        .set('x-admin-mode', 'true')
+        .send({ featured: true });
+      expect(response.status).toBe(200);
+      expect(response.body.featured).toBe(true);
+    });
+  });
+});
+
+// Admin API - Actions
+describe('Admin API - Actions', () => {
+  describe('POST /admin/actions/send-help-email', () => {
+    it('should send help email to tenant', async () => {
+      const response = await request(API_BASE)
+        .post('/admin/actions/send-help-email')
+        .set('x-admin-mode', 'true')
+        .send({ tenantId: '1', message: 'Need help?' });
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+  });
+
+  describe('POST /admin/actions/broadcast', () => {
+    it('should send broadcast message', async () => {
+      const response = await request(API_BASE)
+        .post('/admin/actions/broadcast')
+        .set('x-admin-mode', 'true')
+        .send({ subject: 'Update', message: 'New features!' });
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+  });
+
+  describe('GET /admin/activity-log', () => {
+    it('should return admin activity log', async () => {
+      const response = await request(API_BASE)
+        .get('/admin/activity-log')
+        .set('x-admin-mode', 'true');
+      expect(response.status).toBe(200);
+      expect(response.body).toBeInstanceOf(Array);
+    });
+  });
+});
 export {};
