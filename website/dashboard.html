@@ -1135,9 +1135,211 @@
 
         <!-- ============ SETTINGS SECTION ============ -->
         <section id="section-settings" class="section-content hidden">
-            <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-                <h2 class="text-xl font-semibold mb-4">Settings</h2>
-                <p class="text-slate-400">Coming soon...</p>
+            <!-- Settings Sub-Navigation Tabs -->
+            <div class="flex items-center gap-4 mb-6 border-b border-slate-800">
+                <button onclick="showSettingsTab('bot-config')" class="settings-tab px-4 py-3 text-tiger-400 border-b-2 border-tiger-500 font-medium" data-tab="bot-config">🤖 Bot Configuration</button>
+                <button onclick="showSettingsTab('notifications')" class="settings-tab px-4 py-3 text-slate-400 hover:text-white border-b-2 border-transparent" data-tab="notifications">🔔 Notifications</button>
+                <button onclick="showSettingsTab('integrations')" class="settings-tab px-4 py-3 text-slate-400 hover:text-white border-b-2 border-transparent" data-tab="integrations">🔗 Integrations</button>
+            </div>
+            <!-- ===== BOT CONFIGURATION TAB ===== -->
+            <div id="settings-tab-bot-config" class="settings-tab-content">
+                <div class="grid lg:grid-cols-2 gap-6">
+                    <!-- Discovery Schedule -->
+                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold flex items-center gap-2"><span>⏰</span> Discovery Schedule</h3>
+                        </div>
+                        <div class="bg-slate-800/50 rounded-xl p-4 mb-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-slate-400">Current Schedule (Cron)</span>
+                                <code id="schedule-cron" class="text-xs bg-slate-700 px-2 py-1 rounded font-mono">Loading...</code>
+                            </div>
+                            <p id="schedule-human" class="text-slate-300">Loading schedule...</p>
+                        </div>
+                        <div class="text-xs text-slate-500"><span class="text-tiger-400">💡</span> Schedule is configured by the system administrator.</div>
+                    </div>
+
+                    <!-- Discovery Sources -->
+                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2"><span>🔍</span> Discovery Sources</h3>
+                        <div class="space-y-4">
+                            <!-- LINE OpenChat Toggle -->
+                            <div class="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl">💚</span>
+                                    <div>
+                                        <div class="font-medium">LINE OpenChat</div>
+                                        <div class="text-xs text-slate-400">Discover prospects from LINE OpenChat groups</div>
+                                    </div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="source-line" class="sr-only peer" onchange="markSettingsChanged()">
+                                    <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-tiger-500/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-line-500"></div>
+                                </label>
+                            </div>
+                            <!-- Facebook Groups Toggle -->
+                            <div class="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl">📘</span>
+                                    <div>
+                                        <div class="font-medium">Facebook Groups</div>
+                                        <div class="text-xs text-slate-400">Discover prospects from Facebook groups</div>
+                                    </div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="source-facebook" class="sr-only peer" onchange="markSettingsChanged()">
+                                    <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-tiger-500/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- Save Button -->
+                        <div class="mt-6 flex items-center justify-between">
+                            <span id="settings-unsaved" class="text-sm text-yellow-400 hidden">⚠️ Unsaved changes</span>
+                            <button onclick="saveSettings()" id="save-settings-btn" class="ml-auto px-6 py-2 bg-tiger-500 hover:bg-tiger-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-medium transition flex items-center gap-2">
+                                <span id="save-settings-icon">💾</span>
+                                <span id="save-settings-text">Save Changes</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ===== NOTIFICATIONS TAB ===== -->
+            <div id="settings-tab-notifications" class="settings-tab-content hidden">
+                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold flex items-center gap-2"><span>🔔</span> Notification Preferences</h3>
+                    </div>
+                    <div class="space-y-4">
+                        <!-- Daily Report Toggle -->
+                        <div class="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">📊</span>
+                                <div>
+                                    <div class="font-medium">Daily Report</div>
+                                    <div class="text-xs text-slate-400">Receive email summary of daily activity</div>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="notify-daily-report" class="sr-only peer" onchange="updateNotificationSetting('daily_report', this.checked)">
+                                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-tiger-500/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-tiger-500"></div>
+                            </label>
+                        </div>
+                        <!-- High Score Prospect Alert Toggle -->
+                        <div class="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">🌟</span>
+                                <div>
+                                    <div class="font-medium">New High Score Prospect</div>
+                                    <div class="text-xs text-slate-400">Get alerted when a prospect scores above 80</div>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="notify-high-score" class="sr-only peer" onchange="updateNotificationSetting('high_score_prospect', this.checked)">
+                                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-tiger-500/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-tiger-500"></div>
+                            </label>
+                        </div>
+                        <!-- Weekly Digest Toggle -->
+                        <div class="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">📅</span>
+                                <div>
+                                    <div class="font-medium">Weekly Digest</div>
+                                    <div class="text-xs text-slate-400">Weekly performance summary every Monday</div>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="notify-weekly-digest" class="sr-only peer" onchange="updateNotificationSetting('weekly_digest', this.checked)">
+                                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-tiger-500/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-tiger-500"></div>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- Saved Confirmation -->
+                    <div id="notification-saved" class="hidden mt-4 p-3 bg-green-500/20 border border-green-500/30 rounded-lg text-green-400 text-sm flex items-center gap-2">
+                        <span>✅</span> Notification preferences saved
+                    </div>
+                </div>
+            </div>
+            <!-- ===== INTEGRATIONS TAB ===== -->
+            <div id="settings-tab-integrations" class="settings-tab-content hidden">
+                <div class="grid lg:grid-cols-2 gap-6">
+                    <!-- Integrations Status -->
+                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold flex items-center gap-2"><span>🔗</span> Integration Status</h3>
+                            <button onclick="refreshIntegrations()" class="text-sm text-slate-400 hover:text-white flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                Refresh
+                            </button>
+                        </div>
+                        <div id="integrations-list" class="space-y-3">
+                            <!-- Integration items will be loaded here -->
+                            <div id="integrations-loading" class="flex items-center justify-center py-8">
+                                <svg class="w-6 h-6 spinner text-tiger-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                            </div>
+                        </div>
+                        <!-- Test All Connections Button -->
+                        <div class="mt-6 pt-4 border-t border-slate-700">
+                            <button onclick="testAllConnections()" id="test-all-btn" class="w-full px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-xl font-medium transition flex items-center justify-center gap-2">
+                                <span>🔌</span> Test All Connections
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- API Keys & Account Info -->
+                    <div class="space-y-6">
+                        <!-- API Keys Section -->
+                        <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2"><span>🔑</span> API Keys</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-xl">🤖</span>
+                                        <div>
+                                            <div class="font-medium text-sm">Telegram Bot Token</div>
+                                            <div id="api-telegram-status" class="text-xs text-slate-400">Loading...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-xl">🧠</span>
+                                        <div>
+                                            <div class="font-medium text-sm">OpenAI API Key</div>
+                                            <div id="api-openai-status" class="text-xs text-slate-400">Loading...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 text-xs text-slate-500">
+                                <a href="#" class="text-tiger-400 hover:underline">📚 View setup documentation</a>
+                            </div>
+                        </div>
+
+                        <!-- Account Info Section -->
+                        <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2"><span>👤</span> Account Info</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-slate-400">Subscription Status</span>
+                                    <span id="account-status" class="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full font-medium">Active</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-slate-400">Plan</span>
+                                    <span id="account-plan" class="text-sm font-medium">Tiger Bot Pro</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-slate-400">Member Since</span>
+                                    <span id="account-since" class="text-sm">Loading...</span>
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-slate-700">
+                                <a href="mailto:support@tigerbotscout.com" class="text-sm text-tiger-400 hover:underline flex items-center gap-2">
+                                    <span>💬</span> Contact Support
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
@@ -1837,6 +2039,9 @@
             } else if (sectionName === 'analytics') {
                 // Load analytics - show funnel by default
                 showAnalyticsTab('funnel');
+            } else if (sectionName === 'settings') {
+                // Load settings - show bot config by default
+                showSettingsTab('bot-config');
             }
         }
 
@@ -2791,6 +2996,230 @@
         function hideHeatmapTooltip() {
             document.getElementById('heatmap-tooltip')?.classList.add('hidden');
         }
+
+        
+        // ============ SETTINGS FUNCTIONS ============
+
+        let settingsData = {};
+        let settingsChanged = false;
+
+        // Show Settings sub-tab
+        function showSettingsTab(tabName) {
+            document.querySelectorAll('.settings-tab').forEach(btn => {
+                if (btn.dataset.tab === tabName) {
+                    btn.classList.add('text-tiger-400', 'border-tiger-500');
+                    btn.classList.remove('text-slate-400', 'border-transparent');
+                } else {
+                    btn.classList.remove('text-tiger-400', 'border-tiger-500');
+                    btn.classList.add('text-slate-400', 'border-transparent');
+                }
+            });
+            document.querySelectorAll('.settings-tab-content').forEach(c => c.classList.add('hidden'));
+            document.getElementById(`settings-tab-${tabName}`)?.classList.remove('hidden');
+
+            if (tabName === 'bot-config') loadSettings();
+            else if (tabName === 'notifications') loadNotificationSettings();
+            else if (tabName === 'integrations') loadIntegrations();
+        }
+
+        // Load Settings from API
+        async function loadSettings() {
+            try {
+                const data = await apiFetch('/settings');
+                settingsData = data;
+                const cron = data.discovery_schedule || data.discoverySchedule || '0 */6 * * *';
+                document.getElementById('schedule-cron').textContent = cron;
+                document.getElementById('schedule-human').textContent = cronToHuman(cron);
+                document.getElementById('source-line').checked = data.sources?.line_openchat ?? data.sources?.lineOpenchat ?? true;
+                document.getElementById('source-facebook').checked = data.sources?.facebook_groups ?? data.sources?.facebookGroups ?? false;
+                settingsChanged = false;
+                document.getElementById('settings-unsaved')?.classList.add('hidden');
+            } catch (err) {
+                console.error('Failed to load settings:', err);
+                showToast('Failed to load settings', 'error');
+            }
+        }
+
+        function cronToHuman(cron) {
+            const parts = cron.split(' ');
+            if (parts.length !== 5) return cron;
+            const [minute, hour] = parts;
+            if (hour.startsWith('*/')) return `Runs every ${hour.substring(2)} hours`;
+            if (minute.startsWith('*/')) return `Runs every ${minute.substring(2)} minutes`;
+            if (hour === '*' && minute !== '*') return `Runs every hour at minute ${minute}`;
+            if (hour !== '*' && minute !== '*') return `Runs daily at ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
+            return `Schedule: ${cron}`;
+        }
+
+        function markSettingsChanged() {
+            settingsChanged = true;
+            document.getElementById('settings-unsaved')?.classList.remove('hidden');
+        }
+
+        // Save Settings to API
+        async function saveSettings() {
+            const btn = document.getElementById('save-settings-btn');
+            const icon = document.getElementById('save-settings-icon');
+            const text = document.getElementById('save-settings-text');
+            btn.disabled = true;
+            icon.innerHTML = '<svg class="w-4 h-4 spinner" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>';
+            text.textContent = 'Saving...';
+            try {
+                const payload = {
+                    sources: {
+                        line_openchat: document.getElementById('source-line').checked,
+                        facebook_groups: document.getElementById('source-facebook').checked
+                    }
+                };
+                await apiFetch('/settings', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                settingsChanged = false;
+                document.getElementById('settings-unsaved')?.classList.add('hidden');
+                showToast('Settings saved successfully!', 'success');
+            } catch (err) {
+                console.error('Failed to save settings:', err);
+                showToast('Failed to save settings', 'error');
+            } finally {
+                btn.disabled = false;
+                icon.textContent = '💾';
+                text.textContent = 'Save Changes';
+            }
+        }
+
+        async function loadNotificationSettings() {
+            try {
+                const data = await apiFetch('/settings');
+                const notifications = data.notifications || {};
+                document.getElementById('notify-daily-report').checked = notifications.daily_report ?? notifications.dailyReport ?? true;
+                document.getElementById('notify-high-score').checked = notifications.high_score_prospect ?? notifications.highScoreProspect ?? true;
+                document.getElementById('notify-weekly-digest').checked = notifications.weekly_digest ?? notifications.weeklyDigest ?? false;
+            } catch (err) { console.error('Failed to load notification settings:', err); }
+        }
+
+        async function updateNotificationSetting(key, value) {
+            const savedEl = document.getElementById('notification-saved');
+            try {
+                await apiFetch('/settings', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ notifications: { [key]: value } }) });
+                savedEl?.classList.remove('hidden');
+                setTimeout(() => savedEl?.classList.add('hidden'), 3000);
+            } catch (err) {
+                console.error('Failed to update notification:', err);
+                showToast('Failed to update notification setting', 'error');
+            }
+        }
+
+        async function loadIntegrations() {
+            const loading = document.getElementById('integrations-loading');
+            const list = document.getElementById('integrations-list');
+            loading?.classList.remove('hidden');
+            try {
+                const data = await apiFetch('/settings/integrations');
+                renderIntegrations(data.integrations || data);
+            } catch (err) {
+                console.error('Failed to load integrations:', err);
+                list.innerHTML = '<div class="text-center text-slate-500 py-4">Failed to load integrations</div>';
+                loading?.classList.add('hidden');
+            }
+        }
+
+        function refreshIntegrations() { loadIntegrations(); }
+
+        function renderIntegrations(integrations) {
+            const list = document.getElementById('integrations-list');
+            document.getElementById('integrations-loading')?.classList.add('hidden');
+            const cfg = { telegram: { icon: '🤖', name: 'Telegram Bot' }, openai: { icon: '🧠', name: 'OpenAI API' }, database: { icon: '🗄️', name: 'Database' }, apollo: { icon: '🚀', name: 'Apollo' }, brevo: { icon: '📧', name: 'Brevo' } };
+            const statusColors = { connected: 'bg-green-500/20 text-green-400', error: 'bg-red-500/20 text-red-400', not_configured: 'bg-slate-500/20 text-slate-400' };
+            const statusText = { connected: 'Connected', error: 'Error', not_configured: 'Not Configured' };
+            let html = '';
+            for (const [key, integration] of Object.entries(integrations)) {
+                const c = cfg[key] || { icon: '🔌', name: key };
+                const status = integration.status || 'not_configured';
+                const color = statusColors[status] || statusColors.not_configured;
+                const text = statusText[status] || status;
+                const lastChecked = integration.last_checked || integration.lastChecked;
+                const errorMsg = integration.error || integration.errorMessage;
+                html += `<div class="p-3 bg-slate-800/50 rounded-xl"><div class="flex items-center justify-between"><div class="flex items-center gap-3"><span class="text-xl">${c.icon}</span><div><div class="font-medium text-sm">${c.name}</div>${lastChecked ? `<div class="text-xs text-slate-500">Last checked: ${formatSettingsTime(lastChecked)}</div>` : ''}${errorMsg ? `<div class="text-xs text-red-400 mt-1">${errorMsg}</div>` : ''}</div></div><div class="flex items-center gap-2"><span class="px-2 py-1 ${color} text-xs rounded-full font-medium">${text}</span><button onclick="testConnection('${key}')" class="p-1.5 hover:bg-slate-700 rounded-lg transition" title="Test Connection"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></button></div></div></div>`;
+            }
+            list.innerHTML = html || '<div class="text-center text-slate-500 py-4">No integrations configured</div>';
+            updateApiKeyStatus(integrations);
+        }
+
+        function formatSettingsTime(dateStr) {
+            const d = new Date(dateStr), now = new Date(), diff = Math.floor((now - d) / 60000);
+            if (diff < 1) return 'just now';
+            if (diff < 60) return `${diff}m ago`;
+            if (diff < 1440) return `${Math.floor(diff/60)}h ago`;
+            return d.toLocaleDateString();
+        }
+
+        function updateApiKeyStatus(integrations) {
+            const telegramStatus = document.getElementById('api-telegram-status');
+            const openaiStatus = document.getElementById('api-openai-status');
+            if (telegramStatus) {
+                const t = integrations.telegram;
+                telegramStatus.innerHTML = t?.status === 'connected' ? '<span class="text-green-400">****configured</span>' : t?.status === 'error' ? '<span class="text-red-400">****configured (error)</span>' : '<span class="text-slate-500">not set</span>';
+            }
+            if (openaiStatus) {
+                const o = integrations.openai;
+                openaiStatus.innerHTML = o?.status === 'connected' ? '<span class="text-green-400">****configured</span>' : o?.status === 'error' ? '<span class="text-red-400">****configured (error)</span>' : '<span class="text-slate-500">not set</span>';
+            }
+            loadAccountInfo();
+        }
+
+        async function loadAccountInfo() {
+            try {
+                const data = await apiFetch('/settings');
+                const account = data.account || {};
+                const statusEl = document.getElementById('account-status');
+                const planEl = document.getElementById('account-plan');
+                const sinceEl = document.getElementById('account-since');
+                if (statusEl) {
+                    const isActive = account.status === 'active' || account.subscription_status === 'active';
+                    statusEl.textContent = isActive ? 'Active' : 'Inactive';
+                    statusEl.className = `px-2 py-1 ${isActive ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'} text-xs rounded-full font-medium`;
+                }
+                if (planEl) planEl.textContent = account.plan || account.plan_name || 'Tiger Bot Pro';
+                if (sinceEl) {
+                    const since = account.member_since || account.memberSince || account.created_at;
+                    sinceEl.textContent = since ? new Date(since).toLocaleDateString() : 'N/A';
+                }
+            } catch (err) { console.error('Failed to load account info:', err); }
+        }
+
+        async function testConnection(service) {
+            showToast(`Testing ${service} connection...`, 'info');
+            try {
+                const result = await apiFetch(`/settings/test-connection/${service}`, { method: 'POST' });
+                if (result.success || result.status === 'connected') {
+                    showToast(`${service} connection successful!`, 'success');
+                } else {
+                    showToast(`${service} connection failed: ${result.error || 'Unknown error'}`, 'error');
+                }
+                loadIntegrations();
+            } catch (err) {
+                console.error(`Failed to test ${service}:`, err);
+                showToast(`Failed to test ${service} connection`, 'error');
+            }
+        }
+
+        async function testAllConnections() {
+            const btn = document.getElementById('test-all-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<svg class="w-4 h-4 spinner" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Testing...';
+            try {
+                const services = ['telegram', 'openai', 'database'];
+                for (const svc of services) {
+                    try { await apiFetch(`/settings/test-connection/${svc}`, { method: 'POST' }); } catch (e) { console.error(`Test ${svc} failed:`, e); }
+                }
+                showToast('All connections tested!', 'success');
+                loadIntegrations();
+            } catch (err) {
+                showToast('Failed to test connections', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>🔌</span> Test All Connections';
+            }
+        }
+
 
         // ============ ROI CALCULATOR ============
 
