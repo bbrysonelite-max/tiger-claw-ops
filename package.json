@@ -7,7 +7,9 @@
   "scripts": {
     "dev": "tsx watch api/server.ts",
     "build": "tsc",
-    "start": "node dist/api/server.js"
+    "start": "node dist/api/server.js",
+    "serve": "node serve.js",
+    "dev:all": "npm run dev & npm run serve"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

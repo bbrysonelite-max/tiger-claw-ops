@@ -699,3 +699,133 @@ app.listen(port, () => {
 
 // Start Telegram bot
 startTelegramBot(db);
+
+// ==================== DASHBOARD OVERVIEW ====================
+// Consolidated endpoint for dashboard overview cards (per PRD)
+app.get('/dashboard/overview', async (req, res) => {
+  try {
+    // Today's Prospects
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    
+    const todaysProspectsQuery = await db.query(`
+      SELECT 
+        COUNT(*) as count,
+        COUNT(*) FILTER (WHERE ai_score >= 70) as qualified
+      FROM leads 
+      WHERE created_at >= $1
+    `, [todayStart.toISOString()]);
+    
+    const topProspectQuery = await db.query(`
+      SELECT * FROM leads 
+      WHERE created_at >= $1 
+      ORDER BY ai_score DESC 
+      LIMIT 1
+    `, [todayStart.toISOString()]);
+    
+    // Yesterday for trend
+    const yesterdayStart = new Date(todayStart);
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+    const yesterdayEnd = new Date(todayStart);
+    
+    const yesterdayQuery = await db.query(`
+      SELECT COUNT(*) as count FROM leads 
+      WHERE created_at >= $1 AND created_at < $2
+    `, [yesterdayStart.toISOString(), yesterdayEnd.toISOString()]);
+    
+    const todayCount = parseInt(todaysProspectsQuery.rows[0]?.count) || 0;
+    const yesterdayCount = parseInt(yesterdayQuery.rows[0]?.count) || 0;
+    let trend: 'up' | 'down' | 'stable' = 'stable';
+    let trendValue = 0;
+    if (yesterdayCount > 0) {
+      trendValue = Math.round(((todayCount - yesterdayCount) / yesterdayCount) * 100);
+      trend = trendValue > 0 ? 'up' : trendValue < 0 ? 'down' : 'stable';
+    } else if (todayCount > 0) {
+      trend = 'up';
+      trendValue = 100;
+    }
+    
+    // Script Performance
+    const scriptStatsQuery = await db.query(`
+      SELECT 
+        COUNT(*) as total,
+        COUNT(*) FILTER (WHERE feedback IS NULL) as pending,
+        COUNT(*) FILTER (WHERE feedback = 'no_response') as no_response,
+        COUNT(*) FILTER (WHERE feedback = 'got_reply') as got_reply,
+        COUNT(*) FILTER (WHERE feedback = 'converted') as converted
+      FROM script_feedback
+    `);
+    
+    const scriptStats = scriptStatsQuery.rows[0] || {};
+    const totalScripts = parseInt(scriptStats.total) || 0;
+    const gotReply = parseInt(scriptStats.got_reply) || 0;
+    const converted = parseInt(scriptStats.converted) || 0;
+    const successRate = totalScripts > 0 ? Math.round(((gotReply + converted) / totalScripts) * 100) : 0;
+    
+    // Conversion Funnel
+    const funnelQuery = await db.query(`
+      SELECT status, COUNT(*) as count FROM leads GROUP BY status
+    `);
+    
+    const statusCounts: Record<string, number> = {};
+    funnelQuery.rows.forEach((row: any) => {
+      statusCounts[row.status] = parseInt(row.count) || 0;
+    });
+    
+    const total = Object.values(statusCounts).reduce((a, b) => a + b, 0) || 1;
+    const stages = [
+      { name: 'new', count: statusCounts['new'] || 0, fill: '#6366f1' },
+      { name: 'contacted', count: statusCounts['contacted'] || 0, fill: '#8b5cf6' },
+      { name: 'qualified', count: statusCounts['qualified'] || 0, fill: '#f97316' },
+      { name: 'converted', count: statusCounts['converted'] || 0, fill: '#22c55e' },
+      { name: 'lost', count: statusCounts['lost'] || 0, fill: '#ef4444' }
+    ].map((stage, i, arr) => ({
+      ...stage,
+      percentage: i === 0 ? 100 : (arr[i-1].count > 0 ? Math.round((stage.count / arr[i-1].count) * 100) : 0)
+    }));
+    
+    // Hive Pulse
+    const hiveQuery = await db.query(`
+      SELECT 
+        COUNT(*) as total,
+        COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '24 hours') as recent
+      FROM hive_learnings
+    `);
+    
+    const topScriptQuery = await db.query(`
+      SELECT * FROM hive_learnings ORDER BY success_count DESC LIMIT 1
+    `);
+    
+    const hiveStats = hiveQuery.rows[0] || {};
+    
+    res.json({
+      todaysProspects: {
+        count: todayCount,
+        qualified: parseInt(todaysProspectsQuery.rows[0]?.qualified) || 0,
+        topProspect: topProspectQuery.rows[0] || null,
+        trend,
+        trendValue
+      },
+      scriptPerformance: {
+        total: totalScripts,
+        pendingFeedback: parseInt(scriptStats.pending) || 0,
+        noResponse: parseInt(scriptStats.no_response) || 0,
+        gotReply,
+        converted,
+        successRate
+      },
+      conversionFunnel: {
+        stages
+      },
+      hivePulse: {
+        totalLearnings: parseInt(hiveStats.total) || 0,
+        topScript: topScriptQuery.rows[0] || null,
+        myContributions: 0, // Would need tenant context
+        recentLearnings: parseInt(hiveStats.recent) || 0
+      }
+    });
+  } catch (error) {
+    console.error('Dashboard overview error:', error);
+    res.status(500).json({ error: 'Failed to fetch dashboard overview' });
+  }
+});
