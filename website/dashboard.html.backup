@@ -22,313 +22,6 @@
         }
     </script>
     <style>
-        /* ===== ACCESSIBILITY STYLES (WCAG 2.1 AA) ===== */
-
-        /* Screen reader only - visually hidden but accessible */
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
-        }
-
-        /* Focus visible - keyboard focus indicator */
-        :focus-visible {
-            outline: 2px solid var(--color-primary, #f97316);
-            outline-offset: 2px;
-        }
-
-        /* Remove default focus for mouse users */
-        :focus:not(:focus-visible) {
-            outline: none;
-        }
-
-        /* Skip to main content link */
-        .skip-link {
-            position: absolute;
-            top: -100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #f97316;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0 0 0.5rem 0.5rem;
-            font-weight: 600;
-            z-index: 9999;
-            transition: top 0.2s ease;
-            text-decoration: none;
-        }
-
-        .skip-link:focus {
-            top: 0;
-        }
-
-        /* Ensure minimum touch target size (44x44px) */
-        .touch-target {
-            min-height: 44px;
-            min-width: 44px;
-        }
-
-        /* High contrast focus for buttons and links */
-        button:focus-visible,
-        a:focus-visible,
-        [role="button"]:focus-visible {
-            outline: 2px solid #f97316;
-            outline-offset: 2px;
-            box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.3);
-        }
-
-        /* ===== MOBILE NAVIGATION STYLES ===== */
-
-        /* Mobile header - hidden on desktop */
-        .mobile-header {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            background: #0f172a;
-            border-bottom: 1px solid #334155;
-            z-index: 35;
-            padding: 0 1rem;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        /* Mobile menu button (hamburger) */
-        .mobile-menu-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 44px;
-            height: 44px;
-            border-radius: 0.5rem;
-            background: transparent;
-            border: 1px solid #334155;
-            cursor: pointer;
-            color: white;
-            transition: all 0.2s ease;
-        }
-
-        .mobile-menu-btn:hover,
-        .mobile-menu-btn:focus-visible {
-            background: rgba(249, 115, 22, 0.1);
-            border-color: #f97316;
-        }
-
-        /* Hamburger icon animation */
-        .hamburger-icon {
-            width: 20px;
-            height: 14px;
-            position: relative;
-        }
-
-        .hamburger-icon span {
-            display: block;
-            position: absolute;
-            height: 2px;
-            width: 100%;
-            background: currentColor;
-            border-radius: 2px;
-            transition: all 0.25s ease;
-        }
-
-        .hamburger-icon span:nth-child(1) { top: 0; }
-        .hamburger-icon span:nth-child(2) { top: 6px; }
-        .hamburger-icon span:nth-child(3) { top: 12px; }
-
-        .mobile-menu-btn.active .hamburger-icon span:nth-child(1) {
-            top: 6px;
-            transform: rotate(45deg);
-        }
-
-        .mobile-menu-btn.active .hamburger-icon span:nth-child(2) {
-            opacity: 0;
-        }
-
-        .mobile-menu-btn.active .hamburger-icon span:nth-child(3) {
-            top: 6px;
-            transform: rotate(-45deg);
-        }
-
-        /* Sidebar overlay for mobile */
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 39;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .sidebar-overlay.active {
-            display: block;
-            opacity: 1;
-        }
-
-        /* Mobile close button for sidebar */
-        .sidebar-close-btn {
-            display: none;
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            width: 44px;
-            height: 44px;
-            align-items: center;
-            justify-content: center;
-            border-radius: 0.5rem;
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            cursor: pointer;
-            color: white;
-            transition: all 0.2s ease;
-        }
-
-        .sidebar-close-btn:hover,
-        .sidebar-close-btn:focus-visible {
-            background: rgba(249, 115, 22, 0.2);
-        }
-
-        /* ===== RESPONSIVE BREAKPOINTS ===== */
-        /* Mobile: 320px - 767px */
-        /* Tablet: 768px - 1023px */
-        /* Desktop: 1024px+ */
-
-        @media (max-width: 767px) {
-            /* Show mobile header */
-            .mobile-header {
-                display: flex !important;
-            }
-
-            /* Show sidebar close button */
-            .sidebar-close-btn {
-                display: flex;
-            }
-
-            /* Sidebar as overlay */
-            .sidebar {
-                position: fixed !important;
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-                z-index: 40;
-                top: 0;
-                left: 0;
-                height: 100vh;
-                width: 280px;
-            }
-
-            .sidebar.open {
-                transform: translateX(0);
-            }
-
-            /* Main content adjustments */
-            .main-content {
-                margin-left: 0 !important;
-                padding: 1rem !important;
-                padding-top: 76px !important; /* Account for mobile header */
-                width: 100% !important;
-            }
-
-            /* Overview cards: 1 column */
-            .overview-cards-grid,
-            .grid-cols-4 {
-                grid-template-columns: 1fr !important;
-            }
-
-            /* Tables: horizontal scroll */
-            .table-container {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            .table-container table {
-                min-width: 600px;
-            }
-
-            /* Modals: full screen */
-            .modal-content,
-            #prospect-modal > div:not(.modal-backdrop) {
-                width: 100% !important;
-                height: 100% !important;
-                max-width: 100% !important;
-                max-height: 100% !important;
-                border-radius: 0 !important;
-                margin: 0 !important;
-            }
-
-            /* Responsive typography */
-            .text-4xl { font-size: 1.75rem !important; }
-            .text-3xl { font-size: 1.5rem !important; }
-            .text-2xl { font-size: 1.25rem !important; }
-            .text-xl { font-size: 1.125rem !important; }
-        }
-
-        /* Tablet: 768px - 1023px */
-        @media (min-width: 768px) and (max-width: 1023px) {
-            /* Overview cards: 2 columns */
-            .overview-cards-grid,
-            .grid-cols-4 {
-                grid-template-columns: repeat(2, 1fr) !important;
-            }
-
-            .main-content {
-                padding: 1.5rem !important;
-            }
-        }
-
-        /* Desktop: 1024px+ */
-        @media (min-width: 1024px) {
-            /* Overview cards: 4 columns */
-            .overview-cards-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
-
-            .mobile-header {
-                display: none !important;
-            }
-        }
-
-        /* ===== ARIA LIVE REGION STYLES ===== */
-        [aria-live] {
-            position: relative;
-        }
-
-        /* Loading state indicator */
-        .loading-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        /* Reduced motion preference */
-        @media (prefers-reduced-motion: reduce) {
-            *,
-            *::before,
-            *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-
-        /* ===== ENHANCED COLOR CONTRAST (WCAG AA 4.5:1) ===== */
-        /* Ensure muted text meets contrast requirements */
-        .text-slate-400 {
-            color: #94a3b8 !important; /* 4.6:1 on dark bg */
-        }
-
-        :root.light .text-slate-400 {
-            color: #64748b !important; /* 4.5:1 on light bg */
-        }
-
-
 
         /* ===== DARK MODE CSS VARIABLES ===== */
         :root {
@@ -596,77 +289,21 @@
         .trends-chart-bar {
             transition: height 0.5s ease-out;
         }
-
-        /* ===== REAL-TIME UPDATE STYLES ===== */
-        .connection-status { display: flex; align-items: center; gap: 0.5rem; position: relative; }
-        .connection-dot { width: 8px; height: 8px; border-radius: 50%; transition: background-color 0.3s ease; }
-        .connection-dot.connected { background-color: #22c55e; }
-        .connection-dot.pending { background-color: #eab308; animation: pulse-dot 1.5s infinite; }
-        .connection-dot.error { background-color: #ef4444; }
-        @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .connection-tooltip { position: absolute; top: 100%; right: 0; margin-top: 0.5rem; padding: 0.75rem 1rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.5rem; font-size: 0.75rem; white-space: nowrap; opacity: 0; visibility: hidden; transition: all 0.2s ease; z-index: 50; min-width: 200px; }
-        .connection-status:hover .connection-tooltip { opacity: 1; visibility: visible; }
-        .last-updated { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: #94a3b8; }
-        .last-updated-time { color: #cbd5e1; }
-        .refresh-indicator { position: fixed; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, #f97316, transparent); transform: scaleX(0); transform-origin: left; z-index: 9999; }
-        .refresh-indicator.active { animation: refresh-progress 1.5s ease-in-out; }
-        @keyframes refresh-progress { 0% { transform: scaleX(0); } 50% { transform: scaleX(0.7); } 100% { transform: scaleX(1); } }
-        .shortcuts-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 9999; opacity: 0; visibility: hidden; transition: all 0.2s ease; }
-        .shortcuts-modal.visible { opacity: 1; visibility: visible; }
-        .shortcuts-content { background: #1e293b; border: 1px solid #334155; border-radius: 1rem; padding: 1.5rem; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
-        .shortcut-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #334155; }
-        .shortcut-row:last-child { border-bottom: none; }
-        .shortcut-key { display: inline-flex; align-items: center; justify-content: center; min-width: 2rem; height: 1.75rem; padding: 0 0.5rem; background: #334155; border: 1px solid #475569; border-radius: 0.375rem; font-family: monospace; font-size: 0.875rem; color: #f1f5f9; }
-        .shortcut-hint { display: none; font-size: 0.625rem; padding: 0.125rem 0.375rem; background: #334155; border-radius: 0.25rem; margin-left: 0.5rem; font-family: monospace; }
-        @media (min-width: 1024px) { .shortcut-hint { display: inline-block; } }
-    
-    </style>
+</style>
 </head>
-<body class="bg-slate-950 text-white min-h-screen font-sans">
-    <!-- Refresh Progress Indicator -->
-    <div id="refresh-indicator" class="refresh-indicator" aria-hidden="true"></div>
-    <div id="sr-refresh-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-    <!-- Skip Link for Accessibility -->
-    <a href="#main-content" class="skip-link">Skip to main content</a>
-
-    <!-- Sidebar Overlay (for mobile) -->
-    <div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
-
-    <!-- Mobile Header -->
-    <header class="mobile-header" role="banner">
-        <button 
-            type="button"
-            class="mobile-menu-btn touch-target" 
-            id="mobile-menu-btn"
-            aria-label="Open navigation menu"
-            aria-expanded="false"
-            aria-controls="sidebar"
-        >
-            <div class="hamburger-icon" aria-hidden="true">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-        </button>
-        <div class="flex items-center gap-2">
-            <span class="text-2xl">🐯</span>
-            <span class="font-bold text-tiger-500">Tiger Bot</span>
-        </div>
-        <div class="w-11"></div> <!-- Spacer for centering -->
-    </header>
-
+<body class="bg-slate-950 text-white font-sans">
     <!-- Toast Container -->
-    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2" role="status" aria-live="polite" aria-atomic="true"></div>
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
     <!-- Prospect Detail Modal -->
-    <div id="prospect-modal" class="fixed inset-0 modal-backdrop z-50 hidden flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-prospect-name">
+    <div id="prospect-modal" class="fixed inset-0 modal-backdrop z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 rounded-2xl border border-slate-700 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
             <div class="flex items-center justify-between p-6 border-b border-slate-700">
                 <div>
                     <h2 class="text-xl font-bold" id="modal-prospect-name">Loading...</h2>
                     <p class="text-slate-400 text-sm" id="modal-prospect-source"></p>
                 </div>
-                <button onclick="closeProspectModal()" class="text-slate-400 hover:text-white p-2 touch-target" aria-label="Close modal">
+                <button onclick="closeProspectModal()" class="text-slate-400 hover:text-white p-2">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
@@ -678,7 +315,7 @@
                             <h3 class="font-semibold mb-3 flex items-center gap-2"><span>📊</span> Score & Status</h3>
                             <div class="flex items-center gap-4">
                                 <div class="text-4xl font-bold" id="modal-score">--</div>
-                                <select id="modal-status-select" onchange="updateProspectStatus()" class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm" aria-label="Modal Status Select">
+                                <select id="modal-status-select" onchange="updateProspectStatus()" class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm">
                                     <option value="new">New</option>
                                     <option value="contacted">Contacted</option>
                                     <option value="qualified">Qualified</option>
@@ -800,23 +437,7 @@
     </div>
 
     <!-- Sidebar -->
-    <aside 
-        id="sidebar"
-        class="sidebar fixed left-0 top-0 h-full w-64 bg-slate-900 border-r border-slate-800 p-6 flex flex-col z-40"
-        role="navigation" 
-        aria-label="Main navigation"
-    >
-        <!-- Mobile Close Button -->
-        <button 
-            type="button"
-            class="sidebar-close-btn touch-target" 
-            id="sidebar-close-btn"
-            aria-label="Close navigation menu"
-        >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-        </button>
+    <aside class="fixed left-0 top-0 h-full w-64 bg-slate-900 border-r border-slate-800 p-6 flex flex-col z-40">
         <div class="flex items-center gap-3 mb-10">
             <div class="w-10 h-10 bg-gradient-to-br from-tiger-500 to-tiger-700 rounded-xl flex items-center justify-center text-xl font-bold">🐯</div>
             <span class="text-lg font-bold">Tiger Bot <span class="text-tiger-500">Scout</span></span>
@@ -860,7 +481,7 @@
     </aside>
 
     <!-- Main Content -->
-    <main id="main-content" class="main-content ml-64 p-8" role="main" tabindex="-1">
+    <main class="ml-64 p-8">
         <!-- Header -->
         <header class="flex items-center justify-between mb-8">
             <div>
@@ -868,19 +489,11 @@
                 <p class="text-slate-400">Tiger Bot Scout — AI Recruiting System</p>
             </div>
             <div class="flex items-center gap-4">
-                <div class="last-updated" id="last-updated-container">
-                    <span>Updated:</span>
-                    <span class="last-updated-time" id="last-updated-time">--</span>
-                </div>
-                <div id="connection-status" class="connection-status text-sm" role="status">
-                    <span class="connection-dot" id="status-dot"></span>
+                <div id="connection-status" class="flex items-center gap-2 text-sm">
+                    <span class="w-2 h-2 rounded-full bg-slate-500" id="status-dot"></span>
                     <span class="text-slate-400" id="status-text">Checking...</span>
-                    <div class="connection-tooltip" id="connection-tooltip">
-                        <div class="font-medium mb-1" id="tooltip-status">Checking connection...</div>
-                        <div class="text-slate-400" id="tooltip-detail">Connecting to API</div>
-                    </div>
                 </div>
-                <button onclick="manualRefresh()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition" id="refresh-btn">
+                <button onclick="refreshData()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition" id="refresh-btn">
                     <svg class="w-5 h-5" id="refresh-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                     <span>Refresh</span>
                 </button>
@@ -1047,7 +660,7 @@
                     </div>
                     
                     <!-- Status Filter -->
-                    <select id="filter-status" aria-label="Filter by status" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-tiger-500" onchange="applyFilters()" aria-label="Filter Status">
+                    <select id="filter-status" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-tiger-500" onchange="applyFilters()">
                         <option value="">All Statuses</option>
                         <option value="new">New</option>
                         <option value="contacted">Contacted</option>
@@ -1070,7 +683,7 @@
                     </div>
                     
                     <!-- Source Filter -->
-                    <select id="filter-source" aria-label="Filter by source" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-tiger-500" onchange="applyFilters()" aria-label="Filter Source">
+                    <select id="filter-source" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-tiger-500" onchange="applyFilters()">
                         <option value="">All Sources</option>
                         <option value="line">LINE</option>
                         <option value="telegram">Telegram</option>
@@ -1143,7 +756,7 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="text-sm text-slate-400">Per page:</span>
-                        <select id="pagination-limit" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm" onchange="applyFilters()" aria-label="Pagination Limit">
+                        <select id="pagination-limit" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm" onchange="applyFilters()">
                             <option value="10">10</option>
                             <option value="25" selected>25</option>
                             <option value="50">50</option>
@@ -1191,14 +804,14 @@
                             </div>
                         </div>
                         
-                        <select id="scripts-filter-type" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-tiger-500" onchange="applyScriptsFilters()" aria-label="Scripts Filter Type">
+                        <select id="scripts-filter-type" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-tiger-500" onchange="applyScriptsFilters()">
                             <option value="">All Types</option>
                             <option value="approach">Approach</option>
                             <option value="follow_up">Follow-up</option>
                             <option value="objection">Objection Handler</option>
                         </select>
                         
-                        <select id="scripts-filter-feedback" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-tiger-500" onchange="applyScriptsFilters()" aria-label="Scripts Filter Feedback">
+                        <select id="scripts-filter-feedback" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-tiger-500" onchange="applyScriptsFilters()">
                             <option value="">All Feedback</option>
                             <option value="pending">⏳ Pending</option>
                             <option value="no_response">❌ No Response</option>
@@ -1291,14 +904,14 @@
                         <div class="space-y-4">
                             <div>
                                 <label class="block text-sm text-slate-400 mb-2">Select Prospect</label>
-                                <select id="generate-prospect-select" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-tiger-500" aria-label="Generate Prospect Select">
+                                <select id="generate-prospect-select" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-tiger-500">
                                     <option value="">Loading prospects...</option>
                                 </select>
                             </div>
                             
                             <div>
                                 <label class="block text-sm text-slate-400 mb-2">Script Type</label>
-                                <select id="generate-script-type" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-tiger-500" aria-label="Generate Script Type">
+                                <select id="generate-script-type" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-tiger-500">
                                     <option value="approach">🎯 Initial Approach</option>
                                     <option value="follow_up">🔄 Follow-up Message</option>
                                     <option value="objection">🛡️ Objection Handler</option>
@@ -2055,287 +1668,6 @@
         let currentProspectId = null;
         let filterTimeout = null;
         let isRefreshing = false;
-        let currentSection = 'dashboard'; // Track current active section
-
-        // ============ REFRESH MANAGER (Real-time Updates) ============
-        // ============================================
-// REFRESH MANAGER - Centralized Refresh Control
-// ============================================
-const RefreshManager = {
-    intervals: {},
-    defaultInterval: 30000,
-    sectionIntervals: {
-        'dashboard': 30000,
-        'prospects': 60000,
-        'scripts': 60000,
-        'hive': 60000,
-        'analytics': 120000,
-        'settings': 0
-    },
-    lastUpdate: null,
-    lastUpdateTimer: null,
-    connectionState: 'pending',
-    lastError: null,
-    queuedRefresh: false,
-
-    start(key, callback, interval = null) {
-        const actualInterval = interval || this.sectionIntervals[key] || this.defaultInterval;
-        if (actualInterval === 0) return;
-        this.stop(key);
-        this.executeRefresh(key, callback);
-        this.intervals[key] = setInterval(() => {
-            if (this.shouldRefresh()) {
-                this.executeRefresh(key, callback);
-            } else {
-                this.queuedRefresh = true;
-            }
-        }, actualInterval);
-    },
-
-    async executeRefresh(key, callback) {
-        this.setConnectionState('pending');
-        this.showRefreshIndicator();
-        try {
-            await callback();
-            this.setConnectionState('connected');
-            this.updateLastRefreshTime();
-            this.announceRefresh(key);
-        } catch (error) {
-            this.setConnectionState('error', error.message);
-        }
-        this.hideRefreshIndicator();
-    },
-
-    stop(key) {
-        if (this.intervals[key]) {
-            clearInterval(this.intervals[key]);
-            delete this.intervals[key];
-        }
-    },
-
-    stopAll() {
-        Object.keys(this.intervals).forEach(key => this.stop(key));
-    },
-
-    shouldRefresh() {
-        if (isAnyModalOpen()) return false;
-        if (this.isUserTyping()) return false;
-        return true;
-    },
-
-    isUserTyping() {
-        const activeEl = document.activeElement;
-        if (!activeEl) return false;
-        const tagName = activeEl.tagName.toLowerCase();
-        return tagName === 'input' || tagName === 'textarea' || activeEl.isContentEditable;
-    },
-
-    setConnectionState(state, errorMsg = null) {
-        this.connectionState = state;
-        this.lastError = errorMsg;
-        const dot = document.getElementById('status-dot');
-        const text = document.getElementById('status-text');
-        const tooltipStatus = document.getElementById('tooltip-status');
-        const tooltipDetail = document.getElementById('tooltip-detail');
-
-        if (dot) dot.className = 'connection-dot ' + state;
-        if (text) {
-            const texts = { 'connected': 'Connected', 'pending': 'Refreshing...', 'error': 'Error' };
-            text.textContent = texts[state] || 'Unknown';
-        }
-        if (tooltipStatus) {
-            const texts = { 'connected': '✓ Connected', 'pending': '⟳ Fetching...', 'error': '✗ Failed' };
-            tooltipStatus.textContent = texts[state] || '';
-        }
-        if (tooltipDetail) {
-            if (state === 'error' && errorMsg) tooltipDetail.textContent = errorMsg;
-            else if (state === 'connected') tooltipDetail.textContent = 'All systems operational';
-            else tooltipDetail.textContent = 'Please wait...';
-        }
-    },
-
-    updateLastRefreshTime() {
-        this.lastUpdate = new Date();
-        this.updateLastUpdateDisplay();
-        if (this.lastUpdateTimer) clearInterval(this.lastUpdateTimer);
-        this.lastUpdateTimer = setInterval(() => this.updateLastUpdateDisplay(), 1000);
-    },
-
-    updateLastUpdateDisplay() {
-        const el = document.getElementById('last-updated-time');
-        if (!el || !this.lastUpdate) return;
-        const seconds = Math.floor((new Date() - this.lastUpdate) / 1000);
-        if (seconds < 5) el.textContent = 'just now';
-        else if (seconds < 60) el.textContent = seconds + 's ago';
-        else if (seconds < 3600) el.textContent = Math.floor(seconds / 60) + 'm ago';
-        else el.textContent = this.lastUpdate.toLocaleTimeString();
-    },
-
-    showRefreshIndicator() {
-        const ind = document.getElementById('refresh-indicator');
-        if (ind) ind.classList.add('active');
-    },
-
-    hideRefreshIndicator() {
-        const ind = document.getElementById('refresh-indicator');
-        if (ind) setTimeout(() => ind.classList.remove('active'), 500);
-    },
-
-    announceRefresh(section) {
-        const ann = document.getElementById('sr-refresh-announcer');
-        if (ann) { ann.textContent = section + ' data refreshed'; setTimeout(() => ann.textContent = '', 1000); }
-    },
-
-    processQueuedRefresh() {
-        if (this.queuedRefresh && this.shouldRefresh()) {
-            this.queuedRefresh = false;
-            startRefreshForCurrentSection();
-        }
-    }
-};
-
-// Visibility-based refresh
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden) RefreshManager.stopAll();
-    else { startRefreshForCurrentSection(); RefreshManager.processQueuedRefresh(); }
-});
-
-
-        // ============================================
-// KEYBOARD SHORTCUTS
-// ============================================
-const KeyboardShortcuts = {
-    init() {
-        document.addEventListener('keydown', (e) => this.handleKeydown(e));
-    },
-
-    handleKeydown(e) {
-        if (this.isTyping()) return;
-        if (e.ctrlKey || e.altKey || e.metaKey) return;
-
-        const key = e.key.toLowerCase();
-
-        switch (key) {
-            case '1': e.preventDefault(); showSection('dashboard'); break;
-            case '2': e.preventDefault(); showSection('prospects'); break;
-            case '3': e.preventDefault(); showSection('scripts'); break;
-            case '4': e.preventDefault(); showSection('hive'); break;
-            case '5': e.preventDefault(); showSection('analytics'); break;
-            case '6': e.preventDefault(); showSection('settings'); break;
-            case 'r': e.preventDefault(); manualRefresh(); break;
-            case '/': e.preventDefault(); focusSearch(); break;
-            case 'n':
-                if (currentSection === 'prospects') {
-                    e.preventDefault();
-                    const selected = document.querySelector('.prospect-row.selected, tr[data-prospect-id].bg-slate-700');
-                    if (selected) openScriptModal(selected.dataset.prospectId);
-                }
-                break;
-            case '?': e.preventDefault(); showShortcutsModal(); break;
-            case 'escape': e.preventDefault(); closeAllModals(); break;
-        }
-    },
-
-    isTyping() {
-        const activeEl = document.activeElement;
-        if (!activeEl) return false;
-        const tag = activeEl.tagName.toLowerCase();
-        return tag === 'input' || tag === 'textarea' || activeEl.isContentEditable;
-    }
-};
-
-KeyboardShortcuts.init();
-
-// Shortcuts modal functions
-function showShortcutsModal() {
-    const modal = document.getElementById('shortcuts-modal');
-    if (modal) { modal.classList.add('visible'); modal.querySelector('button')?.focus(); }
-}
-
-function closeShortcutsModal() {
-    const modal = document.getElementById('shortcuts-modal');
-    if (modal) modal.classList.remove('visible');
-}
-
-document.getElementById('shortcuts-modal')?.addEventListener('click', (e) => {
-    if (e.target.id === 'shortcuts-modal') closeShortcutsModal();
-});
-
-// Manual refresh with button state
-async function manualRefresh() {
-    const btn = document.getElementById('refresh-btn');
-    if (btn) { btn.disabled = true; btn.classList.add('opacity-50'); }
-    try { await refreshData(); }
-    finally { if (btn) { btn.disabled = false; btn.classList.remove('opacity-50'); } }
-}
-
-// Focus search in current section
-function focusSearch() {
-    const inputs = { 'prospects': 'prospect-search', 'scripts': 'script-search' };
-    const inputId = inputs[currentSection];
-    if (inputId) {
-        const input = document.getElementById(inputId);
-        if (input) { input.focus(); input.select(); }
-    }
-}
-
-// Check if any modal is open
-function isAnyModalOpen() {
-    const modals = [
-        document.getElementById('prospect-modal'),
-        document.getElementById('script-modal'),
-        document.getElementById('shortcuts-modal')
-    ];
-    return modals.some(modal => {
-        if (!modal) return false;
-        return modal.classList.contains('visible') || 
-               modal.classList.contains('flex') ||
-               modal.style.display === 'flex' ||
-               !modal.classList.contains('hidden');
-    });
-}
-
-// Close all modals
-function closeAllModals() {
-    if (typeof closeProspectModal === 'function') closeProspectModal();
-    if (typeof closeScriptModal === 'function') closeScriptModal();
-    closeShortcutsModal();
-    if (typeof closeMobileSidebar === 'function') closeMobileSidebar();
-    setTimeout(() => RefreshManager.processQueuedRefresh(), 100);
-}
-
-// Start refresh for current section
-function startRefreshForCurrentSection() {
-    RefreshManager.stopAll();
-
-    switch (currentSection) {
-        case 'dashboard':
-            RefreshManager.start('dashboard', async () => {
-                await fetchOverview();
-                await fetchQuickStats();
-            });
-            break;
-        case 'prospects':
-            RefreshManager.start('prospects', fetchProspects);
-            break;
-        case 'scripts':
-            RefreshManager.start('scripts', fetchScripts);
-            break;
-        case 'hive':
-            RefreshManager.start('hive', fetchHiveData);
-            break;
-        case 'analytics':
-            RefreshManager.start('analytics', async () => {
-                if (typeof fetchAnalytics === 'function') await fetchAnalytics();
-            });
-            break;
-        case 'settings':
-            // No auto-refresh for settings
-            break;
-    }
-}
-
-
 
         // ============ UTILITY FUNCTIONS ============
         
@@ -2968,14 +2300,6 @@ function startRefreshForCurrentSection() {
         // ============ NAVIGATION ============
         
         function showSection(sectionName) {
-            // Update current section tracking
-            currentSection = sectionName;
-
-            // Start refresh for new section
-            if (typeof startRefreshForCurrentSection === 'function') {
-                startRefreshForCurrentSection();
-            }
-
             // Hide all sections
             document.querySelectorAll('.section-content').forEach(section => {
                 section.classList.add('hidden');
@@ -3613,12 +2937,12 @@ function startRefreshForCurrentSection() {
                 showSection(hash);
             }
             
-            // Start auto-refresh using RefreshManager
-            // Initial refresh is handled by showSection -> startRefreshForCurrentSection
-            if (typeof RefreshManager !== 'undefined') {
-                console.log('📡 RefreshManager initialized - Auto-refresh enabled');
-                console.log('   Dashboard: 30s, Prospects/Scripts/Hive: 60s, Analytics: 120s');
-            }
+            // Auto-refresh every 60 seconds
+            setInterval(() => {
+                if (!document.hidden) {
+                    refreshData();
+                }
+            }, 60000);
             
             console.log('✅ Dashboard initialized');
         }
@@ -5181,226 +4505,6 @@ ${'='.repeat(50)}
             initTheme();
         }
 
-
-        // ===== MOBILE NAVIGATION & ACCESSIBILITY =====
-
-        // Mobile menu elements
-        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-        const sidebarCloseBtn = document.getElementById('sidebar-close-btn');
-        const sidebar = document.getElementById('sidebar');
-        const sidebarOverlay = document.getElementById('sidebar-overlay');
-
-        // Open mobile sidebar
-        function openMobileSidebar() {
-            if (!sidebar || !sidebarOverlay || !mobileMenuBtn) return;
-
-            sidebar.classList.add('open');
-            sidebarOverlay.classList.add('active');
-            mobileMenuBtn.classList.add('active');
-            mobileMenuBtn.setAttribute('aria-expanded', 'true');
-            sidebarOverlay.setAttribute('aria-hidden', 'false');
-
-            // Focus first focusable element in sidebar
-            const firstFocusable = sidebar.querySelector('button, a, input, select, textarea, [tabindex]:not([tabindex="-1"])');
-            if (firstFocusable) {
-                setTimeout(() => firstFocusable.focus(), 100);
-            }
-
-            // Prevent body scroll
-            document.body.style.overflow = 'hidden';
-        }
-
-        // Close mobile sidebar
-        function closeMobileSidebar() {
-            if (!sidebar || !sidebarOverlay || !mobileMenuBtn) return;
-
-            sidebar.classList.remove('open');
-            sidebarOverlay.classList.remove('active');
-            mobileMenuBtn.classList.remove('active');
-            mobileMenuBtn.setAttribute('aria-expanded', 'false');
-            sidebarOverlay.setAttribute('aria-hidden', 'true');
-
-            // Restore body scroll
-            document.body.style.overflow = '';
-
-            // Return focus to menu button
-            mobileMenuBtn.focus();
-        }
-
-        // Toggle mobile sidebar
-        function toggleMobileSidebar() {
-            if (sidebar && sidebar.classList.contains('open')) {
-                closeMobileSidebar();
-            } else {
-                openMobileSidebar();
-            }
-        }
-
-        // Event listeners for mobile menu
-        if (mobileMenuBtn) {
-            mobileMenuBtn.addEventListener('click', toggleMobileSidebar);
-        }
-
-        if (sidebarCloseBtn) {
-            sidebarCloseBtn.addEventListener('click', closeMobileSidebar);
-        }
-
-        if (sidebarOverlay) {
-            sidebarOverlay.addEventListener('click', closeMobileSidebar);
-        }
-
-        // ===== KEYBOARD NAVIGATION =====
-
-        // Global keyboard event handler
-        document.addEventListener('keydown', function(e) {
-            // Escape key handling
-            if (e.key === 'Escape') {
-                // Close mobile sidebar if open
-                if (sidebar && sidebar.classList.contains('open')) {
-                    closeMobileSidebar();
-                    e.preventDefault();
-                    return;
-                }
-
-                // Close prospect modal if open
-                const prospectModal = document.getElementById('prospect-modal');
-                if (prospectModal && !prospectModal.classList.contains('hidden')) {
-                    closeProspectModal();
-                    e.preventDefault();
-                    return;
-                }
-
-                // Close any other open modals
-                const openModals = document.querySelectorAll('[role="dialog"]:not(.hidden)');
-                openModals.forEach(modal => {
-                    if (!modal.classList.contains('hidden')) {
-                        modal.classList.add('hidden');
-                    }
-                });
-            }
-        });
-
-        // Focus trap for modals
-        function trapFocus(element) {
-            const focusableElements = element.querySelectorAll(
-                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-            );
-            const firstFocusable = focusableElements[0];
-            const lastFocusable = focusableElements[focusableElements.length - 1];
-
-            element.addEventListener('keydown', function(e) {
-                if (e.key !== 'Tab') return;
-
-                if (e.shiftKey) {
-                    if (document.activeElement === firstFocusable) {
-                        lastFocusable.focus();
-                        e.preventDefault();
-                    }
-                } else {
-                    if (document.activeElement === lastFocusable) {
-                        firstFocusable.focus();
-                        e.preventDefault();
-                    }
-                }
-            });
-        }
-
-        // Apply focus trap to modals
-        const prospectModalEl = document.getElementById('prospect-modal');
-        if (prospectModalEl) {
-            trapFocus(prospectModalEl);
-        }
-
-        // ===== ENHANCED MODAL FUNCTIONS =====
-
-        // Store last focused element before modal opens
-        let lastFocusedElement = null;
-
-        // Override showProspectDetail to handle focus
-        const originalShowProspectDetail = typeof showProspectDetail === 'function' ? showProspectDetail : null;
-
-        if (originalShowProspectDetail) {
-            window.showProspectDetail = function(prospect) {
-                lastFocusedElement = document.activeElement;
-                originalShowProspectDetail(prospect);
-
-                // Focus the modal or first focusable element
-                setTimeout(() => {
-                    const modal = document.getElementById('prospect-modal');
-                    if (modal) {
-                        const closeBtn = modal.querySelector('[aria-label="Close modal"]');
-                        if (closeBtn) closeBtn.focus();
-                    }
-                }, 100);
-            };
-        }
-
-        // Override closeProspectModal to restore focus
-        const originalCloseProspectModal = typeof closeProspectModal === 'function' ? closeProspectModal : null;
-
-        if (originalCloseProspectModal) {
-            window.closeProspectModal = function() {
-                originalCloseProspectModal();
-
-                // Restore focus to last focused element
-                if (lastFocusedElement) {
-                    lastFocusedElement.focus();
-                    lastFocusedElement = null;
-                }
-            };
-        }
-
-        // ===== RESPONSIVE HANDLER =====
-
-        // Close mobile sidebar when window resizes to desktop
-        window.addEventListener('resize', function() {
-            if (window.innerWidth >= 768 && sidebar && sidebar.classList.contains('open')) {
-                closeMobileSidebar();
-            }
-        });
-
-        // ===== ANNOUNCE DYNAMIC CONTENT FOR SCREEN READERS =====
-
-        function announceToScreenReader(message) {
-            const announcer = document.createElement('div');
-            announcer.setAttribute('aria-live', 'polite');
-            announcer.setAttribute('aria-atomic', 'true');
-            announcer.classList.add('sr-only');
-            announcer.textContent = message;
-            document.body.appendChild(announcer);
-
-            setTimeout(() => {
-                document.body.removeChild(announcer);
-            }, 1000);
-        }
-
-        // Make function globally available
-        window.announceToScreenReader = announceToScreenReader;
-
 </script>
-
-    <!-- Keyboard Shortcuts Modal -->
-    <div id="shortcuts-modal" class="shortcuts-modal" role="dialog" aria-labelledby="shortcuts-title" aria-modal="true">
-        <div class="shortcuts-content">
-            <div class="flex items-center justify-between mb-4">
-                <h2 id="shortcuts-title" class="text-xl font-bold">⌨️ Keyboard Shortcuts</h2>
-                <button onclick="closeShortcutsModal()" class="text-slate-400 hover:text-white p-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
-            </div>
-            <div class="text-xs uppercase text-slate-500 font-semibold mt-2 mb-2">Navigation</div>
-            <div class="shortcut-row"><span>Command Center</span><span class="shortcut-key">1</span></div>
-            <div class="shortcut-row"><span>Prospects</span><span class="shortcut-key">2</span></div>
-            <div class="shortcut-row"><span>Scripts</span><span class="shortcut-key">3</span></div>
-            <div class="shortcut-row"><span>Hive Learnings</span><span class="shortcut-key">4</span></div>
-            <div class="shortcut-row"><span>Analytics</span><span class="shortcut-key">5</span></div>
-            <div class="shortcut-row"><span>Settings</span><span class="shortcut-key">6</span></div>
-            <div class="text-xs uppercase text-slate-500 font-semibold mt-4 mb-2">Actions</div>
-            <div class="shortcut-row"><span>Refresh</span><span class="shortcut-key">R</span></div>
-            <div class="shortcut-row"><span>Focus search</span><span class="shortcut-key">/</span></div>
-            <div class="shortcut-row"><span>New script</span><span class="shortcut-key">N</span></div>
-            <div class="shortcut-row"><span>Close modal</span><span class="shortcut-key">Esc</span></div>
-            <div class="shortcut-row"><span>Show shortcuts</span><span class="shortcut-key">?</span></div>
-            <p class="text-xs text-slate-500 mt-4 pt-4 border-t border-slate-700">Shortcuts disabled when typing</p>
-        </div>
-    </div>
 </body>
 </html>
