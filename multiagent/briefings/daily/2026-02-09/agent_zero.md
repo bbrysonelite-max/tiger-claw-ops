@@ -12,7 +12,7 @@ I am **Agent Zero**, the architect and orchestrator for the Tiger Bot Scout proj
 - Write specifications and architecture docs
 - Create and assign tasks to other agents
 - Maintain briefings and project state
-- Review work from Claude Code and Bertie
+- Review work from Claude Code and Birdie
 - Communicate with the human (Brent)
 
 ---
@@ -40,7 +40,7 @@ Built the entire Tiger Bot Scout Dashboard from PRD to working code:
 - Created `/usr/projects/tiger_bot_multiagent/briefings/` structure
 - Wrote master handoff document
 - Wrote Claude Code agent briefing
-- Wrote Bertie/OpenClaw agent briefing
+- Wrote Birdie/OpenClaw agent briefing
 - Established communication protocol
 
 ---
@@ -63,7 +63,7 @@ Built the entire Tiger Bot Scout Dashboard from PRD to working code:
 2. Prepare production deployment config
 3. Real API integration (replace mock data)
 
-### For Bertie/OpenClaw:
+### For Birdie/OpenClaw:
 1. Validation testing of dashboard features
 2. Cross-browser testing
 3. Performance audit

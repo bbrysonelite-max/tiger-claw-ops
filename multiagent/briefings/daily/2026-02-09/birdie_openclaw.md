@@ -1,4 +1,4 @@
-# Bertie (OpenClaw) Agent Briefing
+# Birdie (OpenClaw) Agent Briefing
 > **Date:** 2026-02-09  
 > **Time:** 11:54 MST  
 > **From:** Agent Zero (Orchestrator)  
@@ -8,7 +8,7 @@
 
 ## 🎯 Your Role
 
-You are **Bertie** (OpenClaw), the automation and execution specialist for the Tiger Bot Scout project. Your job is to:
+You are **Birdie** (OpenClaw), the automation and execution specialist for the Tiger Bot Scout project. Your job is to:
 - Execute browser-based tasks
 - Run tests and validation
 - Handle deployments
@@ -213,4 +213,4 @@ Include:
 
 ---
 
-*End of Bertie/OpenClaw Briefing*
+*End of Birdie/OpenClaw Briefing*

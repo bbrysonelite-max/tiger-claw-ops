@@ -7,7 +7,7 @@
 
 ## 🎯 Purpose
 
-This protocol ensures all agents (Agent Zero, Claude Code, Bertie/OpenClaw) stay synchronized without requiring the human (Brent) to manually relay information between them.
+This protocol ensures all agents (Agent Zero, Claude Code, Birdie/OpenClaw) stay synchronized without requiring the human (Brent) to manually relay information between them.
 
 ---
 
@@ -99,7 +99,7 @@ See: `templates/daily_briefing_template.md`
          │                                  │
          ▼                                  ▼
 ┌─────────────────┐                ┌─────────────────┐
-│   Claude Code   │                │     Bertie      │
+│   Claude Code   │                │     Birdie      │
 │ (Implementation)│                │   (Automation)  │
 └────────┬────────┘                └────────┬────────┘
          │                                  │
@@ -127,7 +127,7 @@ See: `templates/daily_briefing_template.md`
 2. Include: description, steps, target agent, priority
 3. Notify in daily briefing
 
-### Picking Up Tasks (Claude Code / Bertie)
+### Picking Up Tasks (Claude Code / Birdie)
 
 1. Read daily briefing for priorities
 2. Check `tasks/` folder for `status: "queued"`
