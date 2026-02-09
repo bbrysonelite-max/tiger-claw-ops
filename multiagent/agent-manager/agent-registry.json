@@ -1,0 +1,35 @@
+{
+  "$schema": "./agent.schema.json",
+  "meta": {
+    "version": "1.0.0",
+    "base_port": 18001,
+    "max_agents": 80,
+    "created": "2026-02-09"
+  },
+  "agents": [
+    {
+      "id": "birdie",
+      "name": "Birdie",
+      "type": "personal-assistant",
+      "port": 18001,
+      "workspace": "/Users/Shared/openclaw/agents/birdie",
+      "owner": "brent",
+      "status": "stopped",
+      "auto_start": true,
+      "created": "2026-02-09",
+      "trial_expires": null
+    },
+    {
+      "id": "scout-ops",
+      "name": "Scout Ops Bot",
+      "type": "maintenance",
+      "port": 18002,
+      "workspace": "/Users/Shared/openclaw/agents/scout-ops",
+      "owner": "system",
+      "status": "stopped",
+      "auto_start": true,
+      "created": "2026-02-09",
+      "trial_expires": null
+    }
+  ]
+}
