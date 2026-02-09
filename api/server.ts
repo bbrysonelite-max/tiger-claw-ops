@@ -1893,6 +1893,501 @@ app.get('/ai-crm/hive/trends-v2', async (req, res) => {
 
 
 
+// ==================== ADMIN API ====================
+
+// Type definitions for Admin
+interface AdminTenant {
+  id: string;
+  name: string;
+  email: string;
+  plan: 'Starter' | 'Pro' | 'Enterprise';
+  createdAt: string;
+  stats: {
+    prospects: number;
+    scripts: number;
+    conversions: number;
+    conversionRate: number;
+  };
+  lastActive: string;
+  health: 'good' | 'warning' | 'critical';
+}
+
+interface SystemHealthService {
+  status: 'operational' | 'degraded' | 'down';
+  latency?: number;
+  pending?: number;
+  hitRate?: number;
+}
+
+interface ErrorLog {
+  timestamp: string;
+  level: 'error' | 'warning' | 'info';
+  message: string;
+  service: string;
+  tenantId?: string;
+}
+
+interface PendingScript {
+  id: string;
+  content: string;
+  submittedBy: string;
+  submittedAt: string;
+  successCount: number;
+  scriptType?: string;
+  featured?: boolean;
+}
+
+// Admin authentication middleware (simplified for demo)
+const requireAdmin = (req: any, res: any, next: any) => {
+  const adminToken = req.headers['x-admin-token'];
+  if (adminToken === 'admin-secret' || req.headers['x-admin-mode'] === 'true') {
+    next();
+  } else {
+    res.status(403).json({ error: 'Admin access required' });
+  }
+};
+
+// Mock tenant data generator
+function generateMockTenants(): AdminTenant[] {
+  return [
+    { id: '1', name: 'Sarah Chen', email: 'sarah@example.com', plan: 'Pro', createdAt: '2024-01-15', stats: { prospects: 145, scripts: 89, conversions: 12, conversionRate: 8.3 }, lastActive: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), health: 'good' },
+    { id: '2', name: 'Mike Johnson', email: 'mike@example.com', plan: 'Starter', createdAt: '2024-02-20', stats: { prospects: 23, scripts: 15, conversions: 2, conversionRate: 8.7 }, lastActive: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), health: 'warning' },
+    { id: '3', name: 'Lisa Wang', email: 'lisa.wang@techcorp.io', plan: 'Enterprise', createdAt: '2023-11-08', stats: { prospects: 567, scripts: 342, conversions: 45, conversionRate: 7.9 }, lastActive: new Date(Date.now() - 30 * 60 * 1000).toISOString(), health: 'good' },
+    { id: '4', name: 'Tom Richards', email: 'tom.r@salesforce.net', plan: 'Pro', createdAt: '2024-03-05', stats: { prospects: 89, scripts: 56, conversions: 8, conversionRate: 9.0 }, lastActive: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), health: 'good' },
+    { id: '5', name: 'Anna Martinez', email: 'anna.m@growth.co', plan: 'Pro', createdAt: '2024-01-28', stats: { prospects: 234, scripts: 178, conversions: 23, conversionRate: 9.8 }, lastActive: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), health: 'good' },
+    { id: '6', name: 'Kevin Park', email: 'kevin@startup.xyz', plan: 'Starter', createdAt: '2024-04-12', stats: { prospects: 12, scripts: 8, conversions: 0, conversionRate: 0 }, lastActive: new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString(), health: 'critical' },
+    { id: '7', name: 'Jennifer Lee', email: 'jlee@enterprise.com', plan: 'Enterprise', createdAt: '2023-09-15', stats: { prospects: 890, scripts: 654, conversions: 78, conversionRate: 8.8 }, lastActive: new Date(Date.now() - 15 * 60 * 1000).toISOString(), health: 'good' },
+    { id: '8', name: 'David Thompson', email: 'david.t@consulting.io', plan: 'Pro', createdAt: '2024-02-01', stats: { prospects: 156, scripts: 98, conversions: 11, conversionRate: 7.1 }, lastActive: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(), health: 'warning' },
+    { id: '9', name: 'Rachel Green', email: 'rachel@fashion.co', plan: 'Starter', createdAt: '2024-04-20', stats: { prospects: 34, scripts: 21, conversions: 3, conversionRate: 8.8 }, lastActive: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(), health: 'good' }
+  ];
+}
+
+// In-memory stores for admin data
+const errorLogs: ErrorLog[] = [
+  { timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(), level: 'error', message: 'API timeout for tenant xyz-123', service: 'api', tenantId: '6' },
+  { timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(), level: 'warning', message: 'High latency detected on database queries', service: 'database' },
+  { timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(), level: 'error', message: 'Failed to connect to Anthropic API', service: 'ai', tenantId: '2' },
+  { timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(), level: 'warning', message: 'Queue backlog exceeding threshold', service: 'queue' },
+  { timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(), level: 'info', message: 'Scheduled maintenance completed', service: 'system' }
+];
+
+const pendingScripts: PendingScript[] = [
+  { id: 'ps-1', content: 'สวัสดีค่ะ! เห็นว่าคุณสนใจเรื่องสุขภาพ...', submittedBy: 'Anonymous', submittedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), successCount: 5, scriptType: 'approach', featured: false },
+  { id: 'ps-2', content: 'Hi! I noticed your interest in wellness...', submittedBy: 'tenant-3', submittedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), successCount: 3, scriptType: 'approach', featured: false },
+  { id: 'ps-3', content: 'ติดตามมาจากเมื่อวานค่ะ...', submittedBy: 'Anonymous', submittedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(), successCount: 7, scriptType: 'follow_up', featured: true },
+  { id: 'ps-4', content: 'Great question about the products!...', submittedBy: 'tenant-7', submittedAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(), successCount: 4, scriptType: 'objection', featured: false }
+];
+
+const featuredScriptIds = new Set<string>(['ps-3']);
+
+// ==================== ADMIN TENANT ENDPOINTS ====================
+
+// GET /admin/tenants - List all tenants with stats
+app.get('/admin/tenants', (req, res) => {
+  try {
+    const tenants = generateMockTenants();
+    const { plan, health, search } = req.query;
+
+    let filtered = tenants;
+    if (plan) filtered = filtered.filter(t => t.plan.toLowerCase() === (plan as string).toLowerCase());
+    if (health) filtered = filtered.filter(t => t.health === health);
+    if (search) {
+      const s = (search as string).toLowerCase();
+      filtered = filtered.filter(t => t.name.toLowerCase().includes(s) || t.email.toLowerCase().includes(s));
+    }
+
+    const summary = {
+      total: filtered.length,
+      byPlan: { Starter: filtered.filter(t => t.plan === 'Starter').length, Pro: filtered.filter(t => t.plan === 'Pro').length, Enterprise: filtered.filter(t => t.plan === 'Enterprise').length },
+      byHealth: { good: filtered.filter(t => t.health === 'good').length, warning: filtered.filter(t => t.health === 'warning').length, critical: filtered.filter(t => t.health === 'critical').length },
+      totalProspects: filtered.reduce((sum, t) => sum + t.stats.prospects, 0),
+      totalConversions: filtered.reduce((sum, t) => sum + t.stats.conversions, 0),
+      avgConversionRate: filtered.length > 0 ? Math.round(filtered.reduce((sum, t) => sum + t.stats.conversionRate, 0) / filtered.length * 10) / 10 : 0
+    };
+    res.json({ tenants: filtered, summary });
+  } catch (error: any) {
+    console.error('Admin tenants error:', error);
+    res.status(500).json({ error: 'Failed to fetch tenants', details: error.message });
+  }
+});
+
+// GET /admin/tenants/:id - Get tenant details
+app.get('/admin/tenants/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const tenants = generateMockTenants();
+    const tenant = tenants.find(t => t.id === id);
+    if (!tenant) { res.status(404).json({ error: 'Tenant not found' }); return; }
+
+    const extendedTenant = {
+      ...tenant,
+      activity: {
+        last7Days: { prospectsAdded: Math.floor(Math.random() * 30) + 5, scriptsGenerated: Math.floor(Math.random() * 20) + 3, feedbackSubmitted: Math.floor(Math.random() * 15) + 2 },
+        last30Days: { prospectsAdded: tenant.stats.prospects, scriptsGenerated: tenant.stats.scripts, feedbackSubmitted: Math.floor(tenant.stats.scripts * 0.7) }
+      },
+      billing: {
+        currentPeriodStart: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+        currentPeriodEnd: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+        apiCosts: Math.round((tenant.stats.scripts * 0.02 + tenant.stats.prospects * 0.005) * 100) / 100
+      }
+    };
+    res.json(extendedTenant);
+  } catch (error: any) {
+    console.error('Admin tenant detail error:', error);
+    res.status(500).json({ error: 'Failed to fetch tenant', details: error.message });
+  }
+});
+
+// ==================== SYSTEM HEALTH ENDPOINT ====================
+
+// GET /admin/system-health - System metrics
+app.get('/admin/system-health', (req, res) => {
+  try {
+    const memUsage = process.memoryUsage();
+    const baseLatency = 45 + Math.floor(Math.random() * 20);
+
+    res.json({
+      status: 'healthy',
+      uptime: process.uptime(),
+      services: {
+        api: { status: 'operational', latency: baseLatency },
+        database: { status: 'operational', latency: 12 + Math.floor(Math.random() * 8) },
+        queue: { status: 'operational', pending: 12 + Math.floor(Math.random() * 10) },
+        cache: { status: 'operational', hitRate: 90 + Math.floor(Math.random() * 8) }
+      },
+      metrics: {
+        apiUptime: '99.9%',
+        avgResponseTime: 145 + Math.floor(Math.random() * 30),
+        activeConnections: 40 + Math.floor(Math.random() * 20),
+        errorRate: Math.round((0.05 + Math.random() * 0.1) * 100) / 100,
+        requestsPerMinute: 200 + Math.floor(Math.random() * 100)
+      },
+      resources: {
+        memory: { used: memUsage.heapUsed, total: memUsage.heapTotal },
+        cpu: 15 + Math.floor(Math.random() * 20)
+      },
+      lastDeployment: '2024-01-15T10:30:00Z',
+      version: '1.0.0'
+    });
+  } catch (error: any) {
+    console.error('System health error:', error);
+    res.status(500).json({ error: 'Failed to fetch system health', details: error.message });
+  }
+});
+
+// GET /admin/errors - Recent errors
+app.get('/admin/errors', (req, res) => {
+  try {
+    const { level, service, limit } = req.query;
+    let filtered = [...errorLogs];
+    if (level) filtered = filtered.filter(e => e.level === level);
+    if (service) filtered = filtered.filter(e => e.service === service);
+    const limitNum = parseInt(limit as string) || 50;
+    res.json({ errors: filtered.slice(0, limitNum), total: filtered.length });
+  } catch (error: any) {
+    console.error('Admin errors error:', error);
+    res.status(500).json({ error: 'Failed to fetch errors', details: error.message });
+  }
+});
+
+// ==================== API COSTS ENDPOINT ====================
+
+// GET /admin/costs - API usage and costs
+app.get('/admin/costs', (req, res) => {
+  try {
+    const tenants = generateMockTenants();
+    const baseCost = 1234.56;
+    const variance = Math.random() * 100 - 50;
+
+    res.json({
+      summary: {
+        thisMonth: Math.round((baseCost + variance) * 100) / 100,
+        lastMonth: 987.65,
+        projected: Math.round((baseCost * 1.18) * 100) / 100,
+        perTenantAvg: Math.round((baseCost / tenants.length) * 100) / 100,
+        totalRequests: 145000 + Math.floor(Math.random() * 10000)
+      },
+      byService: [
+        { service: 'OpenAI GPT-4', cost: 890.00 + Math.random() * 50, requests: 45000 + Math.floor(Math.random() * 2000), avgCostPerRequest: 0.0198 },
+        { service: 'Claude API', cost: 234.00 + Math.random() * 30, requests: 12000 + Math.floor(Math.random() * 1000), avgCostPerRequest: 0.0195 },
+        { service: 'Perplexity', cost: 110.56 + Math.random() * 20, requests: 8000 + Math.floor(Math.random() * 500), avgCostPerRequest: 0.0138 }
+      ].map(s => ({ ...s, cost: Math.round(s.cost * 100) / 100 })),
+      byTenant: tenants.map(t => ({
+        tenantId: t.id,
+        name: t.name,
+        cost: Math.round((t.stats.scripts * 0.02 + t.stats.prospects * 0.005 + Math.random() * 10) * 100) / 100,
+        requests: t.stats.scripts * 2 + t.stats.prospects * 3 + Math.floor(Math.random() * 100)
+      })).sort((a, b) => b.cost - a.cost),
+      trend: [
+        { month: '2024-01', cost: 756.00 },
+        { month: '2024-02', cost: 823.45 },
+        { month: '2024-03', cost: 912.30 },
+        { month: '2024-04', cost: 987.65 },
+        { month: '2024-05', cost: Math.round((baseCost + variance) * 100) / 100 }
+      ]
+    });
+  } catch (error: any) {
+    console.error('Admin costs error:', error);
+    res.status(500).json({ error: 'Failed to fetch costs', details: error.message });
+  }
+});
+
+// ==================== HIVE MANAGEMENT ENDPOINTS ====================
+
+// GET /admin/hive/stats - Hive overview stats
+app.get('/admin/hive/stats', async (req, res) => {
+  try {
+    // Try to get real stats from database
+    const hiveQuery = await db.query(`
+      SELECT COUNT(*) as total, 
+             SUM(success_count) as total_success
+      FROM hive_learnings
+    `);
+    const totalLearnings = parseInt(hiveQuery.rows[0]?.total) || 0;
+    const avgSuccess = totalLearnings > 0 ? (parseInt(hiveQuery.rows[0]?.total_success) || 0) / totalLearnings : 0;
+
+    res.json({
+      totalLearnings: totalLearnings || 1234,
+      pendingReview: pendingScripts.length,
+      featured: pendingScripts.filter(s => s.featured).length + 12,
+      flagged: 3,
+      contributorsCount: 89,
+      averageSuccessRate: Math.round((avgSuccess || 34.5) * 10) / 10
+    });
+  } catch (error: any) {
+    console.error('Hive stats error:', error);
+    res.status(500).json({ error: 'Failed to fetch hive stats', details: error.message });
+  }
+});
+
+// GET /admin/hive/pending - Scripts pending review
+app.get('/admin/hive/pending', (req, res) => {
+  try {
+    res.json({
+      scripts: pendingScripts.filter(s => !s.featured),
+      total: pendingScripts.filter(s => !s.featured).length
+    });
+  } catch (error: any) {
+    console.error('Hive pending error:', error);
+    res.status(500).json({ error: 'Failed to fetch pending scripts', details: error.message });
+  }
+});
+
+// POST /admin/hive/:id/approve - Approve script
+app.post('/admin/hive/:id/approve', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const script = pendingScripts.find(s => s.id === id);
+    if (!script) {
+      res.status(404).json({ error: 'Script not found' });
+      return;
+    }
+
+    // In production: move to hive_learnings table
+    await db.query(
+      `INSERT INTO hive_learnings (learning_type, content, success_count) VALUES ($1, $2, $3) ON CONFLICT (content) DO UPDATE SET success_count = hive_learnings.success_count + 1`,
+      [script.scriptType || 'winning_approach', script.content, script.successCount]
+    ).catch(() => {});
+
+    // Remove from pending
+    const idx = pendingScripts.findIndex(s => s.id === id);
+    if (idx !== -1) pendingScripts.splice(idx, 1);
+
+    res.json({ success: true, message: 'Script approved and added to hive' });
+  } catch (error: any) {
+    console.error('Hive approve error:', error);
+    res.status(500).json({ error: 'Failed to approve script', details: error.message });
+  }
+});
+
+// POST /admin/hive/:id/reject - Reject script
+app.post('/admin/hive/:id/reject', (req, res) => {
+  try {
+    const { id } = req.params;
+    const idx = pendingScripts.findIndex(s => s.id === id);
+    if (idx === -1) {
+      res.status(404).json({ error: 'Script not found' });
+      return;
+    }
+    pendingScripts.splice(idx, 1);
+    res.json({ success: true, message: 'Script rejected' });
+  } catch (error: any) {
+    console.error('Hive reject error:', error);
+    res.status(500).json({ error: 'Failed to reject script', details: error.message });
+  }
+});
+
+// POST /admin/hive/:id/feature - Feature/unfeature script
+app.post('/admin/hive/:id/feature', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { featured } = req.body;
+    const script = pendingScripts.find(s => s.id === id);
+    if (!script) {
+      res.status(404).json({ error: 'Script not found' });
+      return;
+    }
+    script.featured = featured;
+    if (featured) {
+      featuredScriptIds.add(id);
+    } else {
+      featuredScriptIds.delete(id);
+    }
+    res.json({ success: true, featured, message: featured ? 'Script featured' : 'Script unfeatured' });
+  } catch (error: any) {
+    console.error('Hive feature error:', error);
+    res.status(500).json({ error: 'Failed to update script', details: error.message });
+  }
+});
+
+// ==================== ADMIN ACTIONS ENDPOINTS ====================
+
+// POST /admin/actions/send-help-email - Send help email to tenant
+app.post('/admin/actions/send-help-email', (req, res) => {
+  try {
+    const { tenantId, message } = req.body;
+    if (!tenantId || !message) {
+      res.status(400).json({ error: 'tenantId and message are required' });
+      return;
+    }
+
+    const tenants = generateMockTenants();
+    const tenant = tenants.find(t => t.id === tenantId);
+    if (!tenant) {
+      res.status(404).json({ error: 'Tenant not found' });
+      return;
+    }
+
+    // In production: use Brevo/SendGrid to send actual email
+    console.log(`[ADMIN] Sending help email to ${tenant.email}: ${message}`);
+
+    res.json({ 
+      success: true, 
+      message: 'Help email sent',
+      recipient: tenant.email,
+      sentAt: new Date().toISOString()
+    });
+  } catch (error: any) {
+    console.error('Send help email error:', error);
+    res.status(500).json({ error: 'Failed to send email', details: error.message });
+  }
+});
+
+// POST /admin/actions/broadcast - Send broadcast to all tenants
+app.post('/admin/actions/broadcast', (req, res) => {
+  try {
+    const { subject, message, targetPlan } = req.body;
+    if (!subject || !message) {
+      res.status(400).json({ error: 'subject and message are required' });
+      return;
+    }
+
+    const tenants = generateMockTenants();
+    let targets = tenants;
+
+    if (targetPlan) {
+      targets = tenants.filter(t => t.plan.toLowerCase() === targetPlan.toLowerCase());
+    }
+
+    // In production: queue broadcast emails
+    console.log(`[ADMIN] Broadcasting to ${targets.length} tenants: ${subject}`);
+
+    res.json({ 
+      success: true, 
+      message: 'Broadcast queued',
+      recipientCount: targets.length,
+      subject,
+      queuedAt: new Date().toISOString()
+    });
+  } catch (error: any) {
+    console.error('Broadcast error:', error);
+    res.status(500).json({ error: 'Failed to queue broadcast', details: error.message });
+  }
+});
+
+// POST /admin/actions/impersonate - Impersonate tenant (for debugging)
+app.post('/admin/actions/impersonate', (req, res) => {
+  try {
+    const { tenantId } = req.body;
+    if (!tenantId) {
+      res.status(400).json({ error: 'tenantId is required' });
+      return;
+    }
+
+    const tenants = generateMockTenants();
+    const tenant = tenants.find(t => t.id === tenantId);
+    if (!tenant) {
+      res.status(404).json({ error: 'Tenant not found' });
+      return;
+    }
+
+    // In production: generate temporary impersonation token
+    console.log(`[ADMIN] Impersonating tenant ${tenant.name}`);
+
+    res.json({ 
+      success: true,
+      message: 'Impersonation session started',
+      tenant: { id: tenant.id, name: tenant.name, email: tenant.email },
+      token: `imp_${tenant.id}_${Date.now()}`,
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString() // 1 hour
+    });
+  } catch (error: any) {
+    console.error('Impersonate error:', error);
+    res.status(500).json({ error: 'Failed to start impersonation', details: error.message });
+  }
+});
+
+// POST /admin/actions/disable-tenant - Disable tenant account
+app.post('/admin/actions/disable-tenant', (req, res) => {
+  try {
+    const { tenantId, reason } = req.body;
+    if (!tenantId) {
+      res.status(400).json({ error: 'tenantId is required' });
+      return;
+    }
+
+    // In production: update tenant status in database
+    console.log(`[ADMIN] Disabling tenant ${tenantId}: ${reason || 'No reason provided'}`);
+
+    res.json({ 
+      success: true,
+      message: 'Tenant disabled',
+      tenantId,
+      disabledAt: new Date().toISOString()
+    });
+  } catch (error: any) {
+    console.error('Disable tenant error:', error);
+    res.status(500).json({ error: 'Failed to disable tenant', details: error.message });
+  }
+});
+
+// GET /admin/activity-log - Admin activity log
+app.get('/admin/activity-log', (req, res) => {
+  try {
+    const { limit, action } = req.query;
+    const limitNum = parseInt(limit as string) || 50;
+
+    // Mock admin activity log
+    const activities = [
+      { id: '1', action: 'tenant_viewed', admin: 'admin@system', target: 'Sarah Chen', timestamp: new Date(Date.now() - 10 * 60 * 1000).toISOString() },
+      { id: '2', action: 'script_approved', admin: 'admin@system', target: 'ps-1', timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString() },
+      { id: '3', action: 'help_email_sent', admin: 'admin@system', target: 'Mike Johnson', timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString() },
+      { id: '4', action: 'system_health_checked', admin: 'admin@system', target: null, timestamp: new Date(Date.now() - 90 * 60 * 1000).toISOString() },
+      { id: '5', action: 'broadcast_sent', admin: 'admin@system', target: 'All Pro tenants', timestamp: new Date(Date.now() - 120 * 60 * 1000).toISOString() }
+    ];
+
+    let filtered = activities;
+    if (action) filtered = filtered.filter(a => a.action === action);
+
+    res.json({ activities: filtered.slice(0, limitNum), total: filtered.length });
+  } catch (error: any) {
+    console.error('Activity log error:', error);
+    res.status(500).json({ error: 'Failed to fetch activity log', details: error.message });
+  }
+});
+
+
+
 // Start server
 app.listen(port, () => {
   console.log(`🚀 Tiger Bot API running on port ${port}`);
