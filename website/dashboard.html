@@ -654,6 +654,160 @@
         .shortcut-hint { display: none; font-size: 0.625rem; padding: 0.125rem 0.375rem; background: #334155; border-radius: 0.25rem; margin-left: 0.5rem; font-family: monospace; }
         @media (min-width: 1024px) { .shortcut-hint { display: inline-block; } }
     
+    
+        /* ===== DATA CACHING INDICATOR ===== */
+        .cache-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 500;
+            border-radius: 4px;
+            background: rgba(251, 191, 36, 0.15);
+            color: #fbbf24;
+            margin-left: 8px;
+        }
+        .cache-indicator svg { width: 12px; height: 12px; }
+        .cache-indicator.fresh { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+
+        /* ===== CONTEXT MENU ===== */
+        .context-menu {
+            position: fixed;
+            z-index: 1000;
+            min-width: 200px;
+            background: var(--bg-secondary, #1e293b);
+            border: 1px solid var(--border-color, #334155);
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            padding: 6px 0;
+            opacity: 0;
+            transform: scale(0.95);
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            pointer-events: none;
+        }
+        .context-menu.visible { opacity: 1; transform: scale(1); pointer-events: auto; }
+        .context-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            font-size: 13px;
+            color: var(--text-primary, #f8fafc);
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .context-menu-item:hover, .context-menu-item.focused { background: rgba(249, 115, 22, 0.1); }
+        .context-menu-item.disabled { opacity: 0.4; pointer-events: none; }
+        .context-menu-divider { height: 1px; background: var(--border-color, #334155); margin: 6px 0; }
+        .context-menu-icon { width: 16px; text-align: center; }
+        .context-menu-shortcut { margin-left: auto; font-size: 11px; color: var(--text-muted, #64748b); }
+
+        /* ===== UNDO TOAST ===== */
+        .undo-toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            transition: transform 0.3s ease;
+        }
+        .undo-toast.visible { transform: translateX(-50%) translateY(0); }
+        .undo-toast-message { font-size: 14px; color: #f8fafc; }
+        .undo-toast-btn {
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            background: #f97316;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .undo-toast-btn:hover { background: #ea580c; }
+        .undo-toast-timer { width: 100%; height: 3px; background: #334155; position: absolute; bottom: 0; left: 0; border-radius: 0 0 8px 8px; overflow: hidden; }
+        .undo-toast-timer-bar { height: 100%; background: #f97316; transition: width linear; }
+
+        /* ===== BATCH SELECTION ===== */
+        .batch-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #f97316; }
+        .batch-action-bar {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 1px solid #f97316;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(249, 115, 22, 0.3);
+            z-index: 1500;
+            transition: transform 0.3s ease;
+        }
+        .batch-action-bar.visible { transform: translateX(-50%) translateY(0); }
+        .batch-count { font-size: 14px; font-weight: 600; color: #f97316; }
+        .batch-actions { display: flex; align-items: center; gap: 8px; }
+        .batch-action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            background: transparent;
+            color: #f8fafc;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .batch-action-btn:hover { background: rgba(249, 115, 22, 0.1); border-color: #f97316; }
+        .batch-action-btn.primary { background: #f97316; border-color: #f97316; }
+        .batch-action-btn.primary:hover { background: #ea580c; }
+        .batch-clear-btn { padding: 8px; background: transparent; border: none; color: #94a3b8; cursor: pointer; }
+        .batch-clear-btn:hover { color: #ef4444; }
+        .batch-status-dropdown { position: relative; }
+        .batch-status-menu {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            margin-bottom: 8px;
+            min-width: 180px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            padding: 6px 0;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: all 0.2s ease;
+        }
+        .batch-status-dropdown:hover .batch-status-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+        .batch-status-option {
+            display: block;
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 13px;
+            text-align: left;
+            background: transparent;
+            border: none;
+            color: #f8fafc;
+            cursor: pointer;
+        }
+        .batch-status-option:hover { background: rgba(249, 115, 22, 0.1); }
+        @media (hover: none) and (pointer: coarse) { .context-menu-item { padding: 14px 16px; } }
+
     </style>
 </head>
 <body class="bg-slate-950 text-white min-h-screen font-sans">
@@ -5467,5 +5621,800 @@ window.addEventListener('resize',debounce(()=>{if(typeof handleResize==='functio
 document.addEventListener('DOMContentLoaded',function(){LoadingManager.updateStatus('Loading...');setTimeout(()=>{if(window.overviewData||document.querySelector('.overview-card')){LoadingManager.updateStatus('Ready!');LoadingManager.markComplete()}else setTimeout(()=>LoadingManager.markComplete(),2500)},1000)});
 if(typeof window.fetchOverviewData==='function'){const o=window.fetchOverviewData;window.fetchOverviewData=async function(...a){LoadingManager.updateStatus('Fetching data...');try{const r=await o.apply(this,a);LoadingManager.updateStatus('Ready!');setTimeout(()=>LoadingManager.markComplete(),200);return r}catch(e){LoadingManager.markComplete();throw e}}}
 </script>
+<script>
+// ===== DATA CACHING, CONTEXT MENU, UNDO SYSTEM, BATCH ACTIONS =====
+// Added: 2026-02-09
+// ===== DATA CACHING SYSTEM =====
+const CacheManager = {
+    prefix: 'tbs_cache_',
+    ttl: 5 * 60 * 1000,
+
+    set(key, data, customTtl = this.ttl) {
+        try {
+            const item = { data, timestamp: Date.now(), expiry: Date.now() + customTtl };
+            localStorage.setItem(this.prefix + key, JSON.stringify(item));
+        } catch (e) { this.clearExpired(); }
+    },
+
+    get(key) {
+        try {
+            const item = localStorage.getItem(this.prefix + key);
+            if (!item) return null;
+            const parsed = JSON.parse(item);
+            if (Date.now() > parsed.expiry) { this.delete(key); return null; }
+            return parsed.data;
+        } catch (e) { return null; }
+    },
+
+    getWithMeta(key) {
+        try {
+            const item = localStorage.getItem(this.prefix + key);
+            if (!item) return null;
+            const parsed = JSON.parse(item);
+            return {
+                data: parsed.data,
+                timestamp: parsed.timestamp,
+                isExpired: Date.now() > parsed.expiry,
+                age: Date.now() - parsed.timestamp,
+                ageFormatted: this.formatAge(Date.now() - parsed.timestamp)
+            };
+        } catch (e) { return null; }
+    },
+
+    formatAge(ms) {
+        const s = Math.floor(ms / 1000);
+        if (s < 60) return `${s}s ago`;
+        const m = Math.floor(s / 60);
+        if (m < 60) return `${m}m ago`;
+        return `${Math.floor(m / 60)}h ago`;
+    },
+
+    delete(key) { localStorage.removeItem(this.prefix + key); },
+
+    clear() {
+        const keys = Object.keys(localStorage).filter(k => k.startsWith(this.prefix));
+        keys.forEach(k => localStorage.removeItem(k));
+        if (typeof showToast === 'function') showToast(`Cache cleared (${keys.length} entries)`, 'success');
+    },
+
+    clearExpired() {
+        Object.keys(localStorage).filter(k => k.startsWith(this.prefix)).forEach(k => {
+            try {
+                const item = JSON.parse(localStorage.getItem(k));
+                if (Date.now() > item.expiry) localStorage.removeItem(k);
+            } catch (e) { localStorage.removeItem(k); }
+        });
+    },
+
+    invalidate(pattern) {
+        Object.keys(localStorage).filter(k => k.startsWith(this.prefix) && k.includes(pattern))
+            .forEach(k => localStorage.removeItem(k));
+    }
+};
+window.CacheManager = CacheManager;
+CacheManager.clearExpired();
+
+// ===== CONTEXT MENU SYSTEM =====
+const ContextMenu = {
+    element: null,
+    items: [],
+    focusedIndex: -1,
+    currentProspect: null,
+    longPressTimer: null,
+
+    init() {
+        this.element = document.createElement('div');
+        this.element.className = 'context-menu';
+        this.element.setAttribute('role', 'menu');
+        document.body.appendChild(this.element);
+
+        document.addEventListener('click', (e) => {
+            if (!this.element.contains(e.target)) this.hide();
+        });
+        document.addEventListener('scroll', () => this.hide(), true);
+        document.addEventListener('keydown', (e) => this.handleKeyboard(e));
+    },
+
+    show(x, y, items, prospect = null) {
+        this.items = items;
+        this.currentProspect = prospect;
+        this.focusedIndex = -1;
+
+        this.element.innerHTML = items.map((item, idx) => {
+            if (item.divider) return '<div class="context-menu-divider"></div>';
+            return `<div class="context-menu-item ${item.disabled ? 'disabled' : ''}" data-index="${idx}">
+                <span class="context-menu-icon">${item.icon || ''}</span>
+                <span>${item.label}</span>
+                ${item.shortcut ? `<span class="context-menu-shortcut">${item.shortcut}</span>` : ''}
+            </div>`;
+        }).join('');
+
+        this.element.querySelectorAll('.context-menu-item:not(.disabled)').forEach(el => {
+            el.addEventListener('click', () => {
+                const item = this.items[parseInt(el.dataset.index)];
+                if (item?.action) { item.action(); this.hide(); }
+            });
+        });
+
+        // Position in viewport
+        this.element.style.left = '0'; this.element.style.top = '0';
+        this.element.classList.add('visible');
+        const rect = this.element.getBoundingClientRect();
+        const vw = window.innerWidth, vh = window.innerHeight;
+        this.element.style.left = `${Math.min(x, vw - rect.width - 10)}px`;
+        this.element.style.top = `${Math.min(y, vh - rect.height - 10)}px`;
+    },
+
+    hide() {
+        this.element.classList.remove('visible');
+        this.focusedIndex = -1;
+    },
+
+    handleKeyboard(e) {
+        if (!this.element.classList.contains('visible')) return;
+        const items = this.element.querySelectorAll('.context-menu-item:not(.disabled)');
+        if (!items.length) return;
+
+        if (e.key === 'Escape') { this.hide(); e.preventDefault(); }
+        else if (e.key === 'ArrowDown') {
+            this.focusedIndex = (this.focusedIndex + 1) % items.length;
+            this.updateFocus(items); e.preventDefault();
+        } else if (e.key === 'ArrowUp') {
+            this.focusedIndex = this.focusedIndex <= 0 ? items.length - 1 : this.focusedIndex - 1;
+            this.updateFocus(items); e.preventDefault();
+        } else if (e.key === 'Enter' || e.key === ' ') {
+            if (items[this.focusedIndex]) items[this.focusedIndex].click();
+            e.preventDefault();
+        }
+    },
+
+    updateFocus(items) {
+        items.forEach((el, i) => el.classList.toggle('focused', i === this.focusedIndex));
+        if (items[this.focusedIndex]) items[this.focusedIndex].focus();
+    },
+
+    copyText(text) {
+        navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard', 'success'));
+    },
+
+    showProspectMenu(x, y, prospect) {
+        const status = prospect.status || 'new';
+        const items = [
+            { icon: '📋', label: 'Copy Name', action: () => this.copyText(prospect.name || prospect.platformUsername) },
+            { icon: '📝', label: 'Generate Script', action: () => { if (typeof generateScriptForProspect === 'function') generateScriptForProspect(prospect); } },
+            { icon: '✏️', label: 'Edit Notes', action: () => { if (typeof showProspectDetail === 'function') showProspectDetail(prospect); } },
+            { icon: '📊', label: 'View Details', action: () => { if (typeof showProspectDetail === 'function') showProspectDetail(prospect); } },
+            { divider: true },
+            { icon: '📞', label: 'Mark Contacted', action: () => this.updateProspectStatus(prospect, 'contacted'), disabled: status === 'contacted' },
+            { icon: '✅', label: 'Mark Qualified', action: () => this.updateProspectStatus(prospect, 'qualified'), disabled: status === 'qualified' },
+            { icon: '🎉', label: 'Mark Converted', action: () => this.updateProspectStatus(prospect, 'converted'), disabled: status === 'converted' },
+            { divider: true },
+            { icon: '🔗', label: 'Open Platform', action: () => { if (prospect.platformLink) window.open(prospect.platformLink, '_blank'); }, disabled: !prospect.platformLink }
+        ];
+        this.show(x, y, items, prospect);
+    },
+
+    async updateProspectStatus(prospect, newStatus) {
+        const oldStatus = prospect.status;
+        try {
+            if (typeof updateProspectStatus === 'function') {
+                await updateProspectStatus(prospect.id, newStatus);
+                UndoManager.push({
+                    description: `Status: ${oldStatus} → ${newStatus}`,
+                    undo: async () => {
+                        await updateProspectStatus(prospect.id, oldStatus);
+                        CacheManager.invalidate('prospects');
+                        if (typeof fetchProspectsData === 'function') fetchProspectsData();
+                    }
+                });
+                CacheManager.invalidate('prospects');
+                CacheManager.invalidate('overview');
+            }
+        } catch (e) { showToast('Failed to update status', 'error'); }
+    }
+};
+window.ContextMenu = ContextMenu;
+
+// ===== UNDO SYSTEM =====
+const UndoManager = {
+    stack: [],
+    maxSize: 10,
+    toastElement: null,
+    toastTimer: null,
+    toastDuration: 5000,
+
+    init() {
+        // Create undo toast element
+        this.toastElement = document.createElement('div');
+        this.toastElement.className = 'undo-toast';
+        this.toastElement.innerHTML = `
+            <span class="undo-toast-message"></span>
+            <button class="undo-toast-btn" onclick="UndoManager.undo()">Undo</button>
+            <div class="undo-toast-timer"><div class="undo-toast-timer-bar"></div></div>
+        `;
+        document.body.appendChild(this.toastElement);
+
+        // Keyboard shortcut: Ctrl+Z
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+                const activeEl = document.activeElement;
+                const isInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
+                if (!isInput && this.stack.length > 0) {
+                    e.preventDefault();
+                    this.undo();
+                }
+            }
+        });
+
+        // Restore from sessionStorage
+        this.restore();
+    },
+
+    push(action) {
+        this.stack.push({
+            ...action,
+            timestamp: Date.now()
+        });
+        if (this.stack.length > this.maxSize) this.stack.shift();
+        this.save();
+        this.showToast(action.description);
+    },
+
+    async undo() {
+        const action = this.stack.pop();
+        if (!action) return;
+
+        try {
+            await action.undo();
+            showToast(`Undone: ${action.description}`, 'success');
+        } catch (e) {
+            showToast('Undo failed', 'error');
+            console.error('Undo error:', e);
+        }
+
+        this.save();
+        this.hideToast();
+    },
+
+    showToast(message) {
+        clearTimeout(this.toastTimer);
+        const msgEl = this.toastElement.querySelector('.undo-toast-message');
+        const timerBar = this.toastElement.querySelector('.undo-toast-timer-bar');
+
+        msgEl.textContent = message;
+        timerBar.style.transition = 'none';
+        timerBar.style.width = '100%';
+
+        // Force reflow
+        timerBar.offsetHeight;
+
+        timerBar.style.transition = `width ${this.toastDuration}ms linear`;
+        timerBar.style.width = '0%';
+
+        this.toastElement.classList.add('visible');
+
+        this.toastTimer = setTimeout(() => this.hideToast(), this.toastDuration);
+    },
+
+    hideToast() {
+        clearTimeout(this.toastTimer);
+        this.toastElement.classList.remove('visible');
+    },
+
+    save() {
+        // Save to sessionStorage for persistence across page refreshes
+        try {
+            const simplified = this.stack.map(a => ({
+                description: a.description,
+                timestamp: a.timestamp,
+                // Note: Cannot serialize functions, so undo won't work after refresh
+                // This is stored mainly for UI state
+            }));
+            sessionStorage.setItem('tbs_undo_stack', JSON.stringify(simplified));
+        } catch (e) { /* Storage full or unavailable */ }
+    },
+
+    restore() {
+        // Note: Actual undo functions can't be restored, but we clear stale entries
+        try {
+            sessionStorage.removeItem('tbs_undo_stack');
+        } catch (e) { /* Ignore */ }
+    },
+
+    clear() {
+        this.stack = [];
+        this.save();
+        this.hideToast();
+    }
+};
+window.UndoManager = UndoManager;
+
+// ===== BATCH SELECTION SYSTEM =====
+const BatchSelection = {
+    selected: new Set(),
+    actionBar: null,
+
+    init() {
+        // Create floating action bar
+        this.actionBar = document.createElement('div');
+        this.actionBar.className = 'batch-action-bar';
+        this.actionBar.innerHTML = `
+            <span class="batch-count"><span class="count-num">0</span> selected</span>
+            <div class="batch-actions">
+                <div class="batch-status-dropdown">
+                    <button class="batch-action-btn">📊 Change Status</button>
+                    <div class="batch-status-menu">
+                        <button class="batch-status-option" data-status="contacted">📞 Mark Contacted</button>
+                        <button class="batch-status-option" data-status="qualified">✅ Mark Qualified</button>
+                        <button class="batch-status-option" data-status="converted">🎉 Mark Converted</button>
+                        <button class="batch-status-option" data-status="rejected">❌ Mark Rejected</button>
+                    </div>
+                </div>
+                <button class="batch-action-btn" onclick="BatchSelection.exportSelected()">📥 Export</button>
+                <button class="batch-clear-btn" onclick="BatchSelection.clearSelection()" title="Clear selection">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        `;
+        document.body.appendChild(this.actionBar);
+
+        // Status change handlers
+        this.actionBar.querySelectorAll('.batch-status-option').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const status = btn.dataset.status;
+                this.bulkStatusChange(status);
+            });
+        });
+    },
+
+    toggle(prospectId, checkbox) {
+        if (this.selected.has(prospectId)) {
+            this.selected.delete(prospectId);
+            if (checkbox) checkbox.checked = false;
+        } else {
+            this.selected.add(prospectId);
+            if (checkbox) checkbox.checked = true;
+        }
+        this.updateUI();
+    },
+
+    selectAll(prospects) {
+        prospects.forEach(p => this.selected.add(p.id));
+        document.querySelectorAll('.batch-checkbox').forEach(cb => cb.checked = true);
+        this.updateUI();
+    },
+
+    clearSelection() {
+        this.selected.clear();
+        document.querySelectorAll('.batch-checkbox').forEach(cb => cb.checked = false);
+        const headerCheckbox = document.getElementById('select-all-checkbox');
+        if (headerCheckbox) headerCheckbox.checked = false;
+        this.updateUI();
+    },
+
+    updateUI() {
+        const count = this.selected.size;
+        const countEl = this.actionBar.querySelector('.count-num');
+        if (countEl) countEl.textContent = count;
+
+        if (count > 0) {
+            this.actionBar.classList.add('visible');
+        } else {
+            this.actionBar.classList.remove('visible');
+        }
+
+        // Update header checkbox state
+        const headerCheckbox = document.getElementById('select-all-checkbox');
+        const allCheckboxes = document.querySelectorAll('.batch-checkbox:not(#select-all-checkbox)');
+        if (headerCheckbox && allCheckboxes.length > 0) {
+            const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+            const someChecked = Array.from(allCheckboxes).some(cb => cb.checked);
+            headerCheckbox.checked = allChecked;
+            headerCheckbox.indeterminate = someChecked && !allChecked;
+        }
+    },
+
+    async bulkStatusChange(newStatus) {
+        const ids = Array.from(this.selected);
+        if (ids.length === 0) return;
+
+        const confirmed = confirm(`Change status of ${ids.length} prospects to "${newStatus}"?`);
+        if (!confirmed) return;
+
+        showToast(`Updating ${ids.length} prospects...`, 'info');
+
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const id of ids) {
+            try {
+                if (typeof updateProspectStatus === 'function') {
+                    await updateProspectStatus(id, newStatus);
+                    successCount++;
+                }
+            } catch (e) {
+                failCount++;
+                console.error(`Failed to update prospect ${id}:`, e);
+            }
+        }
+
+        // Invalidate cache and refresh
+        CacheManager.invalidate('prospects');
+        CacheManager.invalidate('overview');
+
+        if (typeof fetchProspectsData === 'function') {
+            fetchProspectsData();
+        }
+
+        this.clearSelection();
+
+        if (failCount === 0) {
+            showToast(`Updated ${successCount} prospects to ${newStatus}`, 'success');
+        } else {
+            showToast(`Updated ${successCount}, failed ${failCount}`, 'warning');
+        }
+    },
+
+    exportSelected() {
+        const ids = Array.from(this.selected);
+        if (ids.length === 0) return;
+
+        // Get prospect data from current display
+        const prospects = (window.currentProspectsData || []).filter(p => ids.includes(p.id));
+
+        if (prospects.length === 0) {
+            showToast('No prospect data available for export', 'error');
+            return;
+        }
+
+        // CSV export
+        const headers = ['Name', 'Platform', 'Status', 'Source', 'Created'];
+        const rows = prospects.map(p => [
+            p.name || p.platformUsername || '',
+            p.platform || '',
+            p.status || '',
+            p.source || '',
+            p.createdAt || ''
+        ]);
+
+        const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `prospects-export-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        showToast(`Exported ${prospects.length} prospects`, 'success');
+    },
+
+    getSelectedIds() {
+        return Array.from(this.selected);
+    },
+
+    isSelected(prospectId) {
+        return this.selected.has(prospectId);
+    }
+};
+window.BatchSelection = BatchSelection;
+
+// ===== INITIALIZATION & INTEGRATION =====
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all new systems
+    setTimeout(() => {
+        ContextMenu.init();
+        UndoManager.init();
+        BatchSelection.init();
+        console.log('[TBS] Cache, Context Menu, Undo, and Batch Selection initialized');
+    }, 100);
+});
+
+// ===== CACHED API WRAPPER =====
+// Wrap fetch functions to use cache
+const CachedAPI = {
+    async fetchWithCache(cacheKey, fetchFn, ttl = CacheManager.ttl) {
+        // Try cache first
+        const cached = CacheManager.getWithMeta(cacheKey);
+        
+        if (cached && !cached.isExpired) {
+            console.log(`[CachedAPI] Using cache for ${cacheKey} (${cached.ageFormatted})`);
+            // Return cached data immediately
+            setTimeout(() => {
+                // Fetch fresh data in background
+                this.refreshInBackground(cacheKey, fetchFn, ttl);
+            }, 100);
+            return { data: cached.data, fromCache: true, age: cached.ageFormatted };
+        }
+
+        // No cache, fetch fresh
+        console.log(`[CachedAPI] Fetching fresh data for ${cacheKey}`);
+        try {
+            const data = await fetchFn();
+            CacheManager.set(cacheKey, data, ttl);
+            return { data, fromCache: false };
+        } catch (e) {
+            // On error, try to use stale cache
+            if (cached) {
+                console.log(`[CachedAPI] Fetch failed, using stale cache for ${cacheKey}`);
+                return { data: cached.data, fromCache: true, stale: true, age: cached.ageFormatted };
+            }
+            throw e;
+        }
+    },
+
+    async refreshInBackground(cacheKey, fetchFn, ttl) {
+        try {
+            const data = await fetchFn();
+            CacheManager.set(cacheKey, data, ttl);
+            console.log(`[CachedAPI] Background refresh complete for ${cacheKey}`);
+        } catch (e) {
+            console.warn(`[CachedAPI] Background refresh failed for ${cacheKey}:`, e);
+        }
+    }
+};
+window.CachedAPI = CachedAPI;
+
+// ===== ENHANCED TABLE RENDERING WITH CHECKBOXES =====
+// Store original renderProspectsTable and enhance it
+const originalRenderProspectsTable = window.renderProspectsTable;
+
+window.renderProspectsTableWithBatch = function(prospects, container) {
+    if (!container) return;
+    
+    // Store for export
+    window.currentProspectsData = prospects;
+
+    if (!prospects || prospects.length === 0) {
+        renderEmptyState('prospects', container);
+        return;
+    }
+
+    // Build table with checkbox column
+    const table = document.createElement('table');
+    table.className = 'w-full';
+    table.innerHTML = `
+        <thead>
+            <tr class="text-left text-xs uppercase text-slate-500 border-b border-slate-700">
+                <th class="pb-3 pl-4 w-10">
+                    <input type="checkbox" id="select-all-checkbox" class="batch-checkbox" 
+                           onchange="BatchSelection.selectAllToggle(this.checked)" 
+                           title="Select all">
+                </th>
+                <th class="pb-3 pl-2">Prospect</th>
+                <th class="pb-3">Platform</th>
+                <th class="pb-3">Status</th>
+                <th class="pb-3">Source</th>
+                <th class="pb-3">Added</th>
+                <th class="pb-3 pr-4">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="prospects-table-body"></tbody>
+    `;
+
+    const tbody = table.querySelector('tbody');
+    
+    prospects.forEach(prospect => {
+        const row = document.createElement('tr');
+        row.className = 'border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors prospect-row';
+        row.dataset.prospectId = prospect.id;
+        
+        const isSelected = BatchSelection.isSelected(prospect.id);
+        const statusColors = {
+            'new': 'bg-blue-500/20 text-blue-400',
+            'contacted': 'bg-yellow-500/20 text-yellow-400',
+            'qualified': 'bg-green-500/20 text-green-400',
+            'converted': 'bg-purple-500/20 text-purple-400',
+            'rejected': 'bg-red-500/20 text-red-400'
+        };
+        const statusColor = statusColors[prospect.status] || statusColors['new'];
+        const platformIcons = { 'line': '💬', 'telegram': '✈️', 'facebook': '📘', 'instagram': '📸' };
+        const platformIcon = platformIcons[prospect.platform?.toLowerCase()] || '🌐';
+        
+        row.innerHTML = `
+            <td class="py-3 pl-4">
+                <input type="checkbox" class="batch-checkbox" 
+                       ${isSelected ? 'checked' : ''}
+                       onchange="BatchSelection.toggle('${prospect.id}', this)">
+            </td>
+            <td class="py-3 pl-2">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-tiger-500 to-tiger-600 flex items-center justify-center text-white font-semibold text-sm">
+                        ${(prospect.name || prospect.platformUsername || '?')[0].toUpperCase()}
+                    </div>
+                    <div>
+                        <div class="font-medium text-sm">${prospect.name || prospect.platformUsername || 'Unknown'}</div>
+                        <div class="text-xs text-slate-500">${prospect.platformUsername || ''}</div>
+                    </div>
+                </div>
+            </td>
+            <td class="py-3">
+                <span class="inline-flex items-center gap-1 text-sm">
+                    ${platformIcon} ${prospect.platform || 'N/A'}
+                </span>
+            </td>
+            <td class="py-3">
+                <span class="px-2 py-1 rounded-full text-xs font-medium ${statusColor}">
+                    ${(prospect.status || 'new').charAt(0).toUpperCase() + (prospect.status || 'new').slice(1)}
+                </span>
+            </td>
+            <td class="py-3 text-sm text-slate-400">${prospect.source || 'Direct'}</td>
+            <td class="py-3 text-sm text-slate-400">${prospect.createdAt ? new Date(prospect.createdAt).toLocaleDateString() : 'N/A'}</td>
+            <td class="py-3 pr-4">
+                <button class="p-2 hover:bg-slate-700 rounded-lg transition-colors" 
+                        onclick="showProspectDetail(window.currentProspectsData.find(p => p.id === '${prospect.id}'))" 
+                        title="View details">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                </button>
+            </td>
+        `;
+
+        // Context menu on right-click
+        row.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            ContextMenu.showProspectMenu(e.clientX, e.clientY, prospect);
+        });
+
+        // Long press for touch devices
+        let longPressTimer;
+        row.addEventListener('touchstart', (e) => {
+            longPressTimer = setTimeout(() => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                ContextMenu.showProspectMenu(touch.clientX, touch.clientY, prospect);
+            }, 500);
+        }, { passive: false });
+        row.addEventListener('touchend', () => clearTimeout(longPressTimer));
+        row.addEventListener('touchmove', () => clearTimeout(longPressTimer));
+
+        tbody.appendChild(row);
+    });
+
+    container.innerHTML = '';
+    container.appendChild(table);
+};
+
+// Add selectAllToggle to BatchSelection
+BatchSelection.selectAllToggle = function(checked) {
+    const prospects = window.currentProspectsData || [];
+    if (checked) {
+        this.selectAll(prospects);
+    } else {
+        this.clearSelection();
+    }
+};
+
+// Override renderProspectsTable if it exists
+if (typeof window.renderProspectsTable === 'function') {
+    const _origRender = window.renderProspectsTable;
+    window.renderProspectsTable = function(prospects, container) {
+        window.renderProspectsTableWithBatch(prospects, container);
+    };
+}
+
+// ===== CACHE-ENABLED FETCH WRAPPERS =====
+// Wrap existing fetch functions to use cache
+
+// Store original fetch functions
+const _originalFetchOverview = window.fetchOverviewData;
+const _originalFetchProspects = window.fetchProspectsData;
+const _originalFetchAnalytics = window.fetchAnalyticsData;
+
+// Enhanced fetchOverviewData with caching
+if (typeof _originalFetchOverview === 'function') {
+    window.fetchOverviewData = async function() {
+        const cached = CacheManager.get('overview');
+        
+        if (cached) {
+            // Show cached data immediately
+            if (typeof renderOverviewCards === 'function') {
+                renderOverviewCards(cached);
+            }
+            window.overviewData = cached;
+            
+            // Fetch fresh in background
+            _originalFetchOverview().then(fresh => {
+                if (fresh) CacheManager.set('overview', fresh, 2 * 60 * 1000); // 2 min TTL
+            }).catch(e => console.warn('[Cache] Background overview refresh failed'));
+            
+            return cached;
+        }
+        
+        // No cache, fetch fresh
+        const data = await _originalFetchOverview();
+        if (data) CacheManager.set('overview', data, 2 * 60 * 1000);
+        return data;
+    };
+}
+
+// Enhanced fetchProspectsData with caching
+if (typeof _originalFetchProspects === 'function') {
+    window.fetchProspectsData = async function(params) {
+        const cacheKey = 'prospects_' + JSON.stringify(params || {});
+        const cached = CacheManager.get(cacheKey);
+        
+        if (cached) {
+            // Show cached data immediately
+            const container = document.getElementById('prospects-table-container') || 
+                            document.querySelector('[data-prospects-container]');
+            if (container) {
+                window.renderProspectsTableWithBatch(cached, container);
+            }
+            window.currentProspectsData = cached;
+            
+            // Fetch fresh in background
+            _originalFetchProspects(params).then(fresh => {
+                if (fresh) {
+                    CacheManager.set(cacheKey, fresh, 3 * 60 * 1000); // 3 min TTL
+                    // Re-render with fresh data
+                    if (container) window.renderProspectsTableWithBatch(fresh, container);
+                }
+            }).catch(e => console.warn('[Cache] Background prospects refresh failed'));
+            
+            return cached;
+        }
+        
+        // No cache, fetch fresh
+        const data = await _originalFetchProspects(params);
+        if (data) CacheManager.set(cacheKey, data, 3 * 60 * 1000);
+        return data;
+    };
+}
+
+// ===== ADD CLEAR CACHE BUTTON TO SETTINGS =====
+function addClearCacheButton() {
+    // Find settings section
+    const settingsContainer = document.querySelector('#settings-section') || 
+                             document.querySelector('[data-section="settings"]');
+    
+    if (!settingsContainer) {
+        // Try again later
+        setTimeout(addClearCacheButton, 1000);
+        return;
+    }
+
+    // Check if already added
+    if (document.getElementById('clear-cache-btn')) return;
+
+    // Find a good place to insert - look for a card or section
+    const targetCard = settingsContainer.querySelector('.bg-slate-800, .card, [class*="rounded-xl"]');
+    
+    if (targetCard) {
+        const cacheSection = document.createElement('div');
+        cacheSection.className = 'mt-4 pt-4 border-t border-slate-700';
+        cacheSection.innerHTML = `
+            <div class="flex items-center justify-between">
+                <div>
+                    <h4 class="text-sm font-medium text-white">Data Cache</h4>
+                    <p class="text-xs text-slate-400 mt-1">Clear cached data to fetch fresh information</p>
+                </div>
+                <button id="clear-cache-btn" 
+                        onclick="CacheManager.clear()" 
+                        class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded-lg transition-colors">
+                    🗑️ Clear Cache
+                </button>
+            </div>
+        `;
+        targetCard.appendChild(cacheSection);
+        console.log('[TBS] Clear cache button added to settings');
+    }
+}
+
+// Run after DOM ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(addClearCacheButton, 500));
+} else {
+    setTimeout(addClearCacheButton, 500);
+}
+
+console.log('[TBS] Data Caching, Context Menu, Undo System, and Batch Actions loaded');
+
+</script>
+
 </body>
 </html>
