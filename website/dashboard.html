@@ -1754,6 +1754,61 @@
                 </div>
             </div>
 
+
+            <!-- AI Insights Panel -->
+            <div id="ai-insights-panel" class="bg-gradient-to-r from-purple-900/30 to-orange-900/30 border border-purple-500/30 rounded-xl p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold flex items-center gap-2">
+                        <span class="text-2xl">🧠</span> 
+                        AI Insights
+                        <span class="text-xs px-2 py-1 bg-purple-600 rounded-full">Beta</span>
+                    </h3>
+                    <button onclick="AIInsights.toggle()" class="text-gray-400 hover:text-white transition" aria-label="Toggle AI Insights">
+                        <span id="insights-toggle-icon">▼</span>
+                    </button>
+                </div>
+                <div id="ai-insights-content" class="space-y-4">
+                    <div class="flex items-center gap-2 text-gray-400">
+                        <svg class="w-5 h-5 spinner" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        <span>Analyzing your data...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Daily Goals Widget -->
+            <div id="daily-goals-panel" class="bg-slate-900 rounded-xl border border-slate-800 p-4 mb-6">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-semibold flex items-center gap-2">
+                        <span>🎯</span> Daily Goals
+                    </h3>
+                    <button onclick="DailyGoals.reset()" class="text-xs text-slate-500 hover:text-slate-300 transition" title="Reset daily goals">
+                        Reset
+                    </button>
+                </div>
+                <div id="daily-goals-content" class="space-y-3">
+                    <!-- Goals rendered here -->
+                </div>
+            </div>
+
+            <!-- Achievements Badge Display -->
+            <div id="achievements-panel" class="hidden bg-slate-900 rounded-xl border border-slate-800 p-4 mb-6">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-semibold flex items-center gap-2">
+                        <span>🏆</span> Achievements
+                    </h3>
+                    <button onclick="Achievements.showAll()" class="text-xs text-tiger-400 hover:text-tiger-300 transition">
+                        View All
+                    </button>
+                </div>
+                <div id="achievements-content" class="flex flex-wrap gap-2">
+                    <!-- Badges rendered here -->
+                </div>
+            </div>
+
+
             <!-- Quick Stats Row -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 <div class="bg-slate-800/50 rounded-xl p-4 text-center">
@@ -4143,6 +4198,9 @@ function startRefreshForCurrentSection() {
                     }
                 }
                 setCardLoading('card-hive-pulse', false);
+                
+                // Generate AI Insights after data loads
+                AIInsights.generate(data);
                 
             } catch (error) {
                 console.error('Failed to fetch overview:', error);
@@ -6986,6 +7044,420 @@ ${'='.repeat(50)}
 
         // Make function globally available
         window.announceToScreenReader = announceToScreenReader;
+
+
+        // ============ AI INSIGHTS MODULE ============
+        const AIInsights = {
+            isExpanded: true,
+            insights: [],
+            cachedData: null,
+            dismissedInsights: JSON.parse(sessionStorage.getItem('dismissedInsights') || '[]'),
+            
+            async generate(overviewData) {
+                this.cachedData = overviewData;
+                const insights = [];
+                
+                if (!overviewData) {
+                    this.insights = [];
+                    this.render();
+                    return;
+                }
+                
+                // Insight 1: Hot prospects
+                if (overviewData.todaysProspects) {
+                    const qualified = overviewData.todaysProspects.qualified || 0;
+                    const count = overviewData.todaysProspects.count || 0;
+                    if (qualified > 5) {
+                        insights.push({
+                            id: 'hot_prospects',
+                            type: 'opportunity',
+                            icon: '🔥',
+                            title: qualified + ' Hot Prospects Today!',
+                            message: 'You have ' + qualified + ' highly qualified prospects (score 70+) out of ' + count + ' total. Consider prioritizing these for outreach.',
+                            action: { label: 'View Hot Prospects', handler: 'filterHotProspects' }
+                        });
+                    } else if (count > 0 && qualified === 0) {
+                        insights.push({
+                            id: 'no_qualified',
+                            type: 'tip',
+                            icon: '💡',
+                            title: 'Improve Prospect Quality',
+                            message: count + ' prospects today but none qualified. Consider refining your targeting criteria.',
+                            action: { label: 'View Analytics', handler: 'goToAnalytics' }
+                        });
+                    }
+                }
+                
+                // Insight 2: Pending feedback
+                if (overviewData.scriptPerformance) {
+                    const pendingFeedback = overviewData.scriptPerformance.pendingFeedback || 0;
+                    if (pendingFeedback > 10) {
+                        insights.push({
+                            id: 'pending_feedback',
+                            type: 'action',
+                            icon: '📝',
+                            title: 'Update Your Script Feedback',
+                            message: 'You have ' + pendingFeedback + ' scripts awaiting feedback. Updating helps Tiger Bot learn and improve!',
+                            action: { label: 'Review Scripts', handler: 'goToScripts' }
+                        });
+                    } else if (pendingFeedback > 0 && pendingFeedback <= 5) {
+                        insights.push({
+                            id: 'few_pending',
+                            type: 'tip',
+                            icon: '✨',
+                            title: 'Almost There!',
+                            message: 'Just ' + pendingFeedback + ' scripts need feedback. Quick review could help improve future scripts!',
+                            action: { label: 'Quick Review', handler: 'goToScripts' }
+                        });
+                    }
+                }
+                
+                // Insight 3: Conversion rate
+                if (overviewData.scriptPerformance) {
+                    const successRate = overviewData.scriptPerformance.successRate || 0;
+                    if (successRate < 20 && successRate > 0) {
+                        insights.push({
+                            id: 'low_success',
+                            type: 'tip',
+                            icon: '💡',
+                            title: 'Boost Your Success Rate',
+                            message: 'Your current ' + successRate + '% success rate is below average. Check out the Hive Learnings for top-performing scripts!',
+                            action: { label: 'View Hive', handler: 'goToHive' }
+                        });
+                    } else if (successRate >= 40) {
+                        insights.push({
+                            id: 'high_success',
+                            type: 'achievement',
+                            icon: '🏆',
+                            title: 'Outstanding Performance!',
+                            message: 'Your ' + successRate + '% success rate is excellent! Consider sharing your winning scripts to the Hive to help others.',
+                            action: { label: 'Share to Hive', handler: 'shareToHive' }
+                        });
+                    }
+                }
+                
+                // Insight 4: Best contact time
+                insights.push({
+                    id: 'best_time',
+                    type: 'tip',
+                    icon: '⏰',
+                    title: 'Best Time to Reach Out',
+                    message: 'Based on industry data, Tuesday-Thursday 10am-2pm shows highest response rates for cold outreach.',
+                    action: { label: 'View Analytics', handler: 'goToAnalytics' }
+                });
+                
+                // Insight 5: Conversion funnel analysis
+                if (overviewData.conversionFunnel && overviewData.conversionFunnel.stages) {
+                    const stages = overviewData.conversionFunnel.stages;
+                    if (stages.length >= 3) {
+                        const newCount = stages[0]?.count || 0;
+                        const contactedCount = stages[1]?.count || 0;
+                        const convertedCount = stages[2]?.count || 0;
+                        
+                        if (newCount > 20 && contactedCount < 5) {
+                            insights.push({
+                                id: 'stale_new',
+                                type: 'action',
+                                icon: '⚠️',
+                                title: 'Follow Up Needed',
+                                message: 'You have ' + newCount + ' new prospects but only ' + contactedCount + ' contacted. Time to start reaching out!',
+                                action: { label: 'View Prospects', handler: 'filterNewProspects' }
+                            });
+                        }
+                        
+                        if (contactedCount > 10 && convertedCount === 0) {
+                            insights.push({
+                                id: 'no_conversions',
+                                type: 'warning',
+                                icon: '🎯',
+                                title: 'Conversion Opportunity',
+                                message: contactedCount + ' contacted but no conversions yet. Review your follow-up strategy in the Hive!',
+                                action: { label: 'View Hive Tips', handler: 'goToHive' }
+                            });
+                        }
+                    }
+                }
+                
+                // Insight 6: Hive engagement
+                if (overviewData.hivePulse) {
+                    const totalLearnings = overviewData.hivePulse.totalLearnings || 0;
+                    if (totalLearnings === 0) {
+                        insights.push({
+                            id: 'explore_hive',
+                            type: 'tip',
+                            icon: '🐝',
+                            title: 'Explore the Hive',
+                            message: 'The Hive contains collective learnings from all Tiger Bot users. Check it out for proven scripts!',
+                            action: { label: 'Explore Hive', handler: 'goToHive' }
+                        });
+                    }
+                }
+                
+                // Filter out dismissed insights
+                this.insights = insights.filter(i => !this.dismissedInsights.includes(i.id));
+                this.render();
+                
+                // Update daily goals based on data
+                DailyGoals.updateFromData(overviewData);
+                
+                // Check achievements
+                Achievements.check(overviewData);
+            },
+            
+            render() {
+                const container = document.getElementById('ai-insights-content');
+                if (!container) return;
+                
+                if (this.insights.length === 0) {
+                    container.innerHTML = '<div class="text-center py-4"><span class="text-4xl mb-2 block">✨</span><p class="text-gray-400">All caught up! No new insights right now.</p><p class="text-gray-500 text-sm mt-1">Keep working and check back later.</p></div>';
+                    return;
+                }
+                
+                container.innerHTML = this.insights.map((insight, index) => {
+                    return '<div class="insight-card flex items-start gap-4 p-4 bg-gray-800/50 rounded-lg border-l-4 ' + this.getBorderColor(insight.type) + ' transition-all hover:bg-gray-800/70" data-insight-id="' + insight.id + '"><span class="text-2xl flex-shrink-0">' + insight.icon + '</span><div class="flex-1 min-w-0"><h4 class="font-medium text-white">' + insight.title + '</h4><p class="text-sm text-gray-400 mt-1">' + insight.message + '</p>' + (insight.action ? '<button onclick="AIInsights.handleAction(\'' + insight.action.handler + '\')" class="mt-2 text-sm text-orange-400 hover:text-orange-300 font-medium transition">' + insight.action.label + ' →</button>' : '') + '</div><button onclick="AIInsights.dismiss(\'' + insight.id + '\')" class="text-gray-500 hover:text-gray-300 transition flex-shrink-0" title="Dismiss this insight" aria-label="Dismiss insight">✕</button></div>';
+                }).join('');
+            },
+            
+            getBorderColor(type) {
+                const colors = {
+                    'opportunity': 'border-green-500',
+                    'action': 'border-yellow-500',
+                    'tip': 'border-blue-500',
+                    'achievement': 'border-purple-500',
+                    'warning': 'border-red-500'
+                };
+                return colors[type] || 'border-gray-500';
+            },
+            
+            toggle() {
+                this.isExpanded = !this.isExpanded;
+                const content = document.getElementById('ai-insights-content');
+                const icon = document.getElementById('insights-toggle-icon');
+                if (content) content.style.display = this.isExpanded ? 'block' : 'none';
+                if (icon) icon.textContent = this.isExpanded ? '▼' : '▶';
+            },
+            
+            dismiss(insightId) {
+                this.dismissedInsights.push(insightId);
+                sessionStorage.setItem('dismissedInsights', JSON.stringify(this.dismissedInsights));
+                this.insights = this.insights.filter(i => i.id !== insightId);
+                const card = document.querySelector('[data-insight-id="' + insightId + '"]');
+                if (card) {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateX(20px)';
+                    setTimeout(() => this.render(), 300);
+                } else {
+                    this.render();
+                }
+            },
+            
+            handleAction(handler) {
+                switch(handler) {
+                    case 'filterHotProspects':
+                        showSection('prospects');
+                        setTimeout(() => {
+                            const scoreMin = document.getElementById('filter-score-min');
+                            if (scoreMin) { scoreMin.value = '70'; fetchProspects(); }
+                        }, 100);
+                        break;
+                    case 'filterNewProspects':
+                        showSection('prospects');
+                        setTimeout(() => {
+                            const status = document.getElementById('filter-status');
+                            if (status) { status.value = 'new'; fetchProspects(); }
+                        }, 100);
+                        break;
+                    case 'goToScripts': showSection('scripts'); break;
+                    case 'goToHive': showSection('hive'); break;
+                    case 'goToAnalytics': showSection('analytics'); break;
+                    case 'shareToHive':
+                        showSection('scripts');
+                        showToast('Select a successful script and click "Share to Hive" to contribute!', 'info');
+                        break;
+                }
+            },
+            
+            refresh() {
+                if (this.cachedData) this.generate(this.cachedData);
+            }
+        };
+
+
+        // ============ ACHIEVEMENTS MODULE ============
+        const Achievements = {
+            badges: [
+                { id: 'first_script', name: 'Script Starter', icon: '📜', desc: 'Generated your first script', condition: (d) => d.scriptPerformance?.generated >= 1 },
+                { id: 'script_master', name: 'Script Master', icon: '📚', desc: 'Generated 50 scripts', condition: (d) => d.scriptPerformance?.generated >= 50 },
+                { id: 'first_conversion', name: 'First Blood', icon: '🎯', desc: 'Got your first conversion', condition: (d) => d.conversionFunnel?.stages?.[2]?.count >= 1 },
+                { id: 'conversion_pro', name: 'Conversion Pro', icon: '💰', desc: 'Reached 10 conversions', condition: (d) => d.conversionFunnel?.stages?.[2]?.count >= 10 },
+                { id: 'hive_contributor', name: 'Hive Helper', icon: '🐝', desc: 'Contributed to the Hive', condition: (d) => d.hivePulse?.userContributions >= 1 },
+                { id: 'hive_champion', name: 'Hive Champion', icon: '👑', desc: 'Shared 5 scripts to the Hive', condition: (d) => d.hivePulse?.userContributions >= 5 },
+                { id: 'streak_7', name: 'On Fire', icon: '🔥', desc: '7-day activity streak', condition: (d) => d.activityStreak >= 7 },
+                { id: 'century', name: 'Century Club', icon: '💯', desc: 'Reached 100 prospects', condition: (d) => d.totalProspects >= 100 },
+                { id: 'qualified_hunter', name: 'Quality Hunter', icon: '⭐', desc: 'Found 25 qualified prospects', condition: (d) => d.qualifiedCount >= 25 },
+                { id: 'fast_responder', name: 'Speed Demon', icon: '⚡', desc: 'Contacted 10 prospects in one day', condition: (d) => d.todaysContacted >= 10 },
+                { id: 'high_performer', name: 'High Performer', icon: '🏆', desc: 'Achieved 40%+ success rate', condition: (d) => d.scriptPerformance?.successRate >= 40 },
+                { id: 'feedback_guru', name: 'Feedback Guru', icon: '📝', desc: 'Provided feedback on 20 scripts', condition: (d) => d.feedbackCount >= 20 }
+            ],
+            earned: JSON.parse(localStorage.getItem('tigerbot_achievements') || '[]'),
+            
+            check(overviewData) {
+                if (!overviewData) return;
+                
+                const newlyEarned = [];
+                
+                this.badges.forEach(badge => {
+                    if (!this.earned.includes(badge.id)) {
+                        try {
+                            if (badge.condition(overviewData)) {
+                                this.earned.push(badge.id);
+                                newlyEarned.push(badge);
+                            }
+                        } catch (e) {
+                            // Condition check failed, badge not earned
+                        }
+                    }
+                });
+                
+                if (newlyEarned.length > 0) {
+                    localStorage.setItem('tigerbot_achievements', JSON.stringify(this.earned));
+                    newlyEarned.forEach(badge => this.showUnlocked(badge));
+                }
+                
+                this.render();
+            },
+            
+            showUnlocked(badge) {
+                showToast('🎉 Achievement Unlocked: ' + badge.name + ' - ' + badge.desc, 'success');
+            },
+            
+            render() {
+                const container = document.getElementById('achievements-content');
+                const panel = document.getElementById('achievements-panel');
+                if (!container || !panel) return;
+                
+                const earnedBadges = this.badges.filter(b => this.earned.includes(b.id));
+                
+                if (earnedBadges.length === 0) {
+                    panel.classList.add('hidden');
+                    return;
+                }
+                
+                panel.classList.remove('hidden');
+                container.innerHTML = earnedBadges.slice(0, 6).map(badge => {
+                    return '<div class="flex items-center gap-2 px-3 py-2 bg-slate-800 rounded-lg" title="' + badge.desc + '"><span class="text-xl">' + badge.icon + '</span><span class="text-xs font-medium text-white">' + badge.name + '</span></div>';
+                }).join('');
+            },
+            
+            showAll() {
+                const earnedBadges = this.badges.filter(b => this.earned.includes(b.id));
+                const lockedBadges = this.badges.filter(b => !this.earned.includes(b.id));
+                
+                const modalHtml = '<div id="achievements-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop" onclick="if(event.target===this)this.remove()"><div class="bg-slate-900 rounded-2xl border border-slate-700 p-6 max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto"><div class="flex justify-between items-center mb-6"><h2 class="text-xl font-bold flex items-center gap-2"><span>🏆</span> All Achievements</h2><button onclick="document.getElementById(\'achievements-modal\').remove()" class="text-slate-400 hover:text-white">✕</button></div><div class="mb-6"><h3 class="text-sm font-semibold text-green-400 mb-3">Earned (' + earnedBadges.length + ')</h3><div class="grid grid-cols-2 gap-3">' + earnedBadges.map(b => '<div class="flex items-center gap-3 p-3 bg-green-900/20 border border-green-500/30 rounded-lg"><span class="text-2xl">' + b.icon + '</span><div><div class="font-medium text-white text-sm">' + b.name + '</div><div class="text-xs text-slate-400">' + b.desc + '</div></div></div>').join('') + '</div></div><div><h3 class="text-sm font-semibold text-slate-400 mb-3">Locked (' + lockedBadges.length + ')</h3><div class="grid grid-cols-2 gap-3">' + lockedBadges.map(b => '<div class="flex items-center gap-3 p-3 bg-slate-800/50 border border-slate-700 rounded-lg opacity-60"><span class="text-2xl grayscale">🔒</span><div><div class="font-medium text-slate-300 text-sm">' + b.name + '</div><div class="text-xs text-slate-500">' + b.desc + '</div></div></div>').join('') + '</div></div></div></div>';
+                
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+            }
+        };
+
+        // ============ DAILY GOALS MODULE ============
+        const DailyGoals = {
+            goals: [
+                { id: 'contact_5', label: 'Contact 5 prospects', target: 5, current: 0, icon: '📞' },
+                { id: 'feedback_3', label: 'Add feedback to 3 scripts', target: 3, current: 0, icon: '📝' },
+                { id: 'generate_2', label: 'Generate 2 scripts', target: 2, current: 0, icon: '✍️' }
+            ],
+            lastReset: localStorage.getItem('tigerbot_goals_reset') || '',
+            
+            init() {
+                const today = new Date().toDateString();
+                if (this.lastReset !== today) {
+                    this.reset();
+                    localStorage.setItem('tigerbot_goals_reset', today);
+                } else {
+                    const saved = localStorage.getItem('tigerbot_daily_goals');
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        this.goals.forEach(g => {
+                            const savedGoal = parsed.find(sg => sg.id === g.id);
+                            if (savedGoal) g.current = savedGoal.current;
+                        });
+                    }
+                }
+                this.render();
+            },
+            
+            updateFromData(overviewData) {
+                if (!overviewData) return;
+                
+                // Update contact goal from today's contacted count
+                if (overviewData.todaysContacted !== undefined) {
+                    this.goals.find(g => g.id === 'contact_5').current = Math.min(overviewData.todaysContacted, 5);
+                }
+                
+                // Update feedback goal
+                if (overviewData.todaysFeedback !== undefined) {
+                    this.goals.find(g => g.id === 'feedback_3').current = Math.min(overviewData.todaysFeedback, 3);
+                }
+                
+                // Update generate goal
+                if (overviewData.todaysScripts !== undefined) {
+                    this.goals.find(g => g.id === 'generate_2').current = Math.min(overviewData.todaysScripts, 2);
+                }
+                
+                this.save();
+                this.render();
+            },
+            
+            increment(goalId) {
+                const goal = this.goals.find(g => g.id === goalId);
+                if (goal && goal.current < goal.target) {
+                    goal.current++;
+                    this.save();
+                    this.render();
+                    
+                    if (goal.current === goal.target) {
+                        showToast('🎯 Goal completed: ' + goal.label, 'success');
+                    }
+                    
+                    // Check if all goals complete
+                    if (this.goals.every(g => g.current >= g.target)) {
+                        showToast('🏆 All daily goals completed! Amazing work!', 'success');
+                    }
+                }
+            },
+            
+            save() {
+                localStorage.setItem('tigerbot_daily_goals', JSON.stringify(this.goals.map(g => ({ id: g.id, current: g.current }))));
+            },
+            
+            reset() {
+                this.goals.forEach(g => g.current = 0);
+                this.save();
+                this.render();
+                localStorage.setItem('tigerbot_goals_reset', new Date().toDateString());
+            },
+            
+            render() {
+                const container = document.getElementById('daily-goals-content');
+                if (!container) return;
+                
+                const completedCount = this.goals.filter(g => g.current >= g.target).length;
+                
+                container.innerHTML = this.goals.map(goal => {
+                    const progress = Math.min((goal.current / goal.target) * 100, 100);
+                    const isComplete = goal.current >= goal.target;
+                    const barColor = isComplete ? 'bg-green-500' : 'bg-tiger-500';
+                    const textColor = isComplete ? 'text-green-400' : 'text-white';
+                    
+                    return '<div class="space-y-1"><div class="flex justify-between items-center text-sm"><span class="flex items-center gap-2 ' + textColor + '">' + (isComplete ? '✅' : goal.icon) + ' ' + goal.label + '</span><span class="text-xs text-slate-400">' + goal.current + '/' + goal.target + '</span></div><div class="h-2 bg-slate-700 rounded-full overflow-hidden"><div class="h-full ' + barColor + ' rounded-full transition-all duration-500" style="width: ' + progress + '%"></div></div></div>';
+                }).join('') + '<div class="text-center text-xs text-slate-500 mt-2 pt-2 border-t border-slate-700">' + completedCount + '/' + this.goals.length + ' goals completed today</div>';
+            }
+        };
+
+        // Initialize daily goals on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            DailyGoals.init();
+        });
 
 </script>
 
