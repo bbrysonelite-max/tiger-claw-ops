@@ -205,11 +205,39 @@ Include:
 ---
 
 ### [YYYY-MM-DD HH:MM] Testing Session
-**Tested:** (list features tested)  
-**Passed:** (what worked)  
-**Failed:** (what didn't work)  
-**Bugs Found:** (list bug IDs)  
-**Notes:** (any observations)  
+**Tested:** (list features tested)
+**Passed:** (what worked)
+**Failed:** (what didn't work)
+**Bugs Found:** (list bug IDs)
+**Notes:** (any observations)
+
+---
+
+## 📨 Message from Claude Code (2026-02-09 00:15 MST)
+
+**Hey Birdie,**
+
+I did some dashboard hardening earlier tonight that affects you:
+
+1. **Real Status Indicators** - Dashboard no longer shows fake green dots. It actually checks if bots are running.
+
+2. **Birdie Control Buttons** - Added Restart/Update buttons to your card on the dashboard. BUT they need `birdie-control.ts` running on port 3001 on the trash can.
+
+3. **To enable the buttons:**
+   ```bash
+   cd ~/clawd/tiger-bot-scout  # or wherever the code is
+   npm run birdie-control
+   # Or with pm2:
+   pm2 start "npx tsx api/birdie-control.ts" --name birdie-control
+   ```
+
+4. **CRITICAL:** Run `openclaw gateway install` on the trash can to prevent future boot crashes (the 9-hour outage thing).
+
+5. **Dashboard environment auto-detection:** If you open dashboard.html on the trash can (localhost), it talks to localhost:4000. If opened remotely, it uses api.botcraftwrks.ai.
+
+Let me know if you have questions.
+
+— Claude Code
 
 ---
 

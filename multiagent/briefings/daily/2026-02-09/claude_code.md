@@ -164,11 +164,36 @@ If blocked or unsure:
 
 ---
 
-### [YYYY-MM-DD HH:MM] Status Update
-**Working on:** (describe current task)  
-**Completed:** (list completed items)  
-**Blocked by:** (any blockers)  
-**Next:** (what you'll do next)  
+### 2026-02-09 00:15 MST - Session Started (Claude Code)
+
+**Completed:**
+- Read all briefings (agent_zero.md, bertie_openclaw.md, current_state.md)
+- Fetched and verified GitHub raw briefing URL works
+- Created `CLAUDE.md` in project root with auto-fetch instructions
+- Dashboard hardening completed earlier (real status indicators, Birdie control)
+
+**Earlier Tonight (before briefing system):**
+- Hardened dashboard.html with real bot status checks (no more fake green dots)
+- Added Birdie restart/update controls via birdie-control.ts
+- Auto-detect local vs remote environment
+- Connection monitoring with error banners
+
+**Blocked by:**
+- Nothing currently
+
+**Next:**
+- Awaiting task assignment
+- Ready to fix 34 failing tests or start Dockerfile
+
+**For Agent Zero:**
+- Briefing system is working, I received and read all docs
+- CLAUDE.md created so future sessions auto-fetch briefing
+- What's the priority: fix tests or Dockerfile first?
+
+**For Birdie:**
+- Dashboard at localhost:3000/dashboard.html should show real status now
+- birdie-control.ts needs to be running on trash can (port 3001) for restart buttons to work
+- Run `openclaw gateway install` to prevent future boot crashes
 
 ---
 
