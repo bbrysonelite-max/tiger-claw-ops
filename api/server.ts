@@ -2664,3 +2664,180 @@ app.get('/dashboard/overview', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch dashboard overview' });
   }
 });
+
+// ============================================================
+// AGENT MANAGEMENT API
+// ============================================================
+import { exec } from 'child_process';
+import { promisify } from 'util';
+const execAsync = promisify(exec);
+
+const AGENT_MANAGER_PATH = process.env.AGENT_MANAGER_PATH || '/Users/Shared/openclaw/tiger-bot-scout/multiagent/agent-manager';
+const AGENT_REGISTRY_PATH = `${AGENT_MANAGER_PATH}/agent-registry.json`;
+
+// Helper to run agent-manager commands
+async function runAgentManager(command: string): Promise<{stdout: string, stderr: string}> {
+  try {
+    const result = await execAsync(`cd ${AGENT_MANAGER_PATH} && ./agent-manager.sh ${command}`);
+    return result;
+  } catch (error: any) {
+    return { stdout: error.stdout || '', stderr: error.stderr || error.message };
+  }
+}
+
+// GET /api/agents - List all agents with status
+app.get('/api/agents', async (req, res) => {
+  try {
+    // Try to read registry directly for speed
+    const fs = await import('fs/promises');
+    const registry = JSON.parse(await fs.readFile(AGENT_REGISTRY_PATH, 'utf-8'));
+    
+    // Get live status
+    const { stdout } = await runAgentManager('status --json');
+    let liveStatus: any[] = [];
+    try {
+      liveStatus = JSON.parse(stdout);
+    } catch {
+      // Fallback: parse text status
+    }
+    
+    // Merge registry with live status
+    const agents = registry.agents.map((agent: any) => {
+      const live = liveStatus.find((l: any) => l.id === agent.id);
+      return {
+        ...agent,
+        status: live?.status || agent.status,
+        pid: live?.pid || null,
+        uptime: live?.uptime || null
+      };
+    });
+    
+    res.json({
+      success: true,
+      meta: registry.meta,
+      agents,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    // Fallback to mock data
+    res.json({
+      success: true,
+      meta: { version: '1.0.0', base_port: 18001, max_agents: 80 },
+      agents: [
+        { id: 'birdie', name: 'Birdie', type: 'personal-assistant', port: 18001, status: 'running', owner: 'brent' },
+        { id: 'scout-ops', name: 'Scout Ops Bot', type: 'maintenance', port: 18002, status: 'running', owner: 'system' }
+      ],
+      timestamp: new Date().toISOString(),
+      mock: true
+    });
+  }
+});
+
+// POST /api/agents/:id/start - Start an agent
+app.post('/api/agents/:id/start', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { stdout, stderr } = await runAgentManager(`start ${id}`);
+    const success = stdout.includes('[OK]') || stdout.includes('started');
+    res.json({ success, message: stdout || stderr, agent_id: id, action: 'start' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/agents/:id/stop - Stop an agent
+app.post('/api/agents/:id/stop', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { stdout, stderr } = await runAgentManager(`stop ${id}`);
+    const success = stdout.includes('[OK]') || stdout.includes('stopped');
+    res.json({ success, message: stdout || stderr, agent_id: id, action: 'stop' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/agents/:id/restart - Restart an agent
+app.post('/api/agents/:id/restart', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { stdout, stderr } = await runAgentManager(`restart ${id}`);
+    const success = stdout.includes('[OK]') || stdout.includes('started');
+    res.json({ success, message: stdout || stderr, agent_id: id, action: 'restart' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/agents - Create a new agent
+app.post('/api/agents', async (req, res) => {
+  const { name, type, owner, trial_days } = req.body;
+  if (!name || !type) {
+    return res.status(400).json({ success: false, error: 'name and type required' });
+  }
+  
+  try {
+    let command = `add-${type === 'trial' ? 'trial' : 'customer'} "${name}"`;
+    if (owner) command += ` --owner "${owner}"`;
+    if (trial_days) command += ` --trial-days ${trial_days}`;
+    
+    const { stdout, stderr } = await runAgentManager(command);
+    const success = stdout.includes('[OK]') || stdout.includes('created') || stdout.includes('Added');
+    
+    // Extract port from output
+    const portMatch = stdout.match(/port (\d+)/i);
+    const port = portMatch ? parseInt(portMatch[1]) : null;
+    
+    res.json({ success, message: stdout || stderr, port, action: 'create' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// DELETE /api/agents/:id - Remove an agent
+app.delete('/api/agents/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Stop first, then remove from registry
+    await runAgentManager(`stop ${id}`);
+    const { stdout, stderr } = await runAgentManager(`remove ${id}`);
+    const success = stdout.includes('[OK]') || stdout.includes('removed');
+    res.json({ success, message: stdout || stderr, agent_id: id, action: 'delete' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET /api/agents/:id/logs - Get agent logs
+app.get('/api/agents/:id/logs', async (req, res) => {
+  const { id } = req.params;
+  const lines = parseInt(req.query.lines as string) || 100;
+  try {
+    const { stdout, stderr } = await runAgentManager(`logs ${id} --lines ${lines}`);
+    res.json({ success: true, agent_id: id, logs: stdout || stderr });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/agents/start-all - Start all agents
+app.post('/api/agents/start-all', async (req, res) => {
+  try {
+    const { stdout, stderr } = await runAgentManager('start-all');
+    res.json({ success: true, message: stdout || stderr, action: 'start-all' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/agents/stop-all - Stop all agents
+app.post('/api/agents/stop-all', async (req, res) => {
+  try {
+    const { stdout, stderr } = await runAgentManager('stop-all');
+    res.json({ success: true, message: stdout || stderr, action: 'stop-all' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+console.log('🤖 Agent Management API loaded');

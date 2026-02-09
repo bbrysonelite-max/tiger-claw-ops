@@ -2879,6 +2879,7 @@
                 <button onclick="showAdminTab('system')" class="admin-tab px-4 py-3 text-slate-400 hover:text-white border-b-2 border-transparent whitespace-nowrap" data-tab="system">🖥️ System Health</button>
                 <button onclick="showAdminTab('costs')" class="admin-tab px-4 py-3 text-slate-400 hover:text-white border-b-2 border-transparent whitespace-nowrap" data-tab="costs">💰 API Costs</button>
                 <button onclick="showAdminTab('hive-admin')" class="admin-tab px-4 py-3 text-slate-400 hover:text-white border-b-2 border-transparent whitespace-nowrap" data-tab="hive-admin">🐝 Hive Management</button>
+                <button onclick="showAdminTab('agents')" class="admin-tab px-4 py-3 text-slate-400 hover:text-white border-b-2 border-transparent whitespace-nowrap" data-tab="agents">🤖 Agent Manager</button>
             </div>
 
             <!-- ===== TENANT OVERVIEW TAB ===== -->
@@ -3245,6 +3246,123 @@
                     </div>
                 </div>
             </div>
+        
+            <!-- AGENT MANAGEMENT TAB -->
+            <div id="admin-tab-agents" class="admin-tab-content hidden">
+                <!-- ============================================================ -->
+<!-- AGENT MANAGEMENT PANEL - Insert into Admin Dashboard          -->
+<!-- ============================================================ -->
+<div id="agent-management-panel" class="bg-gray-800 rounded-lg p-6 mb-6">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+            🤖 Agent Management
+            <span id="agent-count-badge" class="bg-orange-500 text-white text-sm px-3 py-1 rounded-full">0 agents</span>
+        </h2>
+        <div class="flex gap-3">
+            <button onclick="AgentManager.refreshAgents()" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                🔄 Refresh
+            </button>
+            <button onclick="AgentManager.startAll()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                ▶️ Start All
+            </button>
+            <button onclick="AgentManager.stopAll()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                ⏹️ Stop All
+            </button>
+            <button onclick="AgentManager.showAddModal()" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                ➕ New Agent
+            </button>
+        </div>
+    </div>
+
+    <!-- Agent Stats Row -->
+    <div class="grid grid-cols-4 gap-4 mb-6">
+        <div class="bg-gray-700 rounded-lg p-4 text-center">
+            <div id="stat-total" class="text-3xl font-bold text-white">0</div>
+            <div class="text-gray-400 text-sm">Total Agents</div>
+        </div>
+        <div class="bg-gray-700 rounded-lg p-4 text-center">
+            <div id="stat-running" class="text-3xl font-bold text-green-400">0</div>
+            <div class="text-gray-400 text-sm">Running</div>
+        </div>
+        <div class="bg-gray-700 rounded-lg p-4 text-center">
+            <div id="stat-stopped" class="text-3xl font-bold text-red-400">0</div>
+            <div class="text-gray-400 text-sm">Stopped</div>
+        </div>
+        <div class="bg-gray-700 rounded-lg p-4 text-center">
+            <div id="stat-ports" class="text-3xl font-bold text-orange-400">80</div>
+            <div class="text-gray-400 text-sm">Available Ports</div>
+        </div>
+    </div>
+
+    <!-- Agent Table -->
+    <div class="overflow-x-auto">
+        <table class="w-full text-left">
+            <thead class="bg-gray-700 text-gray-300 text-sm uppercase">
+                <tr>
+                    <th class="px-4 py-3 rounded-tl-lg">Status</th>
+                    <th class="px-4 py-3">Name</th>
+                    <th class="px-4 py-3">ID</th>
+                    <th class="px-4 py-3">Type</th>
+                    <th class="px-4 py-3">Port</th>
+                    <th class="px-4 py-3">Owner</th>
+                    <th class="px-4 py-3">Trial Expires</th>
+                    <th class="px-4 py-3 rounded-tr-lg text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="agent-table-body" class="text-white">
+                <tr><td colspan="8" class="text-center py-8 text-gray-500">Loading agents...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Agent Modal -->
+<div id="add-agent-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50" onclick="if(event.target===this) AgentManager.hideAddModal()">
+    <div class="bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
+        <h3 class="text-xl font-bold text-white mb-4">➕ Create New Agent</h3>
+        <form id="add-agent-form" onsubmit="AgentManager.createAgent(event)">
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm mb-2">Agent Name *</label>
+                <input type="text" id="new-agent-name" required class="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none" placeholder="e.g., Pat Sullivan Bot">
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm mb-2">Agent Type *</label>
+                <select id="new-agent-type" required class="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none">
+                    <option value="customer">Customer (Permanent)</option>
+                    <option value="trial">Trial (7 days)</option>
+                    <option value="personal-assistant">Personal Assistant</option>
+                    <option value="maintenance">Maintenance Bot</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm mb-2">Owner</label>
+                <input type="text" id="new-agent-owner" class="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none" placeholder="e.g., pat@example.com">
+            </div>
+            <div class="mb-6" id="trial-days-container" style="display:none;">
+                <label class="block text-gray-300 text-sm mb-2">Trial Days</label>
+                <input type="number" id="new-agent-trial-days" value="7" min="1" max="30" class="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none">
+            </div>
+            <div class="flex gap-3">
+                <button type="button" onclick="AgentManager.hideAddModal()" class="flex-1 bg-gray-600 hover:bg-gray-500 text-white py-2 rounded-lg">Cancel</button>
+                <button type="submit" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg">Create Agent</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Agent Logs Modal -->
+<div id="agent-logs-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50" onclick="if(event.target===this) AgentManager.hideLogsModal()">
+    <div class="bg-gray-800 rounded-lg p-6 w-full max-w-3xl mx-4 max-h-[80vh] flex flex-col">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-white">📋 Agent Logs: <span id="logs-agent-name"></span></h3>
+            <button onclick="AgentManager.hideLogsModal()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+        </div>
+        <pre id="agent-logs-content" class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-auto flex-1 text-sm font-mono">Loading logs...</pre>
+    </div>
+</div>
+
+            </div>
+
         </section>
 
         </main>
@@ -9953,7 +10071,281 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-</script>
+
+        // ============ AGENT MANAGER ============
+        // ============================================================
+// AGENT MANAGER - JavaScript Controller
+// ============================================================
+const AgentManager = {
+    agents: [],
+    apiBase: window.API_BASE || 'http://localhost:4001',
+    
+    async init() {
+        console.log('🤖 AgentManager initializing...');
+        document.getElementById('new-agent-type')?.addEventListener('change', (e) => {
+            const trialContainer = document.getElementById('trial-days-container');
+            if (trialContainer) {
+                trialContainer.style.display = e.target.value === 'trial' ? 'block' : 'none';
+            }
+        });
+        await this.refreshAgents();
+        // Auto-refresh every 30 seconds
+        setInterval(() => this.refreshAgents(), 30000);
+    },
+    
+    async refreshAgents() {
+        try {
+            const res = await fetch(`${this.apiBase}/api/agents`);
+            const data = await res.json();
+            if (data.success) {
+                this.agents = data.agents || [];
+                this.renderAgents();
+                this.updateStats(data.meta);
+            }
+        } catch (err) {
+            console.error('Failed to fetch agents:', err);
+            this.showToast('Failed to fetch agents', 'error');
+        }
+    },
+    
+    renderAgents() {
+        const tbody = document.getElementById('agent-table-body');
+        if (!tbody) return;
+        
+        if (this.agents.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-500">No agents configured</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = this.agents.map(agent => `
+            <tr class="border-b border-gray-700 hover:bg-gray-700/50 transition-colors">
+                <td class="px-4 py-3">
+                    <span class="inline-flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full ${agent.status === 'running' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}"></span>
+                        <span class="text-sm ${agent.status === 'running' ? 'text-green-400' : 'text-red-400'}">
+                            ${agent.status === 'running' ? 'Running' : 'Stopped'}
+                        </span>
+                    </span>
+                </td>
+                <td class="px-4 py-3 font-semibold">${this.escapeHtml(agent.name)}</td>
+                <td class="px-4 py-3 text-gray-400 font-mono text-sm">${agent.id}</td>
+                <td class="px-4 py-3">
+                    <span class="px-2 py-1 rounded text-xs font-medium ${this.getTypeBadgeClass(agent.type)}">
+                        ${agent.type}
+                    </span>
+                </td>
+                <td class="px-4 py-3 font-mono text-orange-400">${agent.port}</td>
+                <td class="px-4 py-3 text-gray-300">${agent.owner || '-'}</td>
+                <td class="px-4 py-3 ${agent.trial_expires ? 'text-yellow-400' : 'text-gray-500'}">
+                    ${agent.trial_expires || 'Never'}
+                </td>
+                <td class="px-4 py-3 text-right">
+                    <div class="flex justify-end gap-2">
+                        ${agent.status === 'running' ? `
+                            <button onclick="AgentManager.stopAgent('${agent.id}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm" title="Stop">
+                                ⏹️
+                            </button>
+                            <button onclick="AgentManager.restartAgent('${agent.id}')" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm" title="Restart">
+                                🔄
+                            </button>
+                        ` : `
+                            <button onclick="AgentManager.startAgent('${agent.id}')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm" title="Start">
+                                ▶️
+                            </button>
+                        `}
+                        <button onclick="AgentManager.showLogs('${agent.id}', '${this.escapeHtml(agent.name)}')" class="bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded text-sm" title="Logs">
+                            📋
+                        </button>
+                        <button onclick="AgentManager.deleteAgent('${agent.id}', '${this.escapeHtml(agent.name)}')" class="bg-gray-700 hover:bg-red-600 text-white px-3 py-1 rounded text-sm" title="Delete">
+                            🗑️
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    },
+    
+    updateStats(meta) {
+        const running = this.agents.filter(a => a.status === 'running').length;
+        const stopped = this.agents.filter(a => a.status !== 'running').length;
+        const available = (meta?.max_agents || 80) - this.agents.length;
+        
+        document.getElementById('stat-total').textContent = this.agents.length;
+        document.getElementById('stat-running').textContent = running;
+        document.getElementById('stat-stopped').textContent = stopped;
+        document.getElementById('stat-ports').textContent = available;
+        document.getElementById('agent-count-badge').textContent = `${this.agents.length} agents`;
+    },
+    
+    getTypeBadgeClass(type) {
+        const classes = {
+            'personal-assistant': 'bg-purple-600 text-white',
+            'maintenance': 'bg-blue-600 text-white',
+            'customer': 'bg-green-600 text-white',
+            'trial': 'bg-yellow-600 text-black'
+        };
+        return classes[type] || 'bg-gray-600 text-white';
+    },
+    
+    escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    },
+    
+    async startAgent(id) {
+        this.showToast(`Starting ${id}...`, 'info');
+        try {
+            const res = await fetch(`${this.apiBase}/api/agents/${id}/start`, { method: 'POST' });
+            const data = await res.json();
+            this.showToast(data.success ? `${id} started!` : `Failed: ${data.message}`, data.success ? 'success' : 'error');
+            await this.refreshAgents();
+        } catch (err) {
+            this.showToast(`Error starting ${id}`, 'error');
+        }
+    },
+    
+    async stopAgent(id) {
+        this.showToast(`Stopping ${id}...`, 'info');
+        try {
+            const res = await fetch(`${this.apiBase}/api/agents/${id}/stop`, { method: 'POST' });
+            const data = await res.json();
+            this.showToast(data.success ? `${id} stopped` : `Failed: ${data.message}`, data.success ? 'success' : 'error');
+            await this.refreshAgents();
+        } catch (err) {
+            this.showToast(`Error stopping ${id}`, 'error');
+        }
+    },
+    
+    async restartAgent(id) {
+        this.showToast(`Restarting ${id}...`, 'info');
+        try {
+            const res = await fetch(`${this.apiBase}/api/agents/${id}/restart`, { method: 'POST' });
+            const data = await res.json();
+            this.showToast(data.success ? `${id} restarted!` : `Failed: ${data.message}`, data.success ? 'success' : 'error');
+            await this.refreshAgents();
+        } catch (err) {
+            this.showToast(`Error restarting ${id}`, 'error');
+        }
+    },
+    
+    async deleteAgent(id, name) {
+        if (!confirm(`Are you sure you want to delete agent "${name}"? This cannot be undone.`)) return;
+        this.showToast(`Deleting ${name}...`, 'info');
+        try {
+            const res = await fetch(`${this.apiBase}/api/agents/${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            this.showToast(data.success ? `${name} deleted` : `Failed: ${data.message}`, data.success ? 'success' : 'error');
+            await this.refreshAgents();
+        } catch (err) {
+            this.showToast(`Error deleting ${name}`, 'error');
+        }
+    },
+    
+    async startAll() {
+        if (!confirm('Start ALL agents?')) return;
+        this.showToast('Starting all agents...', 'info');
+        try {
+            const res = await fetch(`${this.apiBase}/api/agents/start-all`, { method: 'POST' });
+            const data = await res.json();
+            this.showToast(data.success ? 'All agents started!' : 'Some agents failed to start', data.success ? 'success' : 'warning');
+            await this.refreshAgents();
+        } catch (err) {
+            this.showToast('Error starting agents', 'error');
+        }
+    },
+    
+    async stopAll() {
+        if (!confirm('Stop ALL agents?')) return;
+        this.showToast('Stopping all agents...', 'info');
+        try {
+            const res = await fetch(`${this.apiBase}/api/agents/stop-all`, { method: 'POST' });
+            const data = await res.json();
+            this.showToast(data.success ? 'All agents stopped' : 'Some agents failed to stop', data.success ? 'success' : 'warning');
+            await this.refreshAgents();
+        } catch (err) {
+            this.showToast('Error stopping agents', 'error');
+        }
+    },
+    
+    showAddModal() {
+        document.getElementById('add-agent-modal').classList.remove('hidden');
+        document.getElementById('add-agent-modal').classList.add('flex');
+        document.getElementById('add-agent-form').reset();
+    },
+    
+    hideAddModal() {
+        document.getElementById('add-agent-modal').classList.add('hidden');
+        document.getElementById('add-agent-modal').classList.remove('flex');
+    },
+    
+    async createAgent(e) {
+        e.preventDefault();
+        const name = document.getElementById('new-agent-name').value.trim();
+        const type = document.getElementById('new-agent-type').value;
+        const owner = document.getElementById('new-agent-owner').value.trim();
+        const trialDays = document.getElementById('new-agent-trial-days')?.value;
+        
+        this.showToast(`Creating ${name}...`, 'info');
+        try {
+            const res = await fetch(`${this.apiBase}/api/agents`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, type, owner, trial_days: type === 'trial' ? trialDays : null })
+            });
+            const data = await res.json();
+            if (data.success) {
+                this.showToast(`${name} created on port ${data.port || 'auto'}!`, 'success');
+                this.hideAddModal();
+                await this.refreshAgents();
+            } else {
+                this.showToast(`Failed: ${data.error || data.message}`, 'error');
+            }
+        } catch (err) {
+            this.showToast('Error creating agent', 'error');
+        }
+    },
+    
+    async showLogs(id, name) {
+        document.getElementById('logs-agent-name').textContent = name;
+        document.getElementById('agent-logs-content').textContent = 'Loading logs...';
+        document.getElementById('agent-logs-modal').classList.remove('hidden');
+        document.getElementById('agent-logs-modal').classList.add('flex');
+        
+        try {
+            const res = await fetch(`${this.apiBase}/api/agents/${id}/logs?lines=200`);
+            const data = await res.json();
+            document.getElementById('agent-logs-content').textContent = data.logs || 'No logs available';
+        } catch (err) {
+            document.getElementById('agent-logs-content').textContent = 'Failed to load logs';
+        }
+    },
+    
+    hideLogsModal() {
+        document.getElementById('agent-logs-modal').classList.add('hidden');
+        document.getElementById('agent-logs-modal').classList.remove('flex');
+    },
+    
+    showToast(message, type = 'info') {
+        // Use existing toast system if available
+        if (typeof showToast === 'function') {
+            showToast(message, type);
+        } else {
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+    }
+};
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => AgentManager.init());
+} else {
+    AgentManager.init();
+}
+
+
+        console.log('🤖 AgentManager loaded');
+
+    </script>
 
     <!-- ===== COMMAND PALETTE ===== -->
     <div id="command-palette-overlay" class="command-palette-overlay" role="dialog" aria-labelledby="command-palette-title" aria-modal="true">
