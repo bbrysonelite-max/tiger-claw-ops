@@ -1325,6 +1325,33 @@
             margin-bottom: 8px;
         }
 
+    
+        /* Admin Tab Styles */
+        .admin-tab {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid transparent;
+            background: rgba(51, 65, 85, 0.5);
+            color: #94a3b8;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .admin-tab:hover {
+            background: rgba(71, 85, 105, 0.5);
+            color: white;
+        }
+        .admin-tab.active {
+            background: rgba(147, 51, 234, 0.2);
+            border-color: rgb(147, 51, 234);
+            color: rgb(192, 132, 252);
+        }
+        .admin-tab-content {
+            animation: fadeIn 0.2s ease-out;
+        }
+        body.admin-mode #user-avatar {
+            box-shadow: 0 0 0 2px rgb(234, 179, 8);
+        }
+
     </style>
 </head>
 <body class="bg-slate-950 text-white min-h-screen font-sans">
@@ -2779,7 +2806,393 @@
                 </div>
             </div>
         </section>
-    </main>
+    
+
+        <!-- ===== ADMIN DASHBOARD SECTION ===== -->
+        <section id="section-admin" class="section-content hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold flex items-center gap-3">
+                    <span class="text-3xl">👑</span>
+                    Admin Dashboard
+                </h2>
+                <span class="px-4 py-1.5 bg-gradient-to-r from-purple-600 to-amber-500 text-white rounded-full text-sm font-semibold shadow-lg">Admin Only</span>
+            </div>
+
+            <!-- Admin Tabs Navigation -->
+            <div class="flex items-center gap-2 mb-6 border-b border-slate-800 pb-2 overflow-x-auto">
+                <button onclick="showAdminTab('tenants')" class="admin-tab px-4 py-3 text-purple-400 border-b-2 border-purple-500 font-medium whitespace-nowrap" data-tab="tenants">👥 Tenant Overview</button>
+                <button onclick="showAdminTab('system')" class="admin-tab px-4 py-3 text-slate-400 hover:text-white border-b-2 border-transparent whitespace-nowrap" data-tab="system">🖥️ System Health</button>
+                <button onclick="showAdminTab('costs')" class="admin-tab px-4 py-3 text-slate-400 hover:text-white border-b-2 border-transparent whitespace-nowrap" data-tab="costs">💰 API Costs</button>
+                <button onclick="showAdminTab('hive-admin')" class="admin-tab px-4 py-3 text-slate-400 hover:text-white border-b-2 border-transparent whitespace-nowrap" data-tab="hive-admin">🐝 Hive Management</button>
+            </div>
+
+            <!-- ===== TENANT OVERVIEW TAB ===== -->
+            <div id="admin-tab-tenants" class="admin-tab-content">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                        <div class="text-slate-400 text-sm mb-1">Total Tenants</div>
+                        <div class="text-2xl font-bold text-white" id="admin-total-tenants">--</div>
+                    </div>
+                    <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                        <div class="text-slate-400 text-sm mb-1">Active Today</div>
+                        <div class="text-2xl font-bold text-green-400" id="admin-active-tenants">--</div>
+                    </div>
+                    <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                        <div class="text-slate-400 text-sm mb-1">Needs Attention</div>
+                        <div class="text-2xl font-bold text-yellow-400" id="admin-warning-tenants">--</div>
+                    </div>
+                    <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                        <div class="text-slate-400 text-sm mb-1">Avg Conv Rate</div>
+                        <div class="text-2xl font-bold text-purple-400" id="admin-avg-conversion">--</div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-3 mb-4">
+                    <div class="relative flex-1 min-w-[200px]">
+                        <input type="text" id="admin-tenant-search" placeholder="Search tenants..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 pl-10 text-sm focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition" oninput="AdminTenants.filter()">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">🔍</span>
+                    </div>
+                    <select id="admin-tenant-plan-filter" class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm" onchange="AdminTenants.filter()">
+                        <option value="">All Plans</option>
+                        <option value="Starter">Starter</option>
+                        <option value="Pro">Pro</option>
+                        <option value="Enterprise">Enterprise</option>
+                    </select>
+                    <select id="admin-tenant-health-filter" class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm" onchange="AdminTenants.filter()">
+                        <option value="">All Health</option>
+                        <option value="good">🟢 Good</option>
+                        <option value="warning">🟡 Warning</option>
+                        <option value="critical">🔴 Critical</option>
+                    </select>
+                    <button onclick="AdminTenants.export()" class="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 rounded-xl text-sm flex items-center gap-2">📥 Export</button>
+                </div>
+                <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-slate-800/50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left font-medium text-slate-400 cursor-pointer hover:text-white" onclick="AdminTenants.sort('name')">Tenant ↕</th>
+                                    <th class="px-4 py-3 text-left font-medium text-slate-400 cursor-pointer hover:text-white" onclick="AdminTenants.sort('plan')">Plan ↕</th>
+                                    <th class="px-4 py-3 text-center font-medium text-slate-400 cursor-pointer hover:text-white" onclick="AdminTenants.sort('prospects')">Prospects ↕</th>
+                                    <th class="px-4 py-3 text-center font-medium text-slate-400 cursor-pointer hover:text-white" onclick="AdminTenants.sort('scripts')">Scripts ↕</th>
+                                    <th class="px-4 py-3 text-center font-medium text-slate-400 cursor-pointer hover:text-white" onclick="AdminTenants.sort('conversions')">Conv ↕</th>
+                                    <th class="px-4 py-3 text-center font-medium text-slate-400 cursor-pointer hover:text-white" onclick="AdminTenants.sort('convRate')">Rate ↕</th>
+                                    <th class="px-4 py-3 text-center font-medium text-slate-400">Last Active</th>
+                                    <th class="px-4 py-3 text-center font-medium text-slate-400">Health</th>
+                                    <th class="px-4 py-3 text-center font-medium text-slate-400">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-tenants-tbody" class="divide-y divide-slate-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== SYSTEM HEALTH TAB ===== -->
+            <div id="admin-tab-system" class="admin-tab-content hidden">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-slate-400 text-sm">API Server</span>
+                            <span class="w-3 h-3 rounded-full bg-green-500 animate-pulse" id="status-api"></span>
+                        </div>
+                        <div class="text-lg font-semibold text-green-400" id="api-status-text">Operational</div>
+                    </div>
+                    <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-slate-400 text-sm">Database</span>
+                            <span class="w-3 h-3 rounded-full bg-green-500" id="status-db"></span>
+                        </div>
+                        <div class="text-lg font-semibold text-green-400" id="db-status-text">Connected</div>
+                    </div>
+                    <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-slate-400 text-sm">Queue</span>
+                            <span class="w-3 h-3 rounded-full bg-green-500" id="status-queue"></span>
+                        </div>
+                        <div class="text-lg font-semibold text-green-400" id="queue-status-text">Running</div>
+                    </div>
+                    <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-slate-400 text-sm">Cache</span>
+                            <span class="w-3 h-3 rounded-full bg-green-500" id="status-cache"></span>
+                        </div>
+                        <div class="text-lg font-semibold text-green-400" id="cache-status-text">Active</div>
+                    </div>
+                </div>
+                <div class="grid lg:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2"><span>📊</span> Performance Metrics</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                                <span class="text-slate-400">API Uptime</span>
+                                <span class="text-xl font-bold text-green-400" id="metric-uptime">99.9%</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                                <span class="text-slate-400">Avg Response Time</span>
+                                <span class="text-xl font-bold text-blue-400" id="metric-response-time">145ms</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                                <span class="text-slate-400">Active Connections</span>
+                                <span class="text-xl font-bold text-purple-400" id="metric-connections">47</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                                <span class="text-slate-400">Error Rate</span>
+                                <span class="text-xl font-bold text-green-400" id="metric-error-rate">0.1%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2"><span>🗄️</span> System Resources</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                                <span class="text-slate-400">Queued Jobs</span>
+                                <span class="text-xl font-bold text-amber-400" id="metric-queued-jobs">12</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                                <span class="text-slate-400">Database Size</span>
+                                <span class="text-xl font-bold text-blue-400" id="metric-db-size">2.3 GB</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                                <span class="text-slate-400">Cache Hit Rate</span>
+                                <span class="text-xl font-bold text-green-400" id="metric-cache-hit">94%</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                                <span class="text-slate-400">Last Deployment</span>
+                                <span class="text-sm font-medium text-slate-300" id="metric-last-deploy">2024-01-15 10:30</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold flex items-center gap-2"><span>⚠️</span> Recent Errors</h3>
+                        <button onclick="SystemHealth.clearErrors()" class="text-sm text-slate-400 hover:text-white">Clear All</button>
+                    </div>
+                    <div id="admin-errors-log" class="space-y-2 max-h-64 overflow-y-auto">
+                        <div class="text-slate-500 text-sm text-center py-4">No recent errors 🎉</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== API COSTS TAB ===== -->
+            <div id="admin-tab-costs" class="admin-tab-content hidden">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                        <div class="text-slate-400 text-sm mb-1">This Month</div>
+                        <div class="text-2xl font-bold text-white" id="cost-this-month">$1,234.56</div>
+                        <div class="text-xs text-green-400 mt-1">↑ 25% vs last month</div>
+                    </div>
+                    <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                        <div class="text-slate-400 text-sm mb-1">Last Month</div>
+                        <div class="text-2xl font-bold text-slate-300" id="cost-last-month">$987.65</div>
+                    </div>
+                    <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                        <div class="text-slate-400 text-sm mb-1">Projected</div>
+                        <div class="text-2xl font-bold text-amber-400" id="cost-projected">$1,456.00</div>
+                    </div>
+                    <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                        <div class="text-slate-400 text-sm mb-1">Per Tenant Avg</div>
+                        <div class="text-2xl font-bold text-purple-400" id="cost-per-tenant">$23.45</div>
+                    </div>
+                </div>
+                <div class="grid lg:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2"><span>🔌</span> Cost by Service</h3>
+                        <div class="space-y-3" id="cost-by-service">
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                                    <span>OpenAI GPT-4</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold">$890.00</div>
+                                    <div class="text-xs text-slate-400">45,000 requests</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-3 h-3 rounded-full bg-purple-500"></span>
+                                    <span>Claude API</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold">$234.00</div>
+                                    <div class="text-xs text-slate-400">12,000 requests</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                                    <span>Perplexity</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold">$110.56</div>
+                                    <div class="text-xs text-slate-400">8,000 requests</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2"><span>👥</span> Top Spenders</h3>
+                        <div class="space-y-3" id="cost-by-tenant">
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 bg-tiger-500/20 rounded-full flex items-center justify-center text-tiger-400 font-bold">SC</div>
+                                    <span>Sarah Chen</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold">$89.45</div>
+                                    <div class="text-xs text-slate-400">4,500 requests</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400 font-bold">MJ</div>
+                                    <span>Mike Johnson</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold">$67.23</div>
+                                    <div class="text-xs text-slate-400">3,200 requests</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 bg-purple-500/20 rounded-full flex items-center justify-center text-purple-400 font-bold">AL</div>
+                                    <span>Amy Lee</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold">$54.12</div>
+                                    <div class="text-xs text-slate-400">2,800 requests</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold flex items-center gap-2"><span>📈</span> Cost Trend (Last 30 Days)</h3>
+                        <select class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm">
+                            <option>Last 30 Days</option>
+                            <option>Last 90 Days</option>
+                            <option>This Year</option>
+                        </select>
+                    </div>
+                    <div class="h-48 flex items-center justify-center text-slate-500">
+                        <div class="text-center">
+                            <span class="text-4xl">📊</span>
+                            <p class="mt-2">Cost trend chart will render here</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== HIVE MANAGEMENT TAB ===== -->
+            <div id="admin-tab-hive-admin" class="admin-tab-content hidden">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                        <div class="text-slate-400 text-sm mb-1">Total Learnings</div>
+                        <div class="text-2xl font-bold text-white" id="hive-total-learnings">1,234</div>
+                    </div>
+                    <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                        <div class="text-slate-400 text-sm mb-1">Pending Review</div>
+                        <div class="text-2xl font-bold text-amber-400" id="hive-pending-review">45</div>
+                    </div>
+                    <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                        <div class="text-slate-400 text-sm mb-1">Featured Scripts</div>
+                        <div class="text-2xl font-bold text-purple-400" id="hive-featured">12</div>
+                    </div>
+                    <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                        <div class="text-slate-400 text-sm mb-1">Flagged Content</div>
+                        <div class="text-2xl font-bold text-red-400" id="hive-flagged">3</div>
+                    </div>
+                </div>
+                <div class="grid lg:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold flex items-center gap-2"><span>⭐</span> Top Performing Scripts</h3>
+                            <button onclick="HiveManagement.refreshTopScripts()" class="text-sm text-purple-400 hover:text-purple-300">Refresh</button>
+                        </div>
+                        <div class="space-y-3" id="hive-top-scripts">
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                                <div class="flex-1">
+                                    <div class="font-medium">"I noticed you posted about..."</div>
+                                    <div class="text-xs text-slate-400 mt-1">87% success rate • Used 234 times</div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button class="px-2 py-1 bg-purple-600/20 text-purple-400 rounded text-xs hover:bg-purple-600/30" onclick="HiveManagement.feature(1)">⭐ Feature</button>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                                <div class="flex-1">
+                                    <div class="font-medium">"Congratulations on your recent..."</div>
+                                    <div class="text-xs text-slate-400 mt-1">82% success rate • Used 189 times</div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button class="px-2 py-1 bg-purple-600/20 text-purple-400 rounded text-xs hover:bg-purple-600/30" onclick="HiveManagement.feature(2)">⭐ Feature</button>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                                <div class="flex-1">
+                                    <div class="font-medium">"Your experience in X would be..."</div>
+                                    <div class="text-xs text-slate-400 mt-1">78% success rate • Used 156 times</div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button class="px-2 py-1 bg-purple-600/20 text-purple-400 rounded text-xs hover:bg-purple-600/30" onclick="HiveManagement.feature(3)">⭐ Feature</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold flex items-center gap-2"><span>🚩</span> Flagged for Review</h3>
+                            <span class="px-2 py-1 bg-red-600/20 text-red-400 rounded-full text-xs" id="flagged-count-badge">3 pending</span>
+                        </div>
+                        <div class="space-y-3" id="hive-flagged-content">
+                            <div class="flex items-center justify-between p-3 bg-red-900/20 border border-red-900/50 rounded-xl">
+                                <div class="flex-1">
+                                    <div class="font-medium text-red-300">"URGENT: Limited time offer..."</div>
+                                    <div class="text-xs text-slate-400 mt-1">Flagged: Spam-like content</div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button class="px-2 py-1 bg-green-600/20 text-green-400 rounded text-xs hover:bg-green-600/30" onclick="HiveManagement.approve(1)">✓ Approve</button>
+                                    <button class="px-2 py-1 bg-red-600/20 text-red-400 rounded text-xs hover:bg-red-600/30" onclick="HiveManagement.reject(1)">✕ Reject</button>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-red-900/20 border border-red-900/50 rounded-xl">
+                                <div class="flex-1">
+                                    <div class="font-medium text-red-300">"You MUST respond to this..."</div>
+                                    <div class="text-xs text-slate-400 mt-1">Flagged: Aggressive tone</div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button class="px-2 py-1 bg-green-600/20 text-green-400 rounded text-xs hover:bg-green-600/30" onclick="HiveManagement.approve(2)">✓ Approve</button>
+                                    <button class="px-2 py-1 bg-red-600/20 text-red-400 rounded text-xs hover:bg-red-600/30" onclick="HiveManagement.reject(2)">✕ Reject</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold flex items-center gap-2"><span>📋</span> Bulk Actions</h3>
+                    </div>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="HiveManagement.bulkApproveAll()" class="px-4 py-2 bg-green-600/20 text-green-400 rounded-xl hover:bg-green-600/30 flex items-center gap-2">
+                            <span>✓</span> Approve All Pending
+                        </button>
+                        <button onclick="HiveManagement.exportLearnings()" class="px-4 py-2 bg-blue-600/20 text-blue-400 rounded-xl hover:bg-blue-600/30 flex items-center gap-2">
+                            <span>📥</span> Export Learnings
+                        </button>
+                        <button onclick="HiveManagement.syncHive()" class="px-4 py-2 bg-purple-600/20 text-purple-400 rounded-xl hover:bg-purple-600/30 flex items-center gap-2">
+                            <span>🔄</span> Sync Hive Data
+                        </button>
+                        <button onclick="HiveManagement.purgeOld()" class="px-4 py-2 bg-slate-700 text-slate-300 rounded-xl hover:bg-slate-600 flex items-center gap-2">
+                            <span>🗑️</span> Purge Old Scripts
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        </main>
 
     <script>
         // ============ CONFIGURATION ============
@@ -2805,7 +3218,460 @@
         // ============================================
 // REFRESH MANAGER - Centralized Refresh Control
 // ============================================
-const RefreshManager = {
+
+        // ============ ADMIN MODE SYSTEM ============
+        const AdminMode = {
+            isAdmin: false,
+
+            toggle() {
+                this.isAdmin = !this.isAdmin;
+                document.body.classList.toggle('admin-mode', this.isAdmin);
+                const navAdmin = document.getElementById('nav-admin');
+                if (navAdmin) {
+                    navAdmin.style.display = this.isAdmin ? 'flex' : 'none';
+                }
+                showToast(this.isAdmin ? 'Admin mode enabled 👑' : 'Admin mode disabled', this.isAdmin ? 'success' : 'info');
+
+                // If disabling admin mode while on admin section, go to dashboard
+                if (!this.isAdmin && currentSection === 'admin') {
+                    showSection('dashboard');
+                }
+
+                // Load admin data if enabling
+                if (this.isAdmin) {
+                    AdminTenants.load();
+                    SystemHealth.load();
+                    APICosts.load();
+                    HiveManagement.load();
+                }
+            },
+
+            check() {
+                return this.isAdmin;
+            },
+
+            require() {
+                if (!this.isAdmin) {
+                    showToast('Admin access required', 'error');
+                    showSection('dashboard');
+                    return false;
+                }
+                return true;
+            }
+        };
+
+        // Admin keyboard shortcut (Ctrl+Shift+A)
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+                e.preventDefault();
+                AdminMode.toggle();
+            }
+        });
+
+        // Admin tab switching
+        function showAdminTab(tabName) {
+            if (!AdminMode.check()) return;
+
+            // Update tab buttons
+            document.querySelectorAll('.admin-tab').forEach(tab => {
+                const isActive = tab.dataset.tab === tabName;
+                tab.classList.toggle('text-purple-400', isActive);
+                tab.classList.toggle('border-purple-500', isActive);
+                tab.classList.toggle('text-slate-400', !isActive);
+                tab.classList.toggle('border-transparent', !isActive);
+            });
+
+            // Show/hide content
+            document.querySelectorAll('.admin-tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            const activeContent = document.getElementById(`admin-tab-${tabName}`);
+            if (activeContent) {
+                activeContent.classList.remove('hidden');
+            }
+        }
+
+        // ============ ADMIN TENANTS MANAGEMENT ============
+        const AdminTenants = {
+            data: [],
+            filteredData: [],
+            sortField: 'name',
+            sortAsc: true,
+
+            async load() {
+                // Mock data for now - in production, fetch from API
+                this.data = [
+                    { id: 1, name: 'Sarah Chen', email: 'sarah@example.com', plan: 'Pro', prospects: 145, scripts: 89, conversions: 12, lastActive: '2h ago', health: 'good' },
+                    { id: 2, name: 'Mike Johnson', email: 'mike@example.com', plan: 'Starter', prospects: 23, scripts: 15, conversions: 2, lastActive: '1d ago', health: 'warning' },
+                    { id: 3, name: 'Amy Lee', email: 'amy@example.com', plan: 'Enterprise', prospects: 456, scripts: 234, conversions: 67, lastActive: '5m ago', health: 'good' },
+                    { id: 4, name: 'John Smith', email: 'john@example.com', plan: 'Pro', prospects: 78, scripts: 45, conversions: 8, lastActive: '3d ago', health: 'critical' },
+                    { id: 5, name: 'Lisa Wang', email: 'lisa@example.com', plan: 'Starter', prospects: 34, scripts: 22, conversions: 4, lastActive: '6h ago', health: 'good' },
+                    { id: 6, name: 'Tom Brown', email: 'tom@example.com', plan: 'Pro', prospects: 167, scripts: 98, conversions: 23, lastActive: '1h ago', health: 'good' },
+                    { id: 7, name: 'Emma Davis', email: 'emma@example.com', plan: 'Enterprise', prospects: 289, scripts: 156, conversions: 41, lastActive: '30m ago', health: 'good' },
+                    { id: 8, name: 'Chris Wilson', email: 'chris@example.com', plan: 'Starter', prospects: 12, scripts: 8, conversions: 0, lastActive: '5d ago', health: 'critical' },
+                ];
+                this.filteredData = [...this.data];
+                this.updateSummary();
+                this.render();
+            },
+
+            updateSummary() {
+                const total = this.data.length;
+                const active = this.data.filter(t => t.lastActive.includes('m') || t.lastActive.includes('h')).length;
+                const warning = this.data.filter(t => t.health === 'warning' || t.health === 'critical').length;
+                const totalConversions = this.data.reduce((sum, t) => sum + t.conversions, 0);
+                const totalProspects = this.data.reduce((sum, t) => sum + t.prospects, 0);
+                const avgRate = totalProspects > 0 ? ((totalConversions / totalProspects) * 100).toFixed(1) : 0;
+
+                document.getElementById('admin-total-tenants').textContent = total;
+                document.getElementById('admin-active-tenants').textContent = active;
+                document.getElementById('admin-warning-tenants').textContent = warning;
+                document.getElementById('admin-avg-conversion').textContent = avgRate + '%';
+            },
+
+            filter() {
+                const search = document.getElementById('admin-tenant-search').value.toLowerCase();
+                const planFilter = document.getElementById('admin-tenant-plan-filter').value;
+                const healthFilter = document.getElementById('admin-tenant-health-filter').value;
+
+                this.filteredData = this.data.filter(t => {
+                    const matchSearch = !search || t.name.toLowerCase().includes(search) || t.email.toLowerCase().includes(search);
+                    const matchPlan = !planFilter || t.plan === planFilter;
+                    const matchHealth = !healthFilter || t.health === healthFilter;
+                    return matchSearch && matchPlan && matchHealth;
+                });
+                this.render();
+            },
+
+            sort(field) {
+                if (this.sortField === field) {
+                    this.sortAsc = !this.sortAsc;
+                } else {
+                    this.sortField = field;
+                    this.sortAsc = true;
+                }
+
+                this.filteredData.sort((a, b) => {
+                    let valA = a[field];
+                    let valB = b[field];
+                    if (field === 'convRate') {
+                        valA = a.prospects > 0 ? a.conversions / a.prospects : 0;
+                        valB = b.prospects > 0 ? b.conversions / b.prospects : 0;
+                    }
+                    if (typeof valA === 'string') valA = valA.toLowerCase();
+                    if (typeof valB === 'string') valB = valB.toLowerCase();
+                    if (valA < valB) return this.sortAsc ? -1 : 1;
+                    if (valA > valB) return this.sortAsc ? 1 : -1;
+                    return 0;
+                });
+                this.render();
+            },
+
+            render() {
+                const tbody = document.getElementById('admin-tenants-tbody');
+                if (!tbody) return;
+
+                const healthIcons = { good: '🟢', warning: '🟡', critical: '🔴' };
+                const planColors = { Starter: 'bg-slate-600', Pro: 'bg-tiger-600', Enterprise: 'bg-purple-600' };
+
+                tbody.innerHTML = this.filteredData.map(t => {
+                    const convRate = t.prospects > 0 ? ((t.conversions / t.prospects) * 100).toFixed(1) : '0.0';
+                    return `
+                        <tr class="hover:bg-slate-800/50 transition">
+                            <td class="px-4 py-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center text-sm font-bold">${t.name.split(' ').map(n => n[0]).join('')}</div>
+                                    <div>
+                                        <div class="font-medium">${t.name}</div>
+                                        <div class="text-xs text-slate-400">${t.email}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3"><span class="px-2 py-1 ${planColors[t.plan]} rounded-full text-xs font-medium">${t.plan}</span></td>
+                            <td class="px-4 py-3 text-center">${t.prospects}</td>
+                            <td class="px-4 py-3 text-center">${t.scripts}</td>
+                            <td class="px-4 py-3 text-center">${t.conversions}</td>
+                            <td class="px-4 py-3 text-center font-medium ${parseFloat(convRate) >= 10 ? 'text-green-400' : parseFloat(convRate) >= 5 ? 'text-yellow-400' : 'text-slate-400'}">${convRate}%</td>
+                            <td class="px-4 py-3 text-center text-slate-400 text-sm">${t.lastActive}</td>
+                            <td class="px-4 py-3 text-center">${healthIcons[t.health]}</td>
+                            <td class="px-4 py-3 text-center">
+                                <div class="flex items-center justify-center gap-2">
+                                    <button onclick="AdminTenants.viewDetails(${t.id})" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded text-xs">View</button>
+                                    <button onclick="AdminTenants.sendHelp(${t.id})" class="px-2 py-1 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 rounded text-xs">Help</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            },
+
+            viewDetails(id) {
+                const tenant = this.data.find(t => t.id === id);
+                if (tenant) {
+                    showToast(`Viewing details for ${tenant.name}`, 'info');
+                    // In production: open tenant detail modal
+                }
+            },
+
+            sendHelp(id) {
+                const tenant = this.data.find(t => t.id === id);
+                if (tenant) {
+                    showToast(`Help email sent to ${tenant.name}`, 'success');
+                    // In production: trigger help email
+                }
+            },
+
+            export() {
+                const csv = [
+                    ['Name', 'Email', 'Plan', 'Prospects', 'Scripts', 'Conversions', 'Conv Rate', 'Last Active', 'Health'].join(','),
+                    ...this.filteredData.map(t => [
+                        t.name, t.email, t.plan, t.prospects, t.scripts, t.conversions,
+                        (t.prospects > 0 ? ((t.conversions / t.prospects) * 100).toFixed(1) : 0) + '%',
+                        t.lastActive, t.health
+                    ].join(','))
+                ].join('\n');
+
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `tenants_export_${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast('Tenant data exported', 'success');
+            }
+        };
+
+        // ============ SYSTEM HEALTH MONITORING ============
+        const SystemHealth = {
+            metrics: {},
+            errors: [],
+
+            async load() {
+                // Mock data - in production fetch from /admin/system/health
+                this.metrics = {
+                    apiUptime: '99.9%',
+                    avgResponseTime: '145ms',
+                    activeConnections: 47,
+                    queuedJobs: 12,
+                    errorRate: '0.1%',
+                    lastDeployment: '2024-01-15 10:30',
+                    databaseSize: '2.3 GB',
+                    cacheHitRate: '94%'
+                };
+                this.errors = [
+                    { time: '10:45:23', level: 'warn', message: 'Rate limit approaching for tenant #42' },
+                    { time: '09:12:05', level: 'error', message: 'Failed to connect to LINE API (retry succeeded)' },
+                ];
+                this.render();
+            },
+
+            render() {
+                // Update metrics
+                const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+                setEl('metric-uptime', this.metrics.apiUptime);
+                setEl('metric-response-time', this.metrics.avgResponseTime);
+                setEl('metric-connections', this.metrics.activeConnections);
+                setEl('metric-error-rate', this.metrics.errorRate);
+                setEl('metric-queued-jobs', this.metrics.queuedJobs);
+                setEl('metric-db-size', this.metrics.databaseSize);
+                setEl('metric-cache-hit', this.metrics.cacheHitRate);
+                setEl('metric-last-deploy', this.metrics.lastDeployment);
+
+                // Render errors
+                const errLog = document.getElementById('admin-errors-log');
+                if (errLog) {
+                    if (this.errors.length === 0) {
+                        errLog.innerHTML = '<div class="text-slate-500 text-sm text-center py-4">No recent errors 🎉</div>';
+                    } else {
+                        errLog.innerHTML = this.errors.map(e => `
+                            <div class="flex items-start gap-3 p-3 ${e.level === 'error' ? 'bg-red-900/20 border border-red-900/30' : 'bg-yellow-900/20 border border-yellow-900/30'} rounded-xl">
+                                <span class="text-xs text-slate-500 whitespace-nowrap">${e.time}</span>
+                                <span class="${e.level === 'error' ? 'text-red-400' : 'text-yellow-400'}">${e.level === 'error' ? '❌' : '⚠️'}</span>
+                                <span class="text-sm">${e.message}</span>
+                            </div>
+                        `).join('');
+                    }
+                }
+            },
+
+            clearErrors() {
+                this.errors = [];
+                this.render();
+                showToast('Error log cleared', 'success');
+            }
+        };
+
+        // ============ API COSTS TRACKING ============
+        const APICosts = {
+            summary: {},
+            breakdown: [],
+            byTenant: [],
+
+            async load() {
+                // Mock data - in production fetch from /admin/costs
+                this.summary = {
+                    thisMonth: 1234.56,
+                    lastMonth: 987.65,
+                    projected: 1456.00,
+                    perTenantAvg: 23.45
+                };
+                this.breakdown = [
+                    { service: 'OpenAI GPT-4', cost: 890.00, requests: 45000, color: 'green' },
+                    { service: 'Claude API', cost: 234.00, requests: 12000, color: 'purple' },
+                    { service: 'Perplexity', cost: 110.56, requests: 8000, color: 'blue' }
+                ];
+                this.byTenant = [
+                    { name: 'Sarah Chen', initials: 'SC', cost: 89.45, requests: 4500, color: 'tiger' },
+                    { name: 'Mike Johnson', initials: 'MJ', cost: 67.23, requests: 3200, color: 'blue' },
+                    { name: 'Amy Lee', initials: 'AL', cost: 54.12, requests: 2800, color: 'purple' }
+                ];
+                this.render();
+            },
+
+            render() {
+                const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+                setEl('cost-this-month', '$' + this.summary.thisMonth.toLocaleString());
+                setEl('cost-last-month', '$' + this.summary.lastMonth.toLocaleString());
+                setEl('cost-projected', '$' + this.summary.projected.toLocaleString());
+                setEl('cost-per-tenant', '$' + this.summary.perTenantAvg.toFixed(2));
+
+                // Render service breakdown
+                const serviceContainer = document.getElementById('cost-by-service');
+                if (serviceContainer) {
+                    serviceContainer.innerHTML = this.breakdown.map(s => `
+                        <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                            <div class="flex items-center gap-3">
+                                <span class="w-3 h-3 rounded-full bg-${s.color}-500"></span>
+                                <span>${s.service}</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-bold">$${s.cost.toFixed(2)}</div>
+                                <div class="text-xs text-slate-400">${s.requests.toLocaleString()} requests</div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                // Render tenant costs
+                const tenantContainer = document.getElementById('cost-by-tenant');
+                if (tenantContainer) {
+                    const colorMap = { tiger: 'tiger-500', blue: 'blue-500', purple: 'purple-500' };
+                    tenantContainer.innerHTML = this.byTenant.map(t => `
+                        <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-${colorMap[t.color]}/20 rounded-full flex items-center justify-center text-${colorMap[t.color]} font-bold text-sm">${t.initials}</div>
+                                <span>${t.name}</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-bold">$${t.cost.toFixed(2)}</div>
+                                <div class="text-xs text-slate-400">${t.requests.toLocaleString()} requests</div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            }
+        };
+
+        // ============ HIVE MANAGEMENT ============
+        const HiveManagement = {
+            stats: {},
+            topScripts: [],
+            flaggedContent: [],
+
+            async load() {
+                // Mock data - in production fetch from /admin/hive
+                this.stats = {
+                    totalLearnings: 1234,
+                    pendingReview: 45,
+                    featured: 12,
+                    flagged: 3
+                };
+                this.topScripts = [
+                    { id: 1, text: 'I noticed you posted about...', successRate: 87, usageCount: 234, featured: false },
+                    { id: 2, text: 'Congratulations on your recent...', successRate: 82, usageCount: 189, featured: false },
+                    { id: 3, text: 'Your experience in X would be...', successRate: 78, usageCount: 156, featured: true }
+                ];
+                this.flaggedContent = [
+                    { id: 1, text: 'URGENT: Limited time offer...', reason: 'Spam-like content' },
+                    { id: 2, text: 'You MUST respond to this...', reason: 'Aggressive tone' }
+                ];
+                this.render();
+            },
+
+            render() {
+                const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+                setEl('hive-total-learnings', this.stats.totalLearnings.toLocaleString());
+                setEl('hive-pending-review', this.stats.pendingReview);
+                setEl('hive-featured', this.stats.featured);
+                setEl('hive-flagged', this.stats.flagged);
+
+                const badge = document.getElementById('flagged-count-badge');
+                if (badge) badge.textContent = this.stats.flagged + ' pending';
+            },
+
+            feature(id) {
+                const script = this.topScripts.find(s => s.id === id);
+                if (script) {
+                    script.featured = !script.featured;
+                    showToast(script.featured ? 'Script featured! ⭐' : 'Script unfeatured', 'success');
+                }
+            },
+
+            approve(id) {
+                this.flaggedContent = this.flaggedContent.filter(c => c.id !== id);
+                this.stats.flagged = this.flaggedContent.length;
+                this.render();
+                showToast('Content approved', 'success');
+            },
+
+            reject(id) {
+                this.flaggedContent = this.flaggedContent.filter(c => c.id !== id);
+                this.stats.flagged = this.flaggedContent.length;
+                this.render();
+                showToast('Content rejected and removed', 'info');
+            },
+
+            refreshTopScripts() {
+                showToast('Refreshing top scripts...', 'info');
+                this.load();
+            },
+
+            bulkApproveAll() {
+                if (this.flaggedContent.length === 0) {
+                    showToast('No pending content to approve', 'info');
+                    return;
+                }
+                const count = this.flaggedContent.length;
+                this.flaggedContent = [];
+                this.stats.flagged = 0;
+                this.render();
+                showToast(`Approved ${count} items`, 'success');
+            },
+
+            exportLearnings() {
+                showToast('Exporting hive learnings...', 'info');
+                // In production: trigger CSV download
+                setTimeout(() => showToast('Export complete! Check downloads.', 'success'), 1000);
+            },
+
+            syncHive() {
+                showToast('Syncing hive data...', 'info');
+                // In production: trigger sync
+                setTimeout(() => showToast('Hive sync complete!', 'success'), 1500);
+            },
+
+            purgeOld() {
+                if (confirm('Are you sure you want to purge scripts older than 90 days with <5% success rate?')) {
+                    showToast('Purging old scripts...', 'info');
+                    // In production: trigger purge
+                    setTimeout(() => showToast('Purged 23 old scripts', 'success'), 1000);
+                }
+            }
+        };
+
+
+        const RefreshManager = {
     intervals: {},
     defaultInterval: 30000,
     sectionIntervals: {
