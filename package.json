@@ -9,7 +9,10 @@
     "build": "tsc",
     "start": "node dist/api/server.js",
     "serve": "node serve.js",
-    "dev:all": "npm run dev & npm run serve"
+    "dev:all": "npm run dev & npm run serve",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch",
+    "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
@@ -23,10 +26,15 @@
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.10.5",
     "@types/node-cron": "^3.0.11",
     "@types/node-telegram-bot-api": "^0.64.7",
     "@types/pg": "^8.11.10",
+    "@types/supertest": "^6.0.3",
+    "jest": "^30.2.0",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.6",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   },
