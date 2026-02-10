@@ -3,7 +3,7 @@
  * Unit tests for utility functions
  */
 
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect } from 'vitest';
 
 // ==================== UTILITY FUNCTION TESTS ====================
 

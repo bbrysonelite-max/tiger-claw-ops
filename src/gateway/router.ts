@@ -5,18 +5,18 @@
  */
 
 import { Queue } from 'bullmq';
-import Redis, { Redis as RedisClient } from 'ioredis';
+import { Redis } from 'ioredis';
 import { InboundJobData, ProvisionJobData, QUEUE_NAMES } from '../shared/types.js';
 
 export interface RouterConfig {
   redisUrl?: string;
-  redisConnection?: RedisClient;
+  redisConnection?: Redis;
 }
 
 export class FleetRouter {
   private inboundQueue: Queue;
   private provisionQueue: Queue;
-  private redisConnection: RedisClient;
+  private redisConnection: Redis;
   private ownsConnection: boolean = false;
 
   constructor(config: RouterConfig = {}) {
@@ -43,12 +43,17 @@ export class FleetRouter {
 
   /**
    * Route incoming Telegram webhook to processing queue
+   * @param hash - The public webhook hash (identifies tenant)
+   * @param update - The Telegram Update object
    */
-  async routeInbound(botToken: string, update: any): Promise<string> {
+  async handleWebhook(hash: string, update: any): Promise<string> {
+    if (!update || typeof update !== 'object') {
+      throw new Error('Invalid update payload');
+    }
+
     const jobData: InboundJobData = {
-      botToken,
+      hash,
       update,
-      receivedAt: new Date().toISOString(),
     };
 
     const job = await this.inboundQueue.add('telegram-update', jobData, {
@@ -63,14 +68,18 @@ export class FleetRouter {
   }
 
   /**
-   * Route provisioning request to queue
+   * Route Stripe checkout session to provisioning queue
+   * @param session - Stripe checkout session object
    */
-  async routeProvision(customerId: string, email: string, displayName: string): Promise<string> {
+  async handleStripeCheckout(session: { customer: string; customer_email?: string; customer_details?: { name?: string } } | null): Promise<string> {
+    if (!session) {
+      return 'skipped-null-session';
+    }
+
     const jobData: ProvisionJobData = {
-      customerId,
-      email,
-      displayName,
-      requestedAt: new Date().toISOString(),
+      stripeId: session.customer,
+      email: session.customer_email || '',
+      name: session.customer_details?.name || 'Customer',
     };
 
     const job = await this.provisionQueue.add('provision-bot', jobData, {

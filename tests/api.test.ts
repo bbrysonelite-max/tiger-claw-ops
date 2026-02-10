@@ -4,7 +4,7 @@
  * Run with: npm test
  */
 
-import { describe, it, expect, beforeAll } from '@jest/globals';
+import { describe, it, expect, beforeAll } from 'vitest';
 import request from 'supertest';
 
 const API_BASE = process.env.API_URL || 'http://localhost:4000';
