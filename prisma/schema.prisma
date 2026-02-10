@@ -1,47 +1,122 @@
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
+// Tiger Bot Scout v3.2.0 - Prisma Schema
+// Updated with Gemini Red Team recommendations
 
 generator client {
   provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  extensions = [vector] // REQUIRED: pgvector extension
 }
 
 model Tenant {
   id              String   @id @default(uuid())
   stripeId        String?  @unique
   email           String   @unique
-  botToken        String   @unique
-  botTokenHash    String   @unique
+  name            String?
+  
+  // Bot Identity (Per-Customer Bot Architecture)
+  botToken        String   @unique // AES-256 Encrypted
+  botTokenHash    String   @unique // Public SHA-256 hash for Webhook Routing
   botUsername     String
-  status          String   @default("provisioning")
+  
+  // NEW: Track which Admin Account created this bot (Gemini Red Team - 20 bot limit)
+  createdByAdminSession  String?
+  
+  status          String   @default("provisioning") // provisioning, active, suspended
   createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
   prospects       Prospect[]
   reports         DailyReport[]
-}
-
-model HivePattern {
-  id              String   @id @default(uuid())
-  content         String
-  successCount    Int      @default(0)
-  uses            Int      @default(0)
 }
 
 model Prospect {
   id              String   @id @default(uuid())
   tenantId        String
-  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  // Basic Info
   name            String
-  summary         String?
-  status          String   @default("new")
-  score           Int      @default(0)
+  email           String?
+  phone           String?
+  source          String?  // facebook, linkedin, instagram, referral
+  sourceUrl       String?  // Profile URL
+  
+  // Enrichment Data (from Mini-RAG scraping)
+  summary         String?  // AI-generated summary
+  interests       String[] // Array of detected interests
+  painPoints      String[] // Potential pain points
+  
+  // Scoring & Status
+  score           Int      @default(0) // 0-100 AI-generated score
+  status          String   @default("new") // new, contacted, interested, converted, rejected
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  contactedAt     DateTime?
+  convertedAt     DateTime?
+  
+  @@index([tenantId])
+  @@index([status])
+  @@index([score])
 }
 
 model DailyReport {
   id              String   @id @default(uuid())
   tenantId        String
-  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
   date            DateTime @default(now())
-  status          String
-  prospectCount   Int
+  status          String   @default("pending") // pending, sent, failed
+  prospectCount   Int      @default(0)
+  
+  // Report Content
+  messageId       String?  // Telegram message ID if sent
+  content         String?  // The actual report text
+  
+  createdAt       DateTime @default(now())
+  sentAt          DateTime?
+  
+  @@index([tenantId])
+  @@index([date])
+}
+
+model HivePattern {
+  id              String   @id @default(uuid())
+  
+  // Pattern Content
+  content         String   // The script template or objection handler
+  category        String?  // approach_script, objection_handler, follow_up
+  
+  // Vector Embedding for Semantic Search (OpenAI text-embedding-3-small)
+  embedding       Unsupported("vector(1536)")?
+  
+  // Success Tracking
+  successCount    Int      @default(0)
+  uses            Int      @default(0)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([category])
+}
+
+// Credential Vault for secure secret storage
+model CredentialVault {
+  id              String   @id @default(uuid())
+  tenantId        String
+  
+  credentialType  String   // telegram_session, facebook_cookie, linkedin_cookie, etc.
+  encryptedValue  Bytes    // AES-256-GCM encrypted
+  iv              Bytes    // Initialization vector
+  
+  createdAt       DateTime @default(now())
+  lastAccessed    DateTime?
+  expiresAt       DateTime?
+  
+  @@unique([tenantId, credentialType])
+  @@index([tenantId])
 }
