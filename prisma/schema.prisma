@@ -1,0 +1,47 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Tenant {
+  id              String   @id @default(uuid())
+  stripeId        String?  @unique
+  email           String   @unique
+  botToken        String   @unique
+  botTokenHash    String   @unique
+  botUsername     String
+  status          String   @default("provisioning")
+  createdAt       DateTime @default(now())
+  prospects       Prospect[]
+  reports         DailyReport[]
+}
+
+model HivePattern {
+  id              String   @id @default(uuid())
+  content         String
+  successCount    Int      @default(0)
+  uses            Int      @default(0)
+}
+
+model Prospect {
+  id              String   @id @default(uuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  name            String
+  summary         String?
+  status          String   @default("new")
+  score           Int      @default(0)
+}
+
+model DailyReport {
+  id              String   @id @default(uuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  date            DateTime @default(now())
+  status          String
+  prospectCount   Int
+}
