@@ -2841,3 +2841,223 @@ app.post('/api/agents/stop-all', async (req, res) => {
 });
 
 console.log('🤖 Agent Management API loaded');
+
+// =============================================================================
+// CUSTOMER PROVISIONING ENDPOINTS
+// =============================================================================
+
+// Create tenants table if not exists
+async function initProvisioningTables() {
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS tenants (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        email TEXT NOT NULL UNIQUE,
+        name TEXT,
+        plan TEXT NOT NULL DEFAULT 'scout',
+        status TEXT NOT NULL DEFAULT 'active',
+        stripe_customer_id TEXT,
+        subscription_id TEXT,
+        api_key TEXT UNIQUE,
+        telegram_chat_id TEXT,
+        line_user_id TEXT,
+        settings JSONB DEFAULT '{}',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+
+    // Add tenant_id to leads table if not exists
+    await db.query(`ALTER TABLE leads ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id)`).catch(() => {});
+
+    // Create channels table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS channels (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id UUID REFERENCES tenants(id),
+        type TEXT NOT NULL,
+        name TEXT,
+        config JSONB DEFAULT '{}',
+        status TEXT NOT NULL DEFAULT 'active',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+
+    // Create messages table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        channel_id UUID REFERENCES channels(id),
+        tenant_id UUID REFERENCES tenants(id),
+        direction TEXT NOT NULL,
+        recipient TEXT,
+        content TEXT,
+        status TEXT DEFAULT 'pending',
+        metadata JSONB DEFAULT '{}',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+
+    // Indexes
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_tenants_email ON tenants(email)`).catch(() => {});
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_leads_tenant ON leads(tenant_id)`).catch(() => {});
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_channels_tenant ON channels(tenant_id)`).catch(() => {});
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_messages_tenant ON messages(tenant_id)`).catch(() => {});
+
+    console.log('✅ Provisioning tables ready (tenants, channels, messages)');
+  } catch (error) {
+    console.error('Provisioning tables init error:', error);
+  }
+}
+
+// Initialize provisioning tables
+initProvisioningTables();
+
+// POST /admin/provision - Provision a new customer
+app.post('/admin/provision', async (req, res) => {
+  try {
+    const { email, name, plan, telegram_chat_id, stripe_customer_id, subscription_id } = req.body;
+
+    if (!email) {
+      res.status(400).json({ error: 'email is required' });
+      return;
+    }
+
+    // Generate API key
+    const crypto = await import('crypto');
+    const apiKey = `tb_${crypto.randomBytes(24).toString('hex')}`;
+
+    // Check if tenant already exists
+    const existing = await db.query('SELECT * FROM tenants WHERE email = $1', [email]);
+    if (existing.rows.length > 0) {
+      // Update existing tenant
+      const updateResult = await db.query(`
+        UPDATE tenants SET
+          name = COALESCE($2, name),
+          plan = COALESCE($3, plan),
+          telegram_chat_id = COALESCE($4, telegram_chat_id),
+          stripe_customer_id = COALESCE($5, stripe_customer_id),
+          subscription_id = COALESCE($6, subscription_id),
+          status = 'active',
+          updated_at = NOW()
+        WHERE email = $1
+        RETURNING *
+      `, [email, name, plan || 'scout', telegram_chat_id, stripe_customer_id, subscription_id]);
+
+      res.json({
+        success: true,
+        action: 'updated',
+        tenant: updateResult.rows[0],
+        message: `Tenant ${email} updated successfully`,
+        telegram_bot: '@TigerBotScout_bot',
+        dashboard: 'https://botcraftwrks.ai/dashboard'
+      });
+      return;
+    }
+
+    // Create new tenant
+    const tenantResult = await db.query(`
+      INSERT INTO tenants (
+        email, name, plan, status,
+        stripe_customer_id, subscription_id,
+        api_key, telegram_chat_id,
+        created_at, updated_at
+      ) VALUES ($1, $2, $3, 'active', $4, $5, $6, $7, NOW(), NOW())
+      RETURNING *
+    `, [
+      email,
+      name || email.split('@')[0],
+      plan || 'scout',
+      stripe_customer_id || null,
+      subscription_id || null,
+      apiKey,
+      telegram_chat_id || null
+    ]);
+
+    const tenant = tenantResult.rows[0];
+
+    // Create default Telegram channel
+    await db.query(`
+      INSERT INTO channels (tenant_id, type, name, status, created_at)
+      VALUES ($1, 'telegram', 'Tiger Bot Scout', 'active', NOW())
+    `, [tenant.id]);
+
+    console.log(`✅ Provisioned new tenant: ${email} (${tenant.id})`);
+
+    res.json({
+      success: true,
+      action: 'created',
+      tenant,
+      message: `Welcome! Your Tiger Bot Scout is ready.`,
+      telegram_bot: '@TigerBotScout_bot',
+      dashboard: 'https://botcraftwrks.ai/dashboard'
+    });
+  } catch (err) {
+    console.error('Provision error:', err);
+    res.status(500).json({ error: 'Failed to provision customer', details: String(err) });
+  }
+});
+
+// GET /admin/tenants/db - Get tenants from actual database (not mock)
+app.get('/admin/tenants/db', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT t.*,
+             (SELECT COUNT(*) FROM leads WHERE tenant_id = t.id) as prospect_count
+      FROM tenants t
+      ORDER BY t.created_at DESC
+    `);
+    res.json({ tenants: result.rows, count: result.rows.length });
+  } catch (err) {
+    console.error('Get tenants error:', err);
+    res.status(500).json({ error: 'Failed to get tenants', details: String(err) });
+  }
+});
+
+// POST /admin/provision/batch - Provision multiple customers at once
+app.post('/admin/provision/batch', async (req, res) => {
+  try {
+    const { customers } = req.body;
+
+    if (!customers || !Array.isArray(customers)) {
+      res.status(400).json({ error: 'customers array is required' });
+      return;
+    }
+
+    const results = [];
+    for (const customer of customers) {
+      try {
+        const crypto = await import('crypto');
+        const apiKey = `tb_${crypto.randomBytes(24).toString('hex')}`;
+
+        // Upsert tenant
+        const result = await db.query(`
+          INSERT INTO tenants (email, name, plan, status, api_key, created_at, updated_at)
+          VALUES ($1, $2, $3, 'active', $4, NOW(), NOW())
+          ON CONFLICT (email) DO UPDATE SET
+            name = COALESCE(EXCLUDED.name, tenants.name),
+            plan = COALESCE(EXCLUDED.plan, tenants.plan),
+            status = 'active',
+            updated_at = NOW()
+          RETURNING *
+        `, [customer.email, customer.name, customer.plan || 'scout', apiKey]);
+
+        results.push({ success: true, email: customer.email, tenant: result.rows[0] });
+      } catch (err) {
+        results.push({ success: false, email: customer.email, error: String(err) });
+      }
+    }
+
+    res.json({
+      success: true,
+      provisioned: results.filter(r => r.success).length,
+      failed: results.filter(r => !r.success).length,
+      results
+    });
+  } catch (err) {
+    console.error('Batch provision error:', err);
+    res.status(500).json({ error: 'Failed to batch provision', details: String(err) });
+  }
+});
+
