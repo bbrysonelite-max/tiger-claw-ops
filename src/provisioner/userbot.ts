@@ -12,7 +12,7 @@ import { hashToken } from '../shared/crypto.js';
 const API_ID = parseInt(process.env.TELEGRAM_API_ID || '0', 10);
 const API_HASH = process.env.TELEGRAM_API_HASH || '';
 const SESSION_STRING = process.env.TELEGRAM_SESSION_STRING || '';
-const GATEWAY_URL = process.env.GATEWAY_URL || 'https://api.tigerbotscout.com';
+const GATEWAY_URL = process.env.GATEWAY_URL || 'https://api.botcraftwrks.ai';
 
 // BotFather username
 const BOTFATHER_USERNAME = 'BotFather';
