@@ -15,7 +15,7 @@ export interface ScrapeResult {
 }
 
 export interface ScraperConfig {
-  headless?: boolean | 'new';
+  headless?: boolean;
   timeout?: number;
   userAgent?: string;
 }
@@ -28,7 +28,7 @@ const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Appl
  */
 export async function launchBrowser(config: ScraperConfig = {}): Promise<Browser> {
   const browser = await puppeteer.launch({
-    headless: config.headless ?? 'new',
+    headless: config.headless ?? true,
     // Crucial for server stability (Gemini Red Team recommendation)
     args: [
       '--no-sandbox',

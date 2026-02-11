@@ -6,7 +6,7 @@
 
 import 'dotenv/config';
 import { Worker, Job } from 'bullmq';
-import Redis from 'ioredis';
+import { Redis } from 'ioredis';
 import TelegramBot from 'node-telegram-bot-api';
 import { PrismaClient } from '@prisma/client';
 import { decrypt } from '../shared/crypto.js';
@@ -35,7 +35,7 @@ redisConnection.on('connect', () => {
   console.log('[worker] Connected to Redis');
 });
 
-redisConnection.on('error', (err) => {
+redisConnection.on('error', (err: Error) => {
   console.error('[worker] Redis connection error:', err.message);
 });
 

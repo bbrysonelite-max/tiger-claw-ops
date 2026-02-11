@@ -10,8 +10,9 @@
     "rootDir": ".",
     "declaration": true,
     "resolveJsonModule": true,
-    "types": ["node", "jest"]
+    "downlevelIteration": true,
+    "types": ["node"]
   },
-  "include": ["api/**/*.ts", "tests/**/*.ts", "types/**/*.ts"],
+  "include": ["src/**/*.ts", "api/**/*.ts", "tests/**/*.ts", "types/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

@@ -7,7 +7,7 @@
 import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import { Queue } from 'bullmq';
-import Redis from 'ioredis';
+import { Redis } from 'ioredis';
 import { InboundJobData, ProvisionJobData, QUEUE_NAMES } from '../shared/types.js';
 
 // --- Configuration ---
@@ -25,7 +25,7 @@ redisConnection.on('connect', () => {
   console.log('[gateway] Connected to Redis');
 });
 
-redisConnection.on('error', (err) => {
+redisConnection.on('error', (err: Error) => {
   console.error('[gateway] Redis connection error:', err.message);
 });
 
@@ -95,7 +95,7 @@ app.post('/webhooks/:token_hash', async (req: Request, res: Response) => {
 
   try {
     const jobData: InboundJobData = {
-      hash: token_hash,
+      hash: String(token_hash),
       update: update,
     };
 
