@@ -31,6 +31,7 @@ model Tenant {
   
   prospects       Prospect[]
   reports         DailyReport[]
+  supportTickets  SupportTicket[]
 }
 
 model Prospect {
@@ -119,4 +120,39 @@ model CredentialVault {
   
   @@unique([tenantId, credentialType])
   @@index([tenantId])
+}
+
+// ==========================================
+// F-05: FAILSAFE FEEDBACK LOOP
+// Added: 2026-02-11
+// ==========================================
+
+model SupportTicket {
+  id              String    @id @default(uuid())
+  tenantId        String
+  tenant          Tenant    @relation(fields: [tenantId], references: [id])
+  issue           String    // User's stated problem
+  conversationLog String    // JSON array of last 10 messages
+  status          String    @default("open") // 'open', 'in_progress', 'resolved'
+  priority        String    @default("normal") // 'low', 'normal', 'high', 'urgent'
+  createdAt       DateTime  @default(now())
+  resolvedAt      DateTime?
+  resolvedBy      String?   // Admin who resolved
+}
+
+// ==========================================
+// F-06: OPENCLAW UPDATE TRACKING
+// Added: 2026-02-11
+// ==========================================
+
+model SystemUpdate {
+  id              String    @id @default(uuid())
+  component       String    // 'openclaw', 'gateway', 'worker'
+  fromVersion     String
+  toVersion       String
+  status          String    @default("available") // 'available', 'installing', 'completed', 'failed'
+  triggeredBy     String?   // Admin who triggered update
+  createdAt       DateTime  @default(now())
+  completedAt     DateTime?
+  errorLog        String?   // If failed, capture error
 }

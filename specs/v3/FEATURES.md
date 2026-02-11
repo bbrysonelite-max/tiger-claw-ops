@@ -41,3 +41,96 @@
 2.  **Vector:** Embed the query ("stressed mom").
 3.  **Search:** Query `HivePattern` table using `pgvector` for nearest neighbors.
 4.  **Output:** Return scripts that worked for similar profiles.
+
+## F-05: Failsafe Feedback Loop (Report to HQ)
+**Description:** Escalation system allowing users to report issues directly to headquarters.
+**Priority:** CRITICAL
+**Status:** NEW - Added 2026-02-11
+
+**Trigger Phrases:**
+- "Report to HQ"
+- "Report this to headquarters"
+- "I need help"
+- "Contact support"
+- "Talk to a human"
+
+**Logic Flow:**
+1.  **Detection:** Bot detects escalation trigger phrase in user message.
+2.  **Acknowledgment:** Bot responds: "I'm escalating this to our support team. They'll contact you within 24 hours."
+3.  **Capture:** System captures:
+    - Customer ID (Tenant)
+    - Full conversation history (last 10 messages)
+    - User's stated issue
+    - Timestamp
+4.  **Notification:** System sends alert via:
+    - **Email:** support@botcraftwrks.ai (via Brevo)
+    - **Telegram:** Alert to admin bot (@TigerBotHQ_bot)
+    - **Dashboard:** Creates support ticket in admin panel
+5.  **Logging:** All escalations stored in `SupportTicket` table for tracking.
+
+**Support Contact Information (User-Facing):**
+- **Hotline:** +1-801-369-5488
+- **Email:** support@botcraftwrks.ai
+- **Help Documentation:** https://help.botcraftwrks.ai
+
+**Database Model:**
+```prisma
+model SupportTicket {
+  id              String   @id @default(uuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  issue           String   // User's stated problem
+  conversationLog String   // JSON array of last 10 messages
+  status          String   @default("open") // 'open', 'in_progress', 'resolved'
+  priority        String   @default("normal") // 'low', 'normal', 'high', 'urgent'
+  createdAt       DateTime @default(now())
+  resolvedAt      DateTime?
+  resolvedBy      String?  // Admin who resolved
+}
+```
+
+## F-06: OpenClaw Update Tracking
+**Description:** Mechanism to track and apply OpenClaw/Birdie updates automatically.
+**Priority:** CRITICAL
+**Status:** NEW - Added 2026-02-11
+
+**Components:**
+1.  **Version Checker:** Cron job (hourly) that checks npm registry for OpenClaw updates.
+2.  **Update Notification:** Alerts admin when new version available.
+3.  **One-Click Update:** Existing birdie-control.ts endpoints enable remote updates.
+
+**Logic Flow:**
+1.  **Check:** Worker runs `npm view openclaw version` hourly.
+2.  **Compare:** Compare against installed version.
+3.  **Alert:** If newer version exists:
+    - Send notification to admin dashboard
+    - Log to `SystemUpdate` table
+4.  **Apply:** Admin triggers update via:
+    - `POST /birdie/update` endpoint
+    - Dashboard UI button
+5.  **Verify:** After update, run health check to confirm Birdie is operational.
+
+**Existing Endpoints (from birdie-control.ts):**
+- `POST /birdie/update` - Stops Birdie, runs `npm update -g openclaw`, restarts
+- `POST /birdie/restart` - Restarts gateway
+- `GET /birdie/status` - Shows version and online status
+- `GET /birdie/logs` - View recent logs
+
+**Database Model:**
+```prisma
+model SystemUpdate {
+  id              String   @id @default(uuid())
+  component       String   // 'openclaw', 'gateway', 'worker'
+  fromVersion     String
+  toVersion       String
+  status          String   // 'available', 'installing', 'completed', 'failed'
+  triggeredBy     String?  // Admin who triggered update
+  createdAt       DateTime @default(now())
+  completedAt     DateTime?
+  errorLog        String?  // If failed, capture error
+}
+```
+
+**Automation Rule:**
+- MINOR updates (1.2.x → 1.2.y): Auto-apply during low-traffic hours (2-4 AM local)
+- MAJOR updates (1.x → 2.x): Require admin approval
