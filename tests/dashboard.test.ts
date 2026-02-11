@@ -2,7 +2,7 @@
 // Run with: npm test
 // Framework: Jest + React Testing Library
 
-import { describe, it, expect, beforeEach, jest } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 
 // ==================== API TESTS ====================
 
