@@ -178,6 +178,82 @@ app.post('/stripe/webhook', async (req: Request, res: Response) => {
   return res.status(200).json({ received: true });
 });
 
+
+// --- Admin Provisioning Endpoints ---
+// Manual customer provisioning for admin use
+app.post('/admin/provision', async (req: Request, res: Response) => {
+  const { email, name, stripeId } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+
+  try {
+    const jobData: ProvisionJobData = {
+      stripeId: stripeId || `manual-${Date.now()}`,
+      email: email,
+      name: name || 'Customer',
+    };
+
+    const jobId = `provision-manual-${Date.now()}`;
+
+    await provisionQueue.add('provision_bot', jobData, {
+      jobId,
+      priority: 2,
+    });
+
+    console.log(`[gateway] Queued manual provision job: ${jobId} for ${email}`);
+
+    return res.status(200).json({ 
+      success: true, 
+      jobId,
+      email,
+      name: jobData.name 
+    });
+  } catch (error) {
+    console.error('[gateway] Error queueing manual provision:', error);
+    return res.status(500).json({ error: 'Failed to queue provision job' });
+  }
+});
+
+// Batch provisioning
+app.post('/admin/provision/batch', async (req: Request, res: Response) => {
+  const { customers } = req.body;
+
+  if (!customers || !Array.isArray(customers)) {
+    return res.status(400).json({ error: 'customers array is required' });
+  }
+
+  const results = [];
+
+  for (const customer of customers) {
+    try {
+      const jobData: ProvisionJobData = {
+        stripeId: customer.stripeId || `manual-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        email: customer.email,
+        name: customer.name || 'Customer',
+      };
+
+      const jobId = `provision-batch-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      await provisionQueue.add('provision_bot', jobData, {
+        jobId,
+        priority: 3,
+      });
+
+      results.push({ email: customer.email, success: true, jobId });
+    } catch (error) {
+      results.push({ email: customer.email, success: false, error: String(error) });
+    }
+  }
+
+  return res.status(200).json({ 
+    success: true, 
+    total: customers.length,
+    results 
+  });
+});
+
 // --- 404 Handler ---
 app.use((req: Request, res: Response) => {
   res.status(404).json({ error: 'Not found' });
