@@ -25,13 +25,16 @@ const path = require('path');
 // ── Config ──────────────────────────────────────────────────────────────────
 
 const CUSTOMERS = [
-  { name: 'Phaitoon S.', email: 'phaitoon2010@gmail.com' },
-  { name: 'Tarida Sukavanich', email: 'taridadew@gmail.com' },
-  { name: 'Lily Vergara', email: 'lily.vergara@gmail.com' },
-  { name: 'Theera Phetmalaigul', email: 'phetmalaigul@gmail.com' },
-  { name: 'John & Noon', email: 'vijohn@hotmail.com' },
-  { name: 'Debbie Cameron', email: 'justagreatdirector@outlook.com' },
-  { name: 'Brent Bryson', email: 'brent@botcraftwrks.ai' },
+  { name: 'Nancy Lim', email: 'nancynutcha@gmail.com', bot: 'Tiger_5g6swcaw_bot' },
+  { name: 'Phaitoon S.', email: 'phaitoon2010@gmail.com', bot: 'Tiger_urkz4hwl_bot' },
+  { name: 'Tarida', email: 'taridadew@gmail.com', bot: 'Tiger_d8a671af_bot' },
+  { name: 'Lily Vergara', email: 'lilyrosev@gmail.com', bot: 'Tiger_d0aa5717_bot' },
+  { name: 'Theera', email: 'theeraphet@gmail.com', bot: 'Tiger_Theera_bot' },
+  { name: 'Chana', email: 'chanaloha7777@gmail.com', bot: 'Tiger_ga2jqc3a_bot' },
+  { name: 'John & Noon', email: 'johnnoon.biz@gmail.com', bot: 'Tiger_vqp62i4p_bot' },
+  { name: 'Debbie Cameron', email: 'justagreatdirector@outlook.com', bot: 'Tiger_Debbie_bot' },
+  { name: 'Pat Sullivan', email: 'pat@contatta.com', bot: 'Tiger_17rmwyej_bot' },
+  { name: 'Brent Bryson', email: 'bbrysonelite@gmail.com', bot: 'Tiger_Brent_bot' },
 ];
 
 const DELAY_SECONDS = 30;
