@@ -161,10 +161,17 @@ function DiagonalDivider({ flip = false }: { flip?: boolean }) {
 
 /* ─── Onboarding Progress Tracker ─── */
 
+const API_PROVIDER_DASHBOARDS = [
+  { id: "openai", name: "OpenAI", url: "https://platform.openai.com/api-keys", color: "#10A37F", desc: "GPT-4o / GPT-4o-mini" },
+  { id: "openrouter", name: "OpenRouter", url: "https://openrouter.ai/keys", color: "#6366F1", desc: "Claude, Llama, Mistral" },
+  { id: "qwen", name: "Qwen", url: "https://dashscope.console.aliyun.com/apiKey", color: "#FF6A00", desc: "Qwen-Max / Qwen-Plus" },
+  { id: "gemini", name: "Google Gemini", url: "https://aistudio.google.com/apikey", color: "#4285F4", desc: "Gemini 2.0 Flash" },
+];
+
 const ONBOARDING_STEPS = [
-  { step: 1, label: "Get Your API Key", icon: Key, href: "#key-rotation", time: "5 min", desc: "Choose a provider and paste your key" },
-  { step: 2, label: "Interview 1: Who Are You?", icon: User, href: "#onboarding", time: "3 min", desc: "Tell your bot about yourself" },
-  { step: 3, label: "Interview 2: Your Ideal Customer", icon: Target, href: "#onboarding", time: "3 min", desc: "Describe who you want to reach" },
+  { step: 1, label: "Get Your API Key", icon: Key, href: "#key-rotation", time: "5 min", desc: "Choose a provider and paste your key", actionType: "api-key" as const },
+  { step: 2, label: "Interview 1: Who Are You?", icon: User, href: "#onboarding", time: "3 min", desc: "Tell your bot about yourself", actionType: "interview-1" as const },
+  { step: 3, label: "Interview 2: Your Ideal Customer", icon: Target, href: "#onboarding", time: "3 min", desc: "Describe who you want to reach", actionType: "interview-2" as const },
 ];
 
 const STORAGE_KEY = "tiger-bot-onboarding-progress";
@@ -202,6 +209,7 @@ function OnboardingProgress() {
   const pct = Math.round((completed.size / ONBOARDING_STEPS.length) * 100);
   const allDone = completed.size === ONBOARDING_STEPS.length;
   const [showConfetti, setShowConfetti] = useState(false);
+  const [expandedStep, setExpandedStep] = useState<number | null>(null);
 
   useEffect(() => {
     if (allDone) {
@@ -276,13 +284,14 @@ function OnboardingProgress() {
                   (x) => x.step
                 )
               );
+          const isExpanded = expandedStep === s.step;
 
           return (
             <div key={s.step} className="relative">
-              {/* Card link — navigates to the section */}
-              <a
-                href={s.href}
-                className={`group relative flex items-center gap-4 rounded-xl px-5 py-4 transition-all duration-300 border ${
+              {/* Card — click to expand action panel */}
+              <button
+                onClick={() => setExpandedStep(isExpanded ? null : s.step)}
+                className={`group relative w-full flex items-center gap-4 rounded-xl px-5 py-4 transition-all duration-300 border text-left ${
                   done
                     ? "bg-emerald-500/10 border-emerald-500/30"
                     : isCurrent
@@ -306,7 +315,6 @@ function OnboardingProgress() {
                   ) : (
                     s.step
                   )}
-                  {/* Pulse ring on current step */}
                   {isCurrent && (
                     <span className="absolute inset-0 rounded-lg animate-ping bg-orange-500/20" />
                   )}
@@ -328,18 +336,19 @@ function OnboardingProgress() {
                 </div>
 
                 <ChevronRight
-                  className={`w-4 h-4 ml-auto flex-shrink-0 transition-colors ${
+                  className={`w-4 h-4 ml-auto flex-shrink-0 transition-all duration-300 ${
                     done
                       ? "text-emerald-500/50"
                       : "text-zinc-600 group-hover:text-orange-400"
-                  }`}
+                  } ${isExpanded ? "rotate-90" : ""}`}
                 />
-              </a>
+              </button>
 
               {/* Mark complete checkbox */}
               <button
                 onClick={(e) => {
                   e.preventDefault();
+                  e.stopPropagation();
                   toggle(s.step);
                 }}
                 className={`absolute -top-2 -right-2 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 z-10 ${
@@ -355,6 +364,124 @@ function OnboardingProgress() {
                   <span className="w-2 h-2 rounded-full bg-current" />
                 )}
               </button>
+
+              {/* Expanded action panel */}
+              {isExpanded && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="mt-2 overflow-hidden"
+                >
+                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 backdrop-blur-sm p-4">
+                    {s.actionType === "api-key" && (
+                      <div>
+                        <p className="text-xs text-zinc-400 mb-3">Open your provider's dashboard to get your API key:</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {API_PROVIDER_DASHBOARDS.map((p) => (
+                            <a
+                              key={p.id}
+                              href={p.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2.5 rounded-lg border border-zinc-700/50 bg-zinc-800/50 px-3 py-2.5 hover:border-orange-500/40 hover:bg-zinc-800 transition-all duration-200 group/link"
+                            >
+                              <div
+                                className="w-2 h-2 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: p.color }}
+                              />
+                              <div className="min-w-0">
+                                <p className="text-white text-xs font-semibold truncate group-hover/link:text-orange-300 transition-colors">{p.name}</p>
+                                <p className="text-zinc-600 text-[10px] truncate">{p.desc}</p>
+                              </div>
+                              <ExternalLink className="w-3 h-3 text-zinc-600 ml-auto flex-shrink-0 group-hover/link:text-orange-400 transition-colors" />
+                            </a>
+                          ))}
+                        </div>
+                        <a
+                          href="#key-rotation"
+                          className="mt-3 flex items-center justify-center gap-1.5 text-xs text-orange-400 hover:text-orange-300 transition-colors"
+                          onClick={() => setExpandedStep(null)}
+                        >
+                          <span>Need help? See the full walkthrough</span>
+                          <ChevronRight className="w-3 h-3" />
+                        </a>
+                      </div>
+                    )}
+                    {s.actionType === "interview-1" && (
+                      <div>
+                        <p className="text-xs text-zinc-400 mb-3">Tell your bot about yourself — name, mission, voice, and style.</p>
+                        <div className="space-y-2">
+                          <a
+                            href="#onboarding"
+                            className="flex items-center gap-2.5 rounded-lg border border-zinc-700/50 bg-zinc-800/50 px-3 py-2.5 hover:border-orange-500/40 hover:bg-zinc-800 transition-all duration-200 group/link"
+                            onClick={() => setExpandedStep(null)}
+                          >
+                            <div className="w-7 h-7 rounded-md bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+                              <User className="w-3.5 h-3.5 text-orange-400" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-white text-xs font-semibold group-hover/link:text-orange-300 transition-colors">View Interview 1 Questions</p>
+                              <p className="text-zinc-600 text-[10px]">See all 10 fields the bot will ask</p>
+                            </div>
+                            <ChevronRight className="w-3 h-3 text-zinc-600 ml-auto flex-shrink-0 group-hover/link:text-orange-400 transition-colors" />
+                          </a>
+                          <div
+                            className="flex items-center gap-2.5 rounded-lg border border-dashed border-zinc-700/50 bg-zinc-800/30 px-3 py-2.5 opacity-60"
+                          >
+                            <div className="w-7 h-7 rounded-md bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                              <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-zinc-400 text-xs font-semibold">Start in Telegram</p>
+                              <p className="text-zinc-600 text-[10px]">Bot link will appear in your welcome email</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {s.actionType === "interview-2" && (
+                      <div>
+                        <p className="text-xs text-zinc-400 mb-3">Describe your ideal customer — who they are, where they hang out, what they need.</p>
+                        <div className="space-y-2">
+                          <a
+                            href="#onboarding"
+                            className="flex items-center gap-2.5 rounded-lg border border-zinc-700/50 bg-zinc-800/50 px-3 py-2.5 hover:border-orange-500/40 hover:bg-zinc-800 transition-all duration-200 group/link"
+                            onClick={() => {
+                              setExpandedStep(null);
+                              setTimeout(() => {
+                                const el = document.querySelector('[data-section="interview-2"]');
+                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                              }, 100);
+                            }}
+                          >
+                            <div className="w-7 h-7 rounded-md bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+                              <Target className="w-3.5 h-3.5 text-orange-400" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-white text-xs font-semibold group-hover/link:text-orange-300 transition-colors">View Interview 2 Questions</p>
+                              <p className="text-zinc-600 text-[10px]">See all ICP targeting fields</p>
+                            </div>
+                            <ChevronRight className="w-3 h-3 text-zinc-600 ml-auto flex-shrink-0 group-hover/link:text-orange-400 transition-colors" />
+                          </a>
+                          <div
+                            className="flex items-center gap-2.5 rounded-lg border border-dashed border-zinc-700/50 bg-zinc-800/30 px-3 py-2.5 opacity-60"
+                          >
+                            <div className="w-7 h-7 rounded-md bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                              <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-zinc-400 text-xs font-semibold">Start in Telegram</p>
+                              <p className="text-zinc-600 text-[10px]">Completes automatically after Interview 1</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
             </div>
           );
         })}
@@ -1122,7 +1249,7 @@ export default function Home() {
         </div>
 
         {/* Interview 2: ICP */}
-        <div className="bg-zinc-950 py-20 md:py-28">
+        <div data-section="interview-2" className="bg-zinc-950 py-20 md:py-28">
           <div className="container">
             <AnimateIn>
               <div className="flex items-center gap-3 mb-2">
