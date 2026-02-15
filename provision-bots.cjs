@@ -1,17 +1,29 @@
 /**
- * Tiger Bot Scout - Provision Remaining Customer Bots
+ * Tiger Bot Scout - Provision Customer Bots + Send Welcome Email
  * Pure CommonJS script - runs with node directly
- * 
+ *
+ * Flow per customer:
+ *   1. Create Telegram bot via BotFather
+ *   2. Send welcome email with Telegram deep-link + onboarding guide link
+ *   3. Log result
+ *
  * 30-second delays between bots to avoid Telegram rate limiting
+ *
+ * Required env vars:
+ *   TELEGRAM_SESSION_STRING  - Telegram userbot session
+ *   BREVO_API_KEY            - Brevo (Sendinblue) transactional email key
+ *   ONBOARDING_SITE_URL      - Base URL of the onboarding site (no trailing slash)
  */
 
 require('dotenv').config();
 const { TelegramClient } = require('telegram');
 const { StringSession } = require('telegram/sessions');
-const { Api } = require('telegram/tl');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
-// Customers still needing bots (Nancy and Chana already done)
+// ── Config ──────────────────────────────────────────────────────────────────
+
 const CUSTOMERS = [
   { name: 'Phaitoon S.', email: 'phaitoon2010@gmail.com' },
   { name: 'Tarida Sukavanich', email: 'taridadew@gmail.com' },
@@ -24,38 +36,102 @@ const CUSTOMERS = [
 
 const DELAY_SECONDS = 30;
 const GATEWAY_URL = 'https://api.botcraftwrks.ai';
+const SENDER = { email: 'noreply@botcraftwrks.ai', name: 'Tiger Bot Scout' };
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
 
 function sleep(seconds) {
   return new Promise(resolve => setTimeout(resolve, seconds * 1000));
 }
 
-function generateBotName(customerName) {
+function generateBotName() {
   const suffix = crypto.randomBytes(4).toString('hex');
   return `Tiger_${suffix}`;
 }
 
-async function createBot(client, customerName, customerEmail) {
-  const botName = generateBotName(customerName);
+function loadEmailTemplate() {
+  const templatePath = path.join(__dirname, 'templates', 'welcome-email.html');
+  return fs.readFileSync(templatePath, 'utf-8');
+}
+
+function buildWelcomeEmail(template, customerName, botUsername, onboardingSiteUrl) {
+  const telegramUrl = `https://t.me/${botUsername}`;
+  const onboardingUrl = `${onboardingSiteUrl}/?bot=${botUsername}&name=${encodeURIComponent(customerName)}`;
+
+  return template
+    .replace(/\{\{CUSTOMER_NAME\}\}/g, customerName)
+    .replace(/\{\{TELEGRAM_URL\}\}/g, telegramUrl)
+    .replace(/\{\{ONBOARDING_URL\}\}/g, onboardingUrl);
+}
+
+// ── Brevo Email ─────────────────────────────────────────────────────────────
+
+async function sendWelcomeEmail(brevoApiKey, customerName, customerEmail, botUsername, onboardingSiteUrl) {
+  const template = loadEmailTemplate();
+  const htmlContent = buildWelcomeEmail(template, customerName, botUsername, onboardingSiteUrl);
+  const telegramUrl = `https://t.me/${botUsername}`;
+
+  const payload = {
+    sender: SENDER,
+    to: [{ email: customerEmail, name: customerName }],
+    subject: `${customerName}, your Tiger Bot is ready — open Telegram to start`,
+    htmlContent,
+    textContent: [
+      `Hi ${customerName},`,
+      '',
+      'Your Tiger Bot is ready!',
+      '',
+      `Open it in Telegram: ${telegramUrl}`,
+      '',
+      'What happens next:',
+      '1. Bot says hello (instant)',
+      '2. Quick chat about you (~2 min)',
+      '3. Describe your ideal customer (~3 min)',
+      '',
+      'Total setup: under 5 minutes. Everything happens inside Telegram.',
+      '',
+      '— Tiger Bot Scout',
+    ].join('\n'),
+  };
+
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'accept': 'application/json',
+      'api-key': brevoApiKey,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: response.statusText }));
+    throw new Error(`Brevo API ${response.status}: ${JSON.stringify(error)}`);
+  }
+
+  return response.json();
+}
+
+// ── Bot Creation ────────────────────────────────────────────────────────────
+
+async function createBot(client, customerName) {
+  const botName = generateBotName();
   const botUsername = `${botName}_bot`;
-  
+
   console.log(`  Creating bot: @${botUsername}`);
-  
-  // Start conversation with BotFather
+
   await client.sendMessage('BotFather', { message: '/newbot' });
   await sleep(2);
-  
-  // Send bot display name
+
   const displayName = `TigerBot for ${customerName}`;
   await client.sendMessage('BotFather', { message: displayName });
   await sleep(2);
-  
-  // Send username
+
   await client.sendMessage('BotFather', { message: botUsername });
   await sleep(3);
-  
-  // Get response with token
+
   const messages = await client.getMessages('BotFather', { limit: 5 });
-  
+
   for (const msg of messages) {
     const text = msg.text || '';
     const tokenMatch = text.match(/(\d+:[A-Za-z0-9_-]+)/);
@@ -63,90 +139,114 @@ async function createBot(client, customerName, customerEmail) {
       const token = tokenMatch[1];
       const hash = crypto.createHash('sha256').update(token.split(':')[0]).digest('hex').substring(0, 16);
       const webhookUrl = `${GATEWAY_URL}/webhooks/${hash}`;
-      
-      return {
-        username: botUsername,
-        token: token,
-        webhookUrl: webhookUrl
-      };
+
+      return { username: botUsername, token, webhookUrl };
     }
   }
-  
+
   throw new Error('Could not extract bot token from BotFather response');
 }
 
+// ── Main ────────────────────────────────────────────────────────────────────
+
 async function main() {
   console.log('='.repeat(60));
-  console.log('Tiger Bot Scout - Provisioning Customer Bots');
+  console.log('Tiger Bot Scout - Provision + Welcome Email');
   console.log('='.repeat(60));
   console.log(`Customers: ${CUSTOMERS.length}`);
-  console.log(`Delay: ${DELAY_SECONDS} seconds between bots`);
+  console.log(`Delay: ${DELAY_SECONDS}s between bots`);
   console.log('='.repeat(60));
-  
+
+  // Validate env
   const sessionString = process.env.TELEGRAM_SESSION_STRING;
+  const brevoApiKey = process.env.BREVO_API_KEY;
+  const onboardingSiteUrl = process.env.ONBOARDING_SITE_URL || 'https://tiger-bot-flywheel.manus.space';
+
   if (!sessionString) {
-    console.error('ERROR: TELEGRAM_SESSION_STRING not set in .env');
+    console.error('ERROR: TELEGRAM_SESSION_STRING not set');
     process.exit(1);
   }
-  
-  // Use official Telegram Desktop credentials (skeleton key)
+  if (!brevoApiKey) {
+    console.error('ERROR: BREVO_API_KEY not set — emails will be skipped');
+  }
+
+  // Telegram connection
   const API_ID = 2040;
   const API_HASH = 'b18441a1ff607e10a989891a5462e627';
-  
+
   const client = new TelegramClient(
     new StringSession(sessionString),
-    API_ID,
-    API_HASH,
+    API_ID, API_HASH,
     { connectionRetries: 5, useWSS: true }
   );
-  
+
   console.log('\nConnecting to Telegram...');
   await client.connect();
   console.log('Connected!\n');
-  
+
   const results = [];
-  
+
   for (let i = 0; i < CUSTOMERS.length; i++) {
     const customer = CUSTOMERS[i];
     console.log(`[${i + 1}/${CUSTOMERS.length}] ${customer.name} (${customer.email})`);
-    
+
     try {
-      const result = await createBot(client, customer.name, customer.email);
-      results.push({ customer, result });
-      console.log(`  SUCCESS: @${result.username}`);
+      // Step 1: Create bot
+      const result = await createBot(client, customer.name);
+      console.log(`  ✅ Bot created: @${result.username}`);
       console.log(`  Token: ${result.token.substring(0, 20)}...`);
+
+      // Step 2: Send welcome email
+      if (brevoApiKey) {
+        try {
+          await sendWelcomeEmail(brevoApiKey, customer.name, customer.email, result.username, onboardingSiteUrl);
+          console.log(`  📧 Welcome email sent to ${customer.email}`);
+          results.push({ customer, result, emailSent: true });
+        } catch (emailErr) {
+          console.error(`  ⚠️  Email failed: ${emailErr.message}`);
+          results.push({ customer, result, emailSent: false, emailError: emailErr.message });
+        }
+      } else {
+        console.log(`  ⏭️  Email skipped (no BREVO_API_KEY)`);
+        results.push({ customer, result, emailSent: false });
+      }
     } catch (error) {
       results.push({ customer, error: error.message });
-      console.error(`  FAILED: ${error.message}`);
+      console.error(`  ❌ FAILED: ${error.message}`);
     }
-    
+
     if (i < CUSTOMERS.length - 1) {
-      console.log(`\n  Waiting ${DELAY_SECONDS} seconds...\n`);
+      console.log(`\n  Waiting ${DELAY_SECONDS}s...\n`);
       await sleep(DELAY_SECONDS);
     }
   }
-  
-  // Summary
+
+  // ── Summary ─────────────────────────────────────────────────────────────
   console.log('\n' + '='.repeat(60));
   console.log('SUMMARY');
   console.log('='.repeat(60));
-  
+
   const successes = results.filter(r => r.result);
   const failures = results.filter(r => r.error);
-  
-  console.log(`\nSuccessful: ${successes.length}`);
+  const emailsSent = results.filter(r => r.emailSent).length;
+
+  console.log(`\nBots created: ${successes.length}/${CUSTOMERS.length}`);
+  console.log(`Emails sent:  ${emailsSent}/${successes.length}`);
+
   for (const s of successes) {
-    console.log(`  ${s.customer.name}: @${s.result.username}`);
-    console.log(`    Token: ${s.result.token}`);
+    const emailStatus = s.emailSent ? '📧' : '⚠️';
+    console.log(`  ${emailStatus} ${s.customer.name}: @${s.result.username}`);
+    console.log(`     Token: ${s.result.token}`);
+    console.log(`     Telegram: https://t.me/${s.result.username}`);
   }
-  
+
   if (failures.length > 0) {
     console.log(`\nFailed: ${failures.length}`);
     for (const f of failures) {
-      console.log(`  ${f.customer.name}: ${f.error}`);
+      console.log(`  ❌ ${f.customer.name}: ${f.error}`);
     }
   }
-  
+
   await client.disconnect();
 }
 
