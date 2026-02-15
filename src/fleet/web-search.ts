@@ -217,10 +217,16 @@ export async function painPointSearch(
  */
 export async function extractProspectFromResult(
   result: SearchResult,
-  icp: { description: string; painPoints?: string; keywords?: string },
+  icp: {
+    description: string;
+    painPoints?: string;
+    keywords?: string;
+    triggers?: string;
+    exclusions?: string;
+  },
   generateAI: (prompt: string) => Promise<string>
 ): Promise<ProspectData | null> {
-  const prompt = `Analyze this search result and determine if it represents a good prospect.
+  const prompt = `Analyze this search result and score how well this person matches the Ideal Customer Profile.
 
 Search Result:
 Title: ${result.title}
@@ -228,25 +234,36 @@ URL: ${result.url}
 Content: ${result.snippet}
 ${result.name ? `Author/Name: ${result.name}` : ""}
 
-Ideal Customer Profile:
-${icp.description}
-${icp.painPoints ? `Pain points: ${icp.painPoints}` : ""}
-${icp.keywords ? `Keywords: ${icp.keywords}` : ""}
+=== IDEAL CUSTOMER PROFILE ===
+Who they are: ${icp.description}
+${icp.painPoints ? `Their pain points: ${icp.painPoints}` : ""}
+${icp.keywords ? `Keywords they use: ${icp.keywords}` : ""}
+${icp.triggers ? `Buying triggers: ${icp.triggers}` : ""}
+${icp.exclusions ? `EXCLUDE these people: ${icp.exclusions}` : ""}
 
-If this looks like a good prospect, return a JSON object:
+=== SCORING CRITERIA (add points) ===
++30 points: Matches the ICP description (role, profession, situation)
++25 points: Expresses a pain point from the list
++20 points: Uses keywords from the list
++15 points: Shows a buying trigger (ready to act, asking for solutions)
++10 points: Active engagement (asking questions, seeking advice)
+-50 points: Matches an exclusion criteria (auto-reject if exclusion match)
+
+Return a JSON object:
 {
-  "isProspect": true,
+  "isProspect": true/false,
   "name": "extracted name or username",
-  "summary": "1-2 sentence summary of who they are and why they're relevant",
-  "interests": ["interest1", "interest2"],
-  "painPoints": ["pain point if detected"],
-  "score": 0-100 based on how well they match the ICP
+  "summary": "1-2 sentence summary of who they are and why they match",
+  "interests": ["detected interests"],
+  "painPoints": ["detected pain points"],
+  "matchReasons": ["why they scored points"],
+  "score": 0-100 (sum of applicable points, cap at 100)
 }
 
-If this is NOT a good prospect (company page, irrelevant, etc), return:
-{"isProspect": false}
+If they match an exclusion or are clearly not a prospect (company page, bot, irrelevant), return:
+{"isProspect": false, "reason": "why excluded"}
 
-Return ONLY valid JSON, no explanation.`;
+Return ONLY valid JSON.`;
 
   try {
     const response = await generateAI(prompt);
