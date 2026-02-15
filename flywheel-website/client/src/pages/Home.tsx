@@ -59,6 +59,7 @@ import {
   ArrowUpRight,
   Sparkles,
   ChevronLeft,
+  ChevronDown,
   ImageIcon,
 } from "lucide-react";
 
@@ -159,388 +160,190 @@ function DiagonalDivider({ flip = false }: { flip?: boolean }) {
   );
 }
 
-/* ─── Onboarding Progress Tracker ─── */
+/* ─── Bot URL Parameter Detection ─── */
 
-const API_PROVIDER_DASHBOARDS = [
-  { id: "openai", name: "OpenAI", url: "https://platform.openai.com/api-keys", color: "#10A37F", desc: "GPT-4o / GPT-4o-mini" },
-  { id: "openrouter", name: "OpenRouter", url: "https://openrouter.ai/keys", color: "#6366F1", desc: "Claude, Llama, Mistral" },
-  { id: "qwen", name: "Qwen", url: "https://dashscope.console.aliyun.com/apiKey", color: "#FF6A00", desc: "Qwen-Max / Qwen-Plus" },
-  { id: "gemini", name: "Google Gemini", url: "https://aistudio.google.com/apikey", color: "#4285F4", desc: "Gemini 2.0 Flash" },
-];
-
-const ONBOARDING_STEPS = [
-  { step: 1, label: "Get Your API Key", icon: Key, href: "#key-rotation", time: "5 min", desc: "Choose a provider and paste your key", actionType: "api-key" as const },
-  { step: 2, label: "Interview 1: Who Are You?", icon: User, href: "#onboarding", time: "3 min", desc: "Tell your bot about yourself", actionType: "interview-1" as const },
-  { step: 3, label: "Interview 2: Your Ideal Customer", icon: Target, href: "#onboarding", time: "3 min", desc: "Describe who you want to reach", actionType: "interview-2" as const },
-];
-
-const STORAGE_KEY = "tiger-bot-onboarding-progress";
-
-function useOnboardingProgress() {
-  const [completed, setCompleted] = useState<Set<number>>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? new Set(JSON.parse(saved) as number[]) : new Set<number>();
-    } catch {
-      return new Set<number>();
-    }
-  });
-
-  const toggle = useCallback((step: number) => {
-    setCompleted((prev) => {
-      const next = new Set(prev);
-      if (next.has(step)) next.delete(step);
-      else next.add(step);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(next)));
-      return next;
-    });
-  }, []);
-
-  const reset = useCallback(() => {
-    setCompleted(new Set());
-    localStorage.removeItem(STORAGE_KEY);
-  }, []);
-
-  return { completed, toggle, reset };
-}
-
-function OnboardingProgress() {
-  const { completed, toggle, reset } = useOnboardingProgress();
-  const pct = Math.round((completed.size / ONBOARDING_STEPS.length) * 100);
-  const allDone = completed.size === ONBOARDING_STEPS.length;
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [expandedStep, setExpandedStep] = useState<number | null>(null);
+function useBotParam() {
+  const [botUsername, setBotUsername] = useState<string | null>(null);
+  const [customerName, setCustomerName] = useState<string | null>(null);
 
   useEffect(() => {
-    if (allDone) {
-      setShowConfetti(true);
-      const t = setTimeout(() => setShowConfetti(false), 3000);
-      return () => clearTimeout(t);
-    }
-  }, [allDone]);
+    const params = new URLSearchParams(window.location.search);
+    const bot = params.get("bot");
+    const name = params.get("name");
+    if (bot) setBotUsername(bot);
+    if (name) setCustomerName(name);
+  }, []);
+
+  const telegramUrl = botUsername ? `https://t.me/${botUsername}` : null;
+  return { botUsername, customerName, telegramUrl };
+}
+
+/* ─── Telegram Launch Component ─── */
+
+const TELEGRAM_STEPS = [
+  {
+    icon: MessageSquare,
+    label: "Bot says hello",
+    desc: "Your Tiger Bot greets you and starts Interview 1",
+    time: "Instant",
+  },
+  {
+    icon: User,
+    label: "Quick chat about you",
+    desc: "Answer a few questions so the bot knows your voice",
+    time: "~2 min",
+  },
+  {
+    icon: Target,
+    label: "Describe your ideal customer",
+    desc: "Tell the bot who to hunt — it starts immediately",
+    time: "~2 min",
+  },
+];
+
+function TelegramLaunch({ telegramUrl, customerName, botUsername }: { telegramUrl: string | null; customerName: string | null; botUsername: string | null }) {
+  const [animStep, setAnimStep] = useState(0);
+
+  // Cycle through the 3 steps animation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAnimStep((prev) => (prev + 1) % 3);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <motion.div
-      className="mt-10 max-w-3xl"
+      className="mt-10 max-w-2xl"
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, delay: 0.8 }}
     >
-      {/* Progress bar header */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold tracking-wider uppercase text-zinc-500">
-            Setup Progress
-          </span>
-          <span
-            className={`text-xs font-bold tracking-wider ${
-              allDone ? "text-emerald-400" : "text-orange-400"
-            }`}
-          >
-            {pct}%
-          </span>
-        </div>
-        {completed.size > 0 && (
-          <button
-            onClick={reset}
-            className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
-          >
-            Reset
-          </button>
-        )}
-      </div>
-
-      {/* Progress bar */}
-      <div className="relative h-1.5 bg-white/5 rounded-full overflow-hidden mb-5">
-        <motion.div
-          className={`absolute inset-y-0 left-0 rounded-full ${
-            allDone
-              ? "bg-gradient-to-r from-emerald-500 to-emerald-400"
-              : "bg-gradient-to-r from-orange-500 to-amber-400"
-          }`}
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-        />
-        {/* Glow pulse on the leading edge */}
-        {pct > 0 && pct < 100 && (
-          <motion.div
-            className="absolute inset-y-0 w-8 rounded-full bg-orange-400/40 blur-sm"
-            animate={{ left: `${pct - 2}%` }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-          />
-        )}
-      </div>
-
-      {/* Step cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {ONBOARDING_STEPS.map((s) => {
-          const done = completed.has(s.step);
-          const isCurrent =
-            !done &&
-            s.step ===
-              Math.min(
-                ...ONBOARDING_STEPS.filter((x) => !completed.has(x.step)).map(
-                  (x) => x.step
-                )
-              );
-          const isExpanded = expandedStep === s.step;
-
+      {/* What happens when you open Telegram — animated steps */}
+      <p className="text-xs font-semibold tracking-wider uppercase text-zinc-500 mb-4">
+        What happens when you tap the button
+      </p>
+      <div className="flex flex-col gap-3 mb-8">
+        {TELEGRAM_STEPS.map((step, i) => {
+          const isActive = animStep === i;
+          const Icon = step.icon;
           return (
-            <div key={s.step} className="relative">
-              {/* Card — click to expand action panel */}
-              <button
-                onClick={() => setExpandedStep(isExpanded ? null : s.step)}
-                className={`group relative w-full flex items-center gap-4 rounded-xl px-5 py-4 transition-all duration-300 border text-left ${
-                  done
-                    ? "bg-emerald-500/10 border-emerald-500/30"
-                    : isCurrent
-                    ? "bg-orange-500/10 border-orange-500/40 shadow-[0_0_20px_rgba(249,115,22,0.15)]"
-                    : "bg-white/5 border-white/10 hover:border-orange-500/40 hover:bg-orange-500/5"
+            <motion.div
+              key={i}
+              className={`flex items-center gap-4 rounded-xl px-5 py-4 border transition-all duration-500 ${
+                isActive
+                  ? "bg-orange-500/10 border-orange-500/40 shadow-[0_0_20px_rgba(249,115,22,0.15)]"
+                  : "bg-white/[0.02] border-white/5"
+              }`}
+              animate={{
+                scale: isActive ? 1.02 : 1,
+                opacity: isActive ? 1 : 0.5,
+              }}
+              transition={{ duration: 0.4 }}
+            >
+              <div
+                className={`relative flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg transition-all duration-500 ${
+                  isActive
+                    ? "bg-gradient-to-br from-orange-500 to-amber-500 text-black"
+                    : "bg-zinc-800 text-zinc-500"
                 }`}
+                style={{ fontFamily: '"Bebas Neue", sans-serif' }}
               >
-                {/* Step number / checkmark */}
-                <div
-                  className={`relative flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg transition-all duration-300 ${
-                    done
-                      ? "bg-emerald-500 text-white"
-                      : isCurrent
-                      ? "bg-gradient-to-br from-orange-500 to-amber-500 text-black"
-                      : "bg-zinc-800 text-zinc-500"
-                  }`}
-                  style={{ fontFamily: '"Bebas Neue", sans-serif' }}
-                >
-                  {done ? (
-                    <CheckCircle className="w-5 h-5" />
-                  ) : (
-                    s.step
-                  )}
-                  {isCurrent && (
-                    <span className="absolute inset-0 rounded-lg animate-ping bg-orange-500/20" />
-                  )}
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <p
-                    className={`font-semibold text-sm leading-tight transition-colors ${
-                      done
-                        ? "text-emerald-300 line-through decoration-emerald-500/40"
-                        : "text-white"
-                    }`}
-                  >
-                    {s.label}
-                  </p>
-                  <p className="text-zinc-500 text-xs mt-0.5">
-                    {done ? "Completed" : isCurrent ? `Up next · ${s.time}` : s.time}
-                  </p>
-                </div>
-
-                <ChevronRight
-                  className={`w-4 h-4 ml-auto flex-shrink-0 transition-all duration-300 ${
-                    done
-                      ? "text-emerald-500/50"
-                      : "text-zinc-600 group-hover:text-orange-400"
-                  } ${isExpanded ? "rotate-90" : ""}`}
-                />
-              </button>
-
-              {/* Mark complete checkbox */}
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  toggle(s.step);
-                }}
-                className={`absolute -top-2 -right-2 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 z-10 ${
-                  done
-                    ? "bg-emerald-500 border-emerald-400 text-white hover:bg-emerald-600"
-                    : "bg-zinc-900 border-zinc-700 text-zinc-600 hover:border-orange-500 hover:text-orange-400"
-                }`}
-                title={done ? "Mark as incomplete" : "Mark as complete"}
-              >
-                {done ? (
-                  <CheckCircle className="w-3.5 h-3.5" />
-                ) : (
-                  <span className="w-2 h-2 rounded-full bg-current" />
+                {i + 1}
+                {isActive && (
+                  <span className="absolute inset-0 rounded-lg animate-ping bg-orange-500/20" />
                 )}
-              </button>
-
-              {/* Expanded action panel */}
-              {isExpanded && (
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <Icon className={`w-4 h-4 transition-colors duration-500 ${isActive ? "text-orange-400" : "text-zinc-600"}`} />
+                  <p className={`font-semibold text-sm transition-colors duration-500 ${isActive ? "text-white" : "text-zinc-500"}`}>
+                    {step.label}
+                  </p>
+                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full transition-colors duration-500 ${
+                    isActive ? "bg-orange-500/20 text-orange-400" : "bg-zinc-800 text-zinc-600"
+                  }`}>{step.time}</span>
+                </div>
+                <p className={`text-xs mt-0.5 transition-colors duration-500 ${isActive ? "text-zinc-400" : "text-zinc-600"}`}>
+                  {step.desc}
+                </p>
+              </div>
+              {isActive && (
                 <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.25 }}
-                  className="mt-2 overflow-hidden"
-                >
-                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 backdrop-blur-sm p-4">
-                    {s.actionType === "api-key" && (
-                      <div>
-                        <p className="text-xs text-zinc-400 mb-3">Open your provider's dashboard to get your API key:</p>
-                        <div className="grid grid-cols-2 gap-2">
-                          {API_PROVIDER_DASHBOARDS.map((p) => (
-                            <a
-                              key={p.id}
-                              href={p.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2.5 rounded-lg border border-zinc-700/50 bg-zinc-800/50 px-3 py-2.5 hover:border-orange-500/40 hover:bg-zinc-800 transition-all duration-200 group/link"
-                            >
-                              <div
-                                className="w-2 h-2 rounded-full flex-shrink-0"
-                                style={{ backgroundColor: p.color }}
-                              />
-                              <div className="min-w-0">
-                                <p className="text-white text-xs font-semibold truncate group-hover/link:text-orange-300 transition-colors">{p.name}</p>
-                                <p className="text-zinc-600 text-[10px] truncate">{p.desc}</p>
-                              </div>
-                              <ExternalLink className="w-3 h-3 text-zinc-600 ml-auto flex-shrink-0 group-hover/link:text-orange-400 transition-colors" />
-                            </a>
-                          ))}
-                        </div>
-                        <a
-                          href="#key-rotation"
-                          className="mt-3 flex items-center justify-center gap-1.5 text-xs text-orange-400 hover:text-orange-300 transition-colors"
-                          onClick={() => setExpandedStep(null)}
-                        >
-                          <span>Need help? See the full walkthrough</span>
-                          <ChevronRight className="w-3 h-3" />
-                        </a>
-                      </div>
-                    )}
-                    {s.actionType === "interview-1" && (
-                      <div>
-                        <p className="text-xs text-zinc-400 mb-3">Tell your bot about yourself — name, mission, voice, and style.</p>
-                        <div className="space-y-2">
-                          <a
-                            href="#onboarding"
-                            className="flex items-center gap-2.5 rounded-lg border border-zinc-700/50 bg-zinc-800/50 px-3 py-2.5 hover:border-orange-500/40 hover:bg-zinc-800 transition-all duration-200 group/link"
-                            onClick={() => setExpandedStep(null)}
-                          >
-                            <div className="w-7 h-7 rounded-md bg-orange-500/10 flex items-center justify-center flex-shrink-0">
-                              <User className="w-3.5 h-3.5 text-orange-400" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-white text-xs font-semibold group-hover/link:text-orange-300 transition-colors">View Interview 1 Questions</p>
-                              <p className="text-zinc-600 text-[10px]">See all 10 fields the bot will ask</p>
-                            </div>
-                            <ChevronRight className="w-3 h-3 text-zinc-600 ml-auto flex-shrink-0 group-hover/link:text-orange-400 transition-colors" />
-                          </a>
-                          <div
-                            className="flex items-center gap-2.5 rounded-lg border border-dashed border-zinc-700/50 bg-zinc-800/30 px-3 py-2.5 opacity-60"
-                          >
-                            <div className="w-7 h-7 rounded-md bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                              <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-zinc-400 text-xs font-semibold">Start in Telegram</p>
-                              <p className="text-zinc-600 text-[10px]">Bot link will appear in your welcome email</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {s.actionType === "interview-2" && (
-                      <div>
-                        <p className="text-xs text-zinc-400 mb-3">Describe your ideal customer — who they are, where they hang out, what they need.</p>
-                        <div className="space-y-2">
-                          <a
-                            href="#onboarding"
-                            className="flex items-center gap-2.5 rounded-lg border border-zinc-700/50 bg-zinc-800/50 px-3 py-2.5 hover:border-orange-500/40 hover:bg-zinc-800 transition-all duration-200 group/link"
-                            onClick={() => {
-                              setExpandedStep(null);
-                              setTimeout(() => {
-                                const el = document.querySelector('[data-section="interview-2"]');
-                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                              }, 100);
-                            }}
-                          >
-                            <div className="w-7 h-7 rounded-md bg-orange-500/10 flex items-center justify-center flex-shrink-0">
-                              <Target className="w-3.5 h-3.5 text-orange-400" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-white text-xs font-semibold group-hover/link:text-orange-300 transition-colors">View Interview 2 Questions</p>
-                              <p className="text-zinc-600 text-[10px]">See all ICP targeting fields</p>
-                            </div>
-                            <ChevronRight className="w-3 h-3 text-zinc-600 ml-auto flex-shrink-0 group-hover/link:text-orange-400 transition-colors" />
-                          </a>
-                          <div
-                            className="flex items-center gap-2.5 rounded-lg border border-dashed border-zinc-700/50 bg-zinc-800/30 px-3 py-2.5 opacity-60"
-                          >
-                            <div className="w-7 h-7 rounded-md bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                              <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-zinc-400 text-xs font-semibold">Start in Telegram</p>
-                              <p className="text-zinc-600 text-[10px]">Completes automatically after Interview 1</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
+                  className="w-2 h-2 rounded-full bg-orange-400 flex-shrink-0"
+                  animate={{ scale: [1, 1.5, 1] }}
+                  transition={{ duration: 1, repeat: Infinity }}
+                />
               )}
-            </div>
+            </motion.div>
           );
         })}
       </div>
 
-      {/* Completion celebration */}
-      {allDone && (
-        <motion.div
-          className="mt-5 flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-5 py-3"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4 }}
-        >
-          <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <p className="text-emerald-300 font-semibold text-sm">Setup Complete!</p>
-            <p className="text-emerald-400/60 text-xs">Your Tiger Bot is now hunting leads 24/7.</p>
-          </div>
-        </motion.div>
-      )}
+      {/* Total time callout */}
+      <div className="flex items-center gap-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 px-5 py-3 mb-8">
+        <Timer className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+        <div>
+          <p className="text-emerald-300 font-semibold text-sm">Total setup: under 5 minutes</p>
+          <p className="text-emerald-400/50 text-xs">Everything happens inside Telegram. No websites, no forms, no copy-paste.</p>
+        </div>
+      </div>
 
-      {/* Confetti burst */}
-      {showConfetti && (
-        <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
-          {Array.from({ length: 40 }).map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-2 h-2 rounded-full"
-              style={{
-                left: `${50 + (Math.random() - 0.5) * 20}%`,
-                top: "40%",
-                backgroundColor: [
-                  "#F97316",
-                  "#FBBF24",
-                  "#10B981",
-                  "#3B82F6",
-                  "#EC4899",
-                  "#8B5CF6",
-                ][i % 6],
-              }}
-              initial={{ opacity: 1, scale: 1 }}
-              animate={{
-                x: (Math.random() - 0.5) * 600,
-                y: Math.random() * -400 - 100,
-                opacity: 0,
-                scale: 0,
-                rotate: Math.random() * 720,
-              }}
-              transition={{
-                duration: 1.5 + Math.random(),
-                ease: "easeOut",
-                delay: Math.random() * 0.3,
-              }}
-            />
-          ))}
+      {/* The big button */}
+      {telegramUrl ? (
+        <a
+          href={telegramUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group relative inline-flex items-center gap-4 bg-gradient-to-r from-[#0088cc] to-[#0099dd] text-white font-bold px-10 py-6 rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-[0_0_60px_rgba(0,136,204,0.4)] w-full justify-center"
+        >
+          <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current" xmlns="http://www.w3.org/2000/svg">
+            <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+          </svg>
+          <span
+            className="tracking-wider text-xl"
+            style={{ fontFamily: '"Bebas Neue", sans-serif' }}
+          >
+            Open Your Tiger Bot in Telegram
+          </span>
+          <ArrowUpRight className="w-6 h-6 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+          {/* Pulse ring */}
+          <span className="absolute inset-0 rounded-2xl animate-ping bg-[#0088cc]/10" style={{ animationDuration: '2s' }} />
+        </a>
+      ) : (
+        <div className="text-center">
+          <div className="inline-flex items-center gap-3 bg-zinc-800/80 border border-zinc-700 text-zinc-300 font-bold px-10 py-6 rounded-2xl w-full justify-center">
+            <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current text-zinc-500" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+            </svg>
+            <span
+              className="tracking-wider text-xl text-zinc-400"
+              style={{ fontFamily: '"Bebas Neue", sans-serif' }}
+            >
+              Waiting for your bot link...
+            </span>
+          </div>
+          <p className="mt-4 text-zinc-500 text-sm">
+            Check your welcome email for the link to this page with your bot attached.
+            <br />
+            <span className="text-zinc-600 text-xs">It looks like: yoursite.com<span className="text-orange-400">?bot=Tiger_YourName_bot</span></span>
+          </p>
         </div>
       )}
+
+      {/* Secondary: Buy link */}
+      <div className="mt-6 text-center">
+        <a
+          href="https://stan.store"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 text-zinc-500 hover:text-orange-400 transition-colors text-sm"
+        >
+          <DollarSign className="w-3.5 h-3.5" />
+          <span>Don't have a Tiger Bot yet? Get one here</span>
+          <ExternalLink className="w-3 h-3" />
+        </a>
+      </div>
     </motion.div>
   );
 }
@@ -984,6 +787,7 @@ export default function Home() {
   const [walkthroughProvider, setWalkthroughProvider] = useState<string>("openai");
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const heroRef = useRef(null);
+  const { botUsername, customerName, telegramUrl } = useBotParam();
 
   const handleOnboardingComplete = () => {
     setOnboardingComplete(true);
@@ -1085,10 +889,13 @@ export default function Home() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            Start Your
-            <br />
+            {customerName ? (
+              <>{customerName}'s<br /></>
+            ) : (
+              <>Your<br /></>
+            )}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-400">
-              Tiger Bot
+              Tiger Bot is Ready
             </span>
           </motion.h1>
           <motion.p
@@ -1097,41 +904,27 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6 }}
           >
-            Your bot is provisioned and ready. Complete these 3 steps to get it
-            hunting leads for you 24/7.
+            One tap opens Telegram. Your bot handles everything from there.
           </motion.p>
 
-          {/* ── 3-Step Quick Start with Progress Tracking ── */}
-          <OnboardingProgress />
-
-          <motion.div
-            className="mt-8 flex flex-wrap items-center gap-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 1.1 }}
-          >
-            <a
-              href="#onboarding"
-              className="group inline-flex items-center gap-3 bg-gradient-to-r from-orange-500 to-amber-500 text-black font-bold px-8 py-4 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(249,115,22,0.4)]"
-            >
-              <Rocket className="w-5 h-5" />
-              <span className="tracking-wider" style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: '1.25rem' }}>
-                Begin Setup
-              </span>
-              <ArrowUpRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </a>
-            <a
-              href="https://stan.store"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 border border-zinc-700 text-zinc-300 font-medium px-6 py-4 rounded-xl transition-all duration-300 hover:border-orange-500/40 hover:text-orange-400"
-            >
-              <DollarSign className="w-4 h-4" />
-              <span className="text-sm">Don't have one yet? Buy a Tiger Bot</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          </motion.div>
+          {/* ── Telegram Launch ── */}
+          <TelegramLaunch telegramUrl={telegramUrl} customerName={customerName} botUsername={botUsername} />
         </motion.div>
+      </section>
+
+      {/* ═══════ REFERENCE MATERIAL SEPARATOR ═══════ */}
+      <section className="bg-[#09090b] py-16">
+        <div className="container">
+          <div className="flex items-center gap-6">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-zinc-700 to-transparent" />
+            <div className="flex items-center gap-3 text-zinc-500">
+              <ChevronDown className="w-4 h-4 animate-bounce" />
+              <span className="text-xs font-semibold tracking-wider uppercase">Want to learn more? Keep scrolling</span>
+              <ChevronDown className="w-4 h-4 animate-bounce" />
+            </div>
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-zinc-700 to-transparent" />
+          </div>
+        </div>
       </section>
 
       {/* ═══════ STATS BAR ═══════ */}
@@ -3137,35 +2930,54 @@ export default function Home() {
                 className="text-5xl md:text-7xl lg:text-8xl text-white mb-6 leading-none"
                 style={{ fontFamily: '"Bebas Neue", sans-serif' }}
               >
-                Get Your
+                Open
                 <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-amber-400 to-orange-600">
-                  Tiger Bot
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0088cc] via-[#00aaee] to-[#0088cc]">
+                  Telegram
                 </span>
               </h2>
 
               <p className="text-zinc-400 text-lg md:text-xl max-w-xl mx-auto mb-4" style={{ fontFamily: '"Outfit", sans-serif' }}>
-                Your bot is ready. Complete the 3 setup steps above and it starts hunting leads for you immediately.
+                Your Tiger Bot is waiting. One tap and it takes over from here.
               </p>
 
               <p className="text-zinc-600 text-sm mb-10">
-                API Key → Interview 1 → Interview 2 → Done
+                Bot says hello → Quick chat about you → Describe your customer → Done
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a
-                  href="#key-rotation"
-                  className="group relative inline-flex items-center gap-3 bg-gradient-to-r from-orange-500 to-amber-500 text-black font-bold text-lg px-10 py-5 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(249,115,22,0.4)]"
-                >
-                  <Rocket className="w-5 h-5 transition-transform group-hover:-translate-y-0.5" />
-                  <span
-                    className="tracking-wider"
-                    style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: '1.25rem' }}
+                {telegramUrl ? (
+                  <a
+                    href={telegramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group relative inline-flex items-center gap-3 bg-gradient-to-r from-[#0088cc] to-[#0099dd] text-white font-bold text-lg px-10 py-5 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(0,136,204,0.4)]"
                   >
-                    Start Setup Now
-                  </span>
-                  <ArrowUpRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                </a>
+                    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                    </svg>
+                    <span
+                      className="tracking-wider"
+                      style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: '1.25rem' }}
+                    >
+                      Open in Telegram
+                    </span>
+                    <ArrowUpRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  </a>
+                ) : (
+                  <button
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    className="group relative inline-flex items-center gap-3 bg-gradient-to-r from-orange-500 to-amber-500 text-black font-bold text-lg px-10 py-5 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(249,115,22,0.4)]"
+                  >
+                    <ArrowUpRight className="w-5 h-5 rotate-[-90deg]" />
+                    <span
+                      className="tracking-wider"
+                      style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: '1.25rem' }}
+                    >
+                      Back to Top
+                    </span>
+                  </button>
+                )}
                 <a
                   href="https://stan.store"
                   target="_blank"
@@ -3173,7 +2985,7 @@ export default function Home() {
                   className="inline-flex items-center gap-2 border border-zinc-700 text-zinc-300 font-medium px-8 py-5 rounded-xl transition-all duration-300 hover:border-orange-500/40 hover:text-orange-400"
                 >
                   <DollarSign className="w-4 h-4" />
-                  <span>Buy a Tiger Bot</span>
+                  <span>Don't have one? Buy a Tiger Bot</span>
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </div>
