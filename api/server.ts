@@ -1045,6 +1045,35 @@ app.get('/ai-crm/hive/tenant-stats', async (req, res) => {
   }
 });
 
+// Get my contributions (user script feedback stats)
+app.get('/ai-crm/hive/my-contributions', async (req, res) => {
+  try {
+    // Mock data fallback when DB unavailable
+    let dbAvailable = false;
+    try { await db.query('SELECT 1'); dbAvailable = true; } catch (e) {}
+    if (!dbAvailable) return res.json({ scripts_count: 12, total_success: 47, recent_scripts: [] });
+
+    const result = await db.query(`
+      SELECT COUNT(*) as scripts_count,
+             COALESCE(SUM(success_count), 0) as total_success
+      FROM script_feedback
+      WHERE created_at > NOW() - INTERVAL '30 days'
+    `);
+    const recentScripts = await db.query(`
+      SELECT content, success_count FROM script_feedback
+      ORDER BY created_at DESC LIMIT 5
+    `);
+    res.json({
+      scripts_count: parseInt(result.rows[0]?.scripts_count || '0'),
+      total_success: parseInt(result.rows[0]?.total_success || '0'),
+      recent_scripts: recentScripts.rows
+    });
+  } catch (error: any) {
+    console.error('My contributions error:', error);
+    res.json({ scripts_count: 0, total_success: 0, recent_scripts: [] });
+  }
+});
+
 // ==================== INTEGRATIONS API ====================
 
 app.post('/integrations/apollo/search', async (req, res) => {

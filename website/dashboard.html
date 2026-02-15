@@ -6188,7 +6188,7 @@ Powered by Tiger Bot Scout`;
                 if (hiveData.currentCategory) params.append('type', hiveData.currentCategory);
                 params.append('limit', '10');
 
-                const data = await apiFetch(`/hive/leaderboard?${params}`);
+                const data = await apiFetch(`/ai-crm/hive/leaderboard?${params}`);
                 hiveData.leaderboard = data.leaderboard || data || [];
                 renderLeaderboard();
             } catch (err) {
@@ -6306,7 +6306,7 @@ Powered by Tiger Bot Scout`;
             error?.classList.add('hidden');
 
             try {
-                const data = await apiFetch('/hive/source-performance-v2');
+                const data = await apiFetch('/ai-crm/hive/source-performance-v2');
                 hiveData.sourcePerformance = data.sources || data || [];
                 renderSourceCards();
                 renderSourceChart();
@@ -6462,7 +6462,7 @@ Powered by Tiger Bot Scout`;
                 const params = new URLSearchParams();
                 params.append('days', hiveData.currentPeriod.toString());
 
-                const data = await apiFetch(`/hive/trends-v2?${params}`);
+                const data = await apiFetch(`/ai-crm/hive/trends-v2?${params}`);
                 hiveData.trends = data.trends || data.daily || data || [];
                 renderTrendsChart();
                 renderTrendsHighlights(data);
@@ -6580,7 +6580,7 @@ Powered by Tiger Bot Scout`;
 
             try {
                 // Try to fetch user contributions - this endpoint may vary
-                const data = await apiFetch('/hive/my-contributions');
+                const data = await apiFetch('/ai-crm/hive/my-contributions');
                 hiveData.myContributions = data;
                 renderMyContributions();
             } catch (err) {
