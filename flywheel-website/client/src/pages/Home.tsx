@@ -5,7 +5,7 @@
  * Palette: #09090B black, #F97316 tiger orange, #FBBF24 amber, #27272A dark gray
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useInView, useScroll, useTransform } from "framer-motion";
 import RegionalIntelligence from "@/components/RegionalIntelligence";
 import FlywheelExplainer from "@/components/FlywheelExplainer";
@@ -156,6 +156,265 @@ function DiagonalDivider({ flip = false }: { flip?: boolean }) {
         />
       </svg>
     </div>
+  );
+}
+
+/* ─── Onboarding Progress Tracker ─── */
+
+const ONBOARDING_STEPS = [
+  { step: 1, label: "Get Your API Key", icon: Key, href: "#key-rotation", time: "5 min", desc: "Choose a provider and paste your key" },
+  { step: 2, label: "Interview 1: Who Are You?", icon: User, href: "#onboarding", time: "3 min", desc: "Tell your bot about yourself" },
+  { step: 3, label: "Interview 2: Your Ideal Customer", icon: Target, href: "#onboarding", time: "3 min", desc: "Describe who you want to reach" },
+];
+
+const STORAGE_KEY = "tiger-bot-onboarding-progress";
+
+function useOnboardingProgress() {
+  const [completed, setCompleted] = useState<Set<number>>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? new Set(JSON.parse(saved) as number[]) : new Set<number>();
+    } catch {
+      return new Set<number>();
+    }
+  });
+
+  const toggle = useCallback((step: number) => {
+    setCompleted((prev) => {
+      const next = new Set(prev);
+      if (next.has(step)) next.delete(step);
+      else next.add(step);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(next)));
+      return next;
+    });
+  }, []);
+
+  const reset = useCallback(() => {
+    setCompleted(new Set());
+    localStorage.removeItem(STORAGE_KEY);
+  }, []);
+
+  return { completed, toggle, reset };
+}
+
+function OnboardingProgress() {
+  const { completed, toggle, reset } = useOnboardingProgress();
+  const pct = Math.round((completed.size / ONBOARDING_STEPS.length) * 100);
+  const allDone = completed.size === ONBOARDING_STEPS.length;
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  useEffect(() => {
+    if (allDone) {
+      setShowConfetti(true);
+      const t = setTimeout(() => setShowConfetti(false), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [allDone]);
+
+  return (
+    <motion.div
+      className="mt-10 max-w-3xl"
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, delay: 0.8 }}
+    >
+      {/* Progress bar header */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold tracking-wider uppercase text-zinc-500">
+            Setup Progress
+          </span>
+          <span
+            className={`text-xs font-bold tracking-wider ${
+              allDone ? "text-emerald-400" : "text-orange-400"
+            }`}
+          >
+            {pct}%
+          </span>
+        </div>
+        {completed.size > 0 && (
+          <button
+            onClick={reset}
+            className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
+          >
+            Reset
+          </button>
+        )}
+      </div>
+
+      {/* Progress bar */}
+      <div className="relative h-1.5 bg-white/5 rounded-full overflow-hidden mb-5">
+        <motion.div
+          className={`absolute inset-y-0 left-0 rounded-full ${
+            allDone
+              ? "bg-gradient-to-r from-emerald-500 to-emerald-400"
+              : "bg-gradient-to-r from-orange-500 to-amber-400"
+          }`}
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        />
+        {/* Glow pulse on the leading edge */}
+        {pct > 0 && pct < 100 && (
+          <motion.div
+            className="absolute inset-y-0 w-8 rounded-full bg-orange-400/40 blur-sm"
+            animate={{ left: `${pct - 2}%` }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          />
+        )}
+      </div>
+
+      {/* Step cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {ONBOARDING_STEPS.map((s) => {
+          const done = completed.has(s.step);
+          const isCurrent =
+            !done &&
+            s.step ===
+              Math.min(
+                ...ONBOARDING_STEPS.filter((x) => !completed.has(x.step)).map(
+                  (x) => x.step
+                )
+              );
+
+          return (
+            <div key={s.step} className="relative">
+              {/* Card link — navigates to the section */}
+              <a
+                href={s.href}
+                className={`group relative flex items-center gap-4 rounded-xl px-5 py-4 transition-all duration-300 border ${
+                  done
+                    ? "bg-emerald-500/10 border-emerald-500/30"
+                    : isCurrent
+                    ? "bg-orange-500/10 border-orange-500/40 shadow-[0_0_20px_rgba(249,115,22,0.15)]"
+                    : "bg-white/5 border-white/10 hover:border-orange-500/40 hover:bg-orange-500/5"
+                }`}
+              >
+                {/* Step number / checkmark */}
+                <div
+                  className={`relative flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg transition-all duration-300 ${
+                    done
+                      ? "bg-emerald-500 text-white"
+                      : isCurrent
+                      ? "bg-gradient-to-br from-orange-500 to-amber-500 text-black"
+                      : "bg-zinc-800 text-zinc-500"
+                  }`}
+                  style={{ fontFamily: '"Bebas Neue", sans-serif' }}
+                >
+                  {done ? (
+                    <CheckCircle className="w-5 h-5" />
+                  ) : (
+                    s.step
+                  )}
+                  {/* Pulse ring on current step */}
+                  {isCurrent && (
+                    <span className="absolute inset-0 rounded-lg animate-ping bg-orange-500/20" />
+                  )}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <p
+                    className={`font-semibold text-sm leading-tight transition-colors ${
+                      done
+                        ? "text-emerald-300 line-through decoration-emerald-500/40"
+                        : "text-white"
+                    }`}
+                  >
+                    {s.label}
+                  </p>
+                  <p className="text-zinc-500 text-xs mt-0.5">
+                    {done ? "Completed" : isCurrent ? `Up next · ${s.time}` : s.time}
+                  </p>
+                </div>
+
+                <ChevronRight
+                  className={`w-4 h-4 ml-auto flex-shrink-0 transition-colors ${
+                    done
+                      ? "text-emerald-500/50"
+                      : "text-zinc-600 group-hover:text-orange-400"
+                  }`}
+                />
+              </a>
+
+              {/* Mark complete checkbox */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  toggle(s.step);
+                }}
+                className={`absolute -top-2 -right-2 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 z-10 ${
+                  done
+                    ? "bg-emerald-500 border-emerald-400 text-white hover:bg-emerald-600"
+                    : "bg-zinc-900 border-zinc-700 text-zinc-600 hover:border-orange-500 hover:text-orange-400"
+                }`}
+                title={done ? "Mark as incomplete" : "Mark as complete"}
+              >
+                {done ? (
+                  <CheckCircle className="w-3.5 h-3.5" />
+                ) : (
+                  <span className="w-2 h-2 rounded-full bg-current" />
+                )}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Completion celebration */}
+      {allDone && (
+        <motion.div
+          className="mt-5 flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-5 py-3"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4 }}
+        >
+          <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+            <Sparkles className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <p className="text-emerald-300 font-semibold text-sm">Setup Complete!</p>
+            <p className="text-emerald-400/60 text-xs">Your Tiger Bot is now hunting leads 24/7.</p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Confetti burst */}
+      {showConfetti && (
+        <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
+          {Array.from({ length: 40 }).map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-2 h-2 rounded-full"
+              style={{
+                left: `${50 + (Math.random() - 0.5) * 20}%`,
+                top: "40%",
+                backgroundColor: [
+                  "#F97316",
+                  "#FBBF24",
+                  "#10B981",
+                  "#3B82F6",
+                  "#EC4899",
+                  "#8B5CF6",
+                ][i % 6],
+              }}
+              initial={{ opacity: 1, scale: 1 }}
+              animate={{
+                x: (Math.random() - 0.5) * 600,
+                y: Math.random() * -400 - 100,
+                opacity: 0,
+                scale: 0,
+                rotate: Math.random() * 720,
+              }}
+              transition={{
+                duration: 1.5 + Math.random(),
+                ease: "easeOut",
+                delay: Math.random() * 0.3,
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </motion.div>
   );
 }
 
@@ -715,34 +974,8 @@ export default function Home() {
             hunting leads for you 24/7.
           </motion.p>
 
-          {/* ── 3-Step Quick Start ── */}
-          <motion.div
-            className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-          >
-            {[
-              { step: 1, label: "Get Your API Key", icon: Key, href: "#key-rotation", time: "5 min" },
-              { step: 2, label: "Interview 1: Who Are You?", icon: User, href: "#onboarding", time: "3 min" },
-              { step: 3, label: "Interview 2: Your Ideal Customer", icon: Target, href: "#onboarding", time: "3 min" },
-            ].map((s) => (
-              <a
-                key={s.step}
-                href={s.href}
-                className="group relative flex items-center gap-4 bg-white/5 border border-white/10 rounded-xl px-5 py-4 hover:border-orange-500/40 hover:bg-orange-500/5 transition-all duration-300"
-              >
-                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-black font-bold text-lg" style={{ fontFamily: '"Bebas Neue", sans-serif' }}>
-                  {s.step}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-white font-semibold text-sm leading-tight">{s.label}</p>
-                  <p className="text-zinc-500 text-xs mt-0.5">{s.time}</p>
-                </div>
-                <ChevronRight className="w-4 h-4 text-zinc-600 ml-auto flex-shrink-0 group-hover:text-orange-400 transition-colors" />
-              </a>
-            ))}
-          </motion.div>
+          {/* ── 3-Step Quick Start with Progress Tracking ── */}
+          <OnboardingProgress />
 
           <motion.div
             className="mt-8 flex flex-wrap items-center gap-4"
