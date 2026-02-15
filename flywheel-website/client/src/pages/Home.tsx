@@ -682,7 +682,7 @@ export default function Home() {
         </motion.div>
 
         <motion.div
-          className="relative container pb-20 md:pb-32 pt-32"
+          className="relative container pb-16 md:pb-24 pt-32"
           style={{ opacity: heroOpacity }}
         >
           <motion.div
@@ -690,7 +690,7 @@ export default function Home() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <SectionLabel text="The Complete System" />
+            <SectionLabel text="Welcome — You're In" />
           </motion.div>
           <motion.h1
             className="text-6xl sm:text-7xl md:text-8xl lg:text-[10rem] leading-[0.85] tracking-tight max-w-5xl"
@@ -699,10 +699,10 @@ export default function Home() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            Onboarding
+            Start Your
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-400">
-              & Flywheel
+              Tiger Bot
             </span>
           </motion.h1>
           <motion.p
@@ -711,20 +711,65 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6 }}
           >
-            From stranger to loyal customer. The automated engine that powers
-            relentless growth for gig economy workers, network marketers, and
-            independent hustlers.
+            Your bot is provisioned and ready. Complete these 3 steps to get it
+            hunting leads for you 24/7.
           </motion.p>
+
+          {/* ── 3-Step Quick Start ── */}
           <motion.div
-            className="mt-10 flex items-center gap-2 text-orange-400"
+            className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+          >
+            {[
+              { step: 1, label: "Get Your API Key", icon: Key, href: "#key-rotation", time: "5 min" },
+              { step: 2, label: "Interview 1: Who Are You?", icon: User, href: "#onboarding", time: "3 min" },
+              { step: 3, label: "Interview 2: Your Ideal Customer", icon: Target, href: "#onboarding", time: "3 min" },
+            ].map((s) => (
+              <a
+                key={s.step}
+                href={s.href}
+                className="group relative flex items-center gap-4 bg-white/5 border border-white/10 rounded-xl px-5 py-4 hover:border-orange-500/40 hover:bg-orange-500/5 transition-all duration-300"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-black font-bold text-lg" style={{ fontFamily: '"Bebas Neue", sans-serif' }}>
+                  {s.step}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-white font-semibold text-sm leading-tight">{s.label}</p>
+                  <p className="text-zinc-500 text-xs mt-0.5">{s.time}</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-zinc-600 ml-auto flex-shrink-0 group-hover:text-orange-400 transition-colors" />
+              </a>
+            ))}
+          </motion.div>
+
+          <motion.div
+            className="mt-8 flex flex-wrap items-center gap-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 1 }}
+            transition={{ duration: 0.8, delay: 1.1 }}
           >
-            <ArrowDown className="w-5 h-5 animate-bounce" />
-            <span className="text-sm font-medium tracking-wide uppercase">
-              Scroll to explore
-            </span>
+            <a
+              href="#onboarding"
+              className="group inline-flex items-center gap-3 bg-gradient-to-r from-orange-500 to-amber-500 text-black font-bold px-8 py-4 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(249,115,22,0.4)]"
+            >
+              <Rocket className="w-5 h-5" />
+              <span className="tracking-wider" style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: '1.25rem' }}>
+                Begin Setup
+              </span>
+              <ArrowUpRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </a>
+            <a
+              href="https://stan.store"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 border border-zinc-700 text-zinc-300 font-medium px-6 py-4 rounded-xl transition-all duration-300 hover:border-orange-500/40 hover:text-orange-400"
+            >
+              <DollarSign className="w-4 h-4" />
+              <span className="text-sm">Don't have one yet? Buy a Tiger Bot</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
           </motion.div>
         </motion.div>
       </section>
@@ -2740,16 +2785,16 @@ export default function Home() {
               </h2>
 
               <p className="text-zinc-400 text-lg md:text-xl max-w-xl mx-auto mb-4" style={{ fontFamily: '"Outfit", sans-serif' }}>
-                Stop chasing leads manually. Let an AI-powered predator work your pipeline 24/7 while you focus on closing.
+                Your bot is ready. Complete the 3 setup steps above and it starts hunting leads for you immediately.
               </p>
 
               <p className="text-zinc-600 text-sm mb-10">
-                72-hour free trial · No credit card required · Cancel anytime
+                API Key → Interview 1 → Interview 2 → Done
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <a
-                  href="#onboarding"
+                  href="#key-rotation"
                   className="group relative inline-flex items-center gap-3 bg-gradient-to-r from-orange-500 to-amber-500 text-black font-bold text-lg px-10 py-5 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(249,115,22,0.4)]"
                 >
                   <Rocket className="w-5 h-5 transition-transform group-hover:-translate-y-0.5" />
@@ -2757,9 +2802,19 @@ export default function Home() {
                     className="tracking-wider"
                     style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: '1.25rem' }}
                   >
-                    Start Onboarding Now
+                    Start Setup Now
                   </span>
                   <ArrowUpRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                </a>
+                <a
+                  href="https://stan.store"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 border border-zinc-700 text-zinc-300 font-medium px-8 py-5 rounded-xl transition-all duration-300 hover:border-orange-500/40 hover:text-orange-400"
+                >
+                  <DollarSign className="w-4 h-4" />
+                  <span>Buy a Tiger Bot</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </div>
 
