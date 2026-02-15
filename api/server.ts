@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { Pool } from 'pg';
 import { ApolloClient } from './integrations/apollo.js';
 import { BrevoClient } from './integrations/brevo.js';
@@ -141,9 +143,75 @@ const twilio = new TwilioClient(
 );
 const calendly = new CalendlyClient(process.env.CALENDLY_API_KEY!, process.env.CALENDLY_LINK!);
 
-// Middleware
-app.use(cors({ origin: true, credentials: true }));
-app.use(express.json());
+// ==================== SECURITY MIDDLEWARE ====================
+
+// Security headers (helmet)
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "cdn.tailwindcss.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "fonts.googleapis.com"],
+      fontSrc: ["'self'", "fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https://api.botcraftwrks.ai"],
+    },
+  },
+  crossOriginEmbedderPolicy: false, // Allow embedding
+}));
+
+// CORS - restrict to known origins
+const allowedOrigins = [
+  'https://botcraftwrks.ai',
+  'https://www.botcraftwrks.ai',
+  'https://api.botcraftwrks.ai',
+  'http://localhost:3000',
+  'http://localhost:4000',
+  'http://localhost:4001',
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    // In development, allow all
+    if (process.env.NODE_ENV === 'development') {
+      return callback(null, true);
+    }
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Admin-Token'],
+}));
+
+// Rate limiting - general API
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // 100 requests per window
+  message: { error: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Stricter rate limit for auth/admin endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20, // 20 attempts per 15 min
+  message: { error: 'Too many authentication attempts' },
+});
+
+// Apply rate limiting
+app.use('/ai-crm/', apiLimiter);
+app.use('/admin/', authLimiter);
+app.use('/scripts/', apiLimiter);
+app.use('/analytics/', apiLimiter);
+
+// Body parser
+app.use(express.json({ limit: '10kb' })); // Limit body size
 
 // Helper function to log activity on a lead
 async function logActivity(leadId: string, activityType: string, description: string, metadata?: any, createdBy?: string) {
@@ -2058,14 +2126,26 @@ interface PendingScript {
   featured?: boolean;
 }
 
-// Admin authentication middleware (simplified for demo)
+// Admin authentication middleware
+const ADMIN_API_KEY = process.env.ADMIN_API_KEY || 'change-me-in-production';
+
 const requireAdmin = (req: any, res: any, next: any) => {
-  const adminToken = req.headers['x-admin-token'];
-  if (adminToken === 'admin-secret' || req.headers['x-admin-mode'] === 'true') {
-    next();
-  } else {
-    res.status(403).json({ error: 'Admin access required' });
+  const apiKey = req.headers['x-api-key'] || req.headers['x-admin-token'];
+
+  // Check API key
+  if (apiKey && apiKey === ADMIN_API_KEY) {
+    return next();
   }
+
+  // In development, allow with header flag
+  if (process.env.NODE_ENV === 'development' && req.headers['x-admin-mode'] === 'true') {
+    return next();
+  }
+
+  // Log failed auth attempt
+  console.warn(`[security] Failed admin auth attempt from ${req.ip}`);
+
+  res.status(403).json({ error: 'Admin access required' });
 };
 
 // Mock tenant data generator
