@@ -11,6 +11,7 @@ import RegionalIntelligence from "@/components/RegionalIntelligence";
 import FlywheelExplainer from "@/components/FlywheelExplainer";
 import ProvisioningPipeline from "@/components/ProvisioningPipeline";
 import WebhookSetupGuide from "@/components/WebhookSetupGuide";
+import OnboardingDemo from "@/components/OnboardingDemo";
 import {
   Search,
   MessageSquare,
@@ -822,6 +823,9 @@ export default function Home() {
             </span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-400">
+            <a href="#demo" className="hover:text-orange-400 transition-colors">
+              Demo
+            </a>
             <a href="#onboarding" className="hover:text-orange-400 transition-colors">
               Onboarding
             </a>
@@ -911,6 +915,9 @@ export default function Home() {
           <TelegramLaunch telegramUrl={telegramUrl} customerName={customerName} botUsername={botUsername} />
         </motion.div>
       </section>
+
+      {/* ═══════ ONBOARDING DEMO ═══════ */}
+      <OnboardingDemo />
 
       {/* ═══════ REFERENCE MATERIAL SEPARATOR ═══════ */}
       <section className="bg-[#09090b] py-16">
