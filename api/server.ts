@@ -2413,6 +2413,132 @@ function formatUptime(seconds: number): string {
   return `${mins}m`;
 }
 
+// ==================== BOT CONTROL PANEL ====================
+
+// Helper to decrypt bot tokens (uses CryptoJS format)
+async function decryptToken(encryptedToken: string): Promise<string> {
+  const CryptoJS = (await import('crypto-js')).default;
+  const key = process.env.ENCRYPTION_KEY || 'tiger-bot-scout-encryption-key!!';
+  const decrypted = CryptoJS.AES.decrypt(encryptedToken, key).toString(CryptoJS.enc.Utf8);
+  return decrypted;
+}
+
+// GET /admin/bots - Get all bots with webhook status
+app.get('/admin/bots', async (req, res) => {
+  try {
+    // Get all active tenants
+    const tenantsResult = await db.query(`
+      SELECT
+        t.id,
+        t.name,
+        t.email,
+        t."botUsername",
+        t."botToken",
+        t.status,
+        t."createdAt",
+        t."updatedAt",
+        COALESCE(p.prospect_count, 0) as prospects
+      FROM "Tenant" t
+      LEFT JOIN (
+        SELECT "tenantId", COUNT(*) as prospect_count
+        FROM "Prospect"
+        GROUP BY "tenantId"
+      ) p ON p."tenantId" = t.id
+      WHERE t.status = 'active'
+      ORDER BY t."createdAt" DESC
+    `);
+
+    const bots = [];
+
+    for (const tenant of tenantsResult.rows) {
+      let webhookStatus = 'unknown';
+      let webhookUrl = '';
+      let pendingUpdates = 0;
+
+      try {
+        // Decrypt token and check webhook
+        const token = await decryptToken(tenant.botToken);
+        const response = await fetch(`https://api.telegram.org/bot${token}/getWebhookInfo`);
+        const data = await response.json();
+
+        if (data.ok) {
+          webhookUrl = data.result?.url || '';
+          pendingUpdates = data.result?.pending_update_count || 0;
+          webhookStatus = webhookUrl.includes('botcraftwrks.ai') ? 'connected' : 'disconnected';
+        }
+      } catch {
+        webhookStatus = 'error';
+      }
+
+      // Calculate last activity
+      const lastUpdate = new Date(tenant.updatedAt);
+      const hoursSince = (Date.now() - lastUpdate.getTime()) / (1000 * 60 * 60);
+      let lastActive = 'Unknown';
+      if (hoursSince < 1) lastActive = `${Math.round(hoursSince * 60)}m ago`;
+      else if (hoursSince < 24) lastActive = `${Math.round(hoursSince)}h ago`;
+      else lastActive = `${Math.round(hoursSince / 24)}d ago`;
+
+      bots.push({
+        id: tenant.id,
+        name: tenant.name || tenant.botUsername,
+        email: tenant.email,
+        botUsername: tenant.botUsername,
+        status: tenant.status,
+        webhookStatus,
+        webhookUrl: webhookUrl.substring(0, 50) + (webhookUrl.length > 50 ? '...' : ''),
+        pendingUpdates,
+        prospects: parseInt(tenant.prospects) || 0,
+        lastActive,
+        createdAt: tenant.createdAt
+      });
+    }
+
+    res.json({
+      bots,
+      summary: {
+        total: bots.length,
+        connected: bots.filter(b => b.webhookStatus === 'connected').length,
+        disconnected: bots.filter(b => b.webhookStatus === 'disconnected').length,
+        errors: bots.filter(b => b.webhookStatus === 'error').length
+      }
+    });
+  } catch (error: any) {
+    console.error('Admin bots error:', error);
+    res.status(500).json({ error: 'Failed to fetch bots', details: error.message });
+  }
+});
+
+// POST /admin/bots/:id/refresh-webhook - Refresh a bot's webhook
+app.post('/admin/bots/:id/refresh-webhook', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get tenant
+    const tenantResult = await db.query('SELECT * FROM "Tenant" WHERE id = $1', [id]);
+    if (tenantResult.rows.length === 0) {
+      res.status(404).json({ error: 'Bot not found' });
+      return;
+    }
+
+    const tenant = tenantResult.rows[0];
+    const token = await decryptToken(tenant.botToken);
+
+    // Set webhook to our gateway
+    const webhookUrl = `https://botcraftwrks.ai/webhooks/${tenant.botTokenHash}`;
+    const response = await fetch(`https://api.telegram.org/bot${token}/setWebhook?url=${encodeURIComponent(webhookUrl)}`);
+    const result = await response.json();
+
+    if (result.ok) {
+      res.json({ success: true, message: 'Webhook refreshed', webhookUrl });
+    } else {
+      res.status(500).json({ error: 'Failed to set webhook', details: result.description });
+    }
+  } catch (error: any) {
+    console.error('Refresh webhook error:', error);
+    res.status(500).json({ error: 'Failed to refresh webhook', details: error.message });
+  }
+});
+
 // GET /admin/errors - Recent errors
 app.get('/admin/errors', (req, res) => {
   try {
