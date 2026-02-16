@@ -3947,3 +3947,62 @@ app.post('/admin/provision/batch', async (req, res) => {
   }
 });
 
+// GET /admin/onboarding - Get onboarding status for all tenants
+app.get('/admin/onboarding', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT
+        id,
+        name,
+        email,
+        "botUsername",
+        status,
+        "createdAt"
+      FROM "Tenant"
+      ORDER BY "createdAt" DESC
+    `);
+
+    const tenants = result.rows.map((t: any) => {
+      const daysSinceCreated = Math.round((Date.now() - new Date(t.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+
+      // Determine onboarding status
+      let onboardingStatus = 'complete';
+      let onboardingSteps = {
+        accountCreated: true,
+        botCreated: t.status === 'active',
+        webhookConnected: t.status === 'active',
+        firstMessage: t.status === 'active', // Would need message tracking
+      };
+
+      if (t.status === 'provisioning') {
+        onboardingStatus = 'pending_bot';
+      } else if (t.status === 'suspended') {
+        onboardingStatus = 'suspended';
+      }
+
+      return {
+        id: t.id,
+        name: t.name,
+        email: t.email,
+        botUsername: t.botUsername,
+        status: t.status,
+        onboardingStatus,
+        onboardingSteps,
+        daysSinceCreated,
+        createdAt: t.createdAt
+      };
+    });
+
+    const summary = {
+      total: tenants.length,
+      complete: tenants.filter((t: any) => t.onboardingStatus === 'complete').length,
+      pendingBot: tenants.filter((t: any) => t.onboardingStatus === 'pending_bot').length,
+      suspended: tenants.filter((t: any) => t.onboardingStatus === 'suspended').length
+    };
+
+    res.json({ tenants, summary });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to get onboarding status', details: error.message });
+  }
+});
+

@@ -7,9 +7,11 @@
   "scripts": {
     "dev:gateway": "tsx watch src/gateway/index.ts",
     "dev:worker": "tsx watch src/fleet/worker.ts",
+    "dev:provision": "tsx watch src/provisioner/provision-worker.ts",
     "build": "tsc",
     "start:gateway": "node dist/src/gateway/index.js",
     "start:worker": "node dist/src/fleet/worker.js",
+    "start:provision": "node dist/src/provisioner/provision-worker.js",
     "start:cluster": "pm2 start ecosystem.config.js",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
