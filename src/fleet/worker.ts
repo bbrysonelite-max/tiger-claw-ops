@@ -233,7 +233,7 @@ async function handleUnknownMessage(
   // Use Gemini for intelligent conversation (much cheaper than OpenAI)
   if (gemini) {
     try {
-      const model = gemini.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = gemini.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
       const systemPrompt = `You are Tiger Bot Scout, a friendly AI recruiting assistant for network marketers. Your job is to help users find and connect with prospects.
 
