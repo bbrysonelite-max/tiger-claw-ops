@@ -2909,7 +2909,7 @@
                     </div>
                     <select id="admin-tenant-plan-filter" class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm" onchange="AdminTenants.filter()">
                         <option value="">All Plans</option>
-                        <option value="Starter">Starter</option>
+                        <option value="Scout">Scout</option>
                         <option value="Pro">Pro</option>
                         <option value="Enterprise">Enterprise</option>
                     </select>
@@ -3472,16 +3472,27 @@
             sortAsc: true,
 
             async load() {
-                // Mock data for now - in production, fetch from API
+                try {
+                    // Fetch REAL tenant data from API
+                    const response = await fetch(`${API_BASE}/admin/tenants`, {
+                        headers: { 'X-API-Key': localStorage.getItem('admin_api_key') || '' }
+                    });
+                    const result = await response.json();
+
+                    if (result.tenants && result.tenants.length > 0) {
+                        this.data = result.tenants;
+                        this.filteredData = [...this.data];
+                        this.updateSummary();
+                        this.render();
+                        return;
+                    }
+                } catch (err) {
+                    console.warn('Failed to load real tenant data, using fallback:', err);
+                }
+
+                // Fallback mock data only if API fails
                 this.data = [
-                    { id: 1, name: 'Sarah Chen', email: 'sarah@example.com', plan: 'Pro', prospects: 145, scripts: 89, conversions: 12, lastActive: '2h ago', health: 'good' },
-                    { id: 2, name: 'Mike Johnson', email: 'mike@example.com', plan: 'Starter', prospects: 23, scripts: 15, conversions: 2, lastActive: '1d ago', health: 'warning' },
-                    { id: 3, name: 'Amy Lee', email: 'amy@example.com', plan: 'Enterprise', prospects: 456, scripts: 234, conversions: 67, lastActive: '5m ago', health: 'good' },
-                    { id: 4, name: 'John Smith', email: 'john@example.com', plan: 'Pro', prospects: 78, scripts: 45, conversions: 8, lastActive: '3d ago', health: 'critical' },
-                    { id: 5, name: 'Lisa Wang', email: 'lisa@example.com', plan: 'Starter', prospects: 34, scripts: 22, conversions: 4, lastActive: '6h ago', health: 'good' },
-                    { id: 6, name: 'Tom Brown', email: 'tom@example.com', plan: 'Pro', prospects: 167, scripts: 98, conversions: 23, lastActive: '1h ago', health: 'good' },
-                    { id: 7, name: 'Emma Davis', email: 'emma@example.com', plan: 'Enterprise', prospects: 289, scripts: 156, conversions: 41, lastActive: '30m ago', health: 'good' },
-                    { id: 8, name: 'Chris Wilson', email: 'chris@example.com', plan: 'Starter', prospects: 12, scripts: 8, conversions: 0, lastActive: '5d ago', health: 'critical' },
+                    { id: 1, name: 'No tenants found', email: 'check API connection', plan: 'Scout', prospects: 0, scripts: 0, conversions: 0, lastActive: '-', health: 'warning' },
                 ];
                 this.filteredData = [...this.data];
                 this.updateSummary();
@@ -3545,7 +3556,7 @@
                 if (!tbody) return;
 
                 const healthIcons = { good: '🟢', warning: '🟡', critical: '🔴' };
-                const planColors = { Starter: 'bg-slate-600', Pro: 'bg-tiger-600', Enterprise: 'bg-purple-600' };
+                const planColors = { Scout: 'bg-tiger-600', Starter: 'bg-slate-600', Pro: 'bg-blue-600', Enterprise: 'bg-purple-600' };
 
                 tbody.innerHTML = this.filteredData.map(t => {
                     const convRate = t.prospects > 0 ? ((t.conversions / t.prospects) * 100).toFixed(1) : '0.0';
