@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "@google/generative-ai": "^0.24.1",
     "@jest/globals": "^30.2.0",
     "@prisma/client": "^5.10.0",
     "@types/node-cron": "^3.0.11",

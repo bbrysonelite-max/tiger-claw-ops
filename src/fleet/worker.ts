@@ -9,7 +9,7 @@ import { Worker, Job } from 'bullmq';
 import { Redis } from 'ioredis';
 import TelegramBot from 'node-telegram-bot-api';
 import { PrismaClient } from '@prisma/client';
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { decrypt } from '../shared/crypto.js';
 import {
   InboundJobData,
@@ -19,13 +19,13 @@ import {
   QUEUE_NAMES,
 } from '../shared/types.js';
 
-// --- OpenAI Client for AI Conversations ---
-const openai = process.env.OPENAI_API_KEY
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+// --- Gemini Client for AI Conversations (much cheaper than OpenAI) ---
+const gemini = process.env.GEMINI_API_KEY
+  ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
   : null;
 
-if (!openai) {
-  console.warn('[worker] WARNING: OPENAI_API_KEY not set - AI conversations disabled');
+if (!gemini) {
+  console.warn('[worker] WARNING: GEMINI_API_KEY not set - AI conversations disabled');
 }
 
 // --- Configuration ---
@@ -230,15 +230,12 @@ async function handleUnknownMessage(
     return;
   }
 
-  // Use OpenAI for intelligent conversation
-  if (openai) {
+  // Use Gemini for intelligent conversation (much cheaper than OpenAI)
+  if (gemini) {
     try {
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `You are Tiger Bot Scout, a friendly AI recruiting assistant for network marketers. Your job is to help users find and connect with prospects.
+      const model = gemini.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+      const systemPrompt = `You are Tiger Bot Scout, a friendly AI recruiting assistant for network marketers. Your job is to help users find and connect with prospects.
 
 Key capabilities you can mention:
 - /today command shows today's hot prospects
@@ -250,25 +247,19 @@ Personality: Friendly, helpful, encouraging. Use emojis sparingly (1-2 per messa
 Keep responses concise (2-4 sentences). Always be helpful and on-topic.
 If they ask about something unrelated to recruiting/prospecting, gently steer back to how you can help them find prospects.
 
-The user's first name is: ${firstName}`
-          },
-          {
-            role: 'user',
-            content: text
-          }
-        ],
-        max_tokens: 200,
-        temperature: 0.7,
-      });
+The user's first name is: ${firstName}
 
-      const aiResponse = completion.choices[0]?.message?.content;
+User message: ${text}`;
+
+      const result = await model.generateContent(systemPrompt);
+      const aiResponse = result.response.text();
 
       if (aiResponse) {
         await ctx.bot.sendMessage(chatId, aiResponse, { parse_mode: 'Markdown' });
         return;
       }
     } catch (error) {
-      console.error(`[worker] OpenAI error for tenant ${ctx.tenantId}:`, error);
+      console.error(`[worker] Gemini error for tenant ${ctx.tenantId}:`, error);
       // Fall through to default response
     }
   }
