@@ -209,21 +209,62 @@ async function handleUnknownMessage(
 ): Promise<void> {
   const chatId = message.chat.id;
   const text = message.text || '';
-  
-  // Check if this might be a prospect name (script generation request)
-  if (text.length > 2 && !text.startsWith('/')) {
-    // For now, acknowledge and explain
+  const firstName = message.from?.first_name || 'there';
+
+  // If it's a short message or looks like a typo, suggest help
+  if (text.length <= 3) {
     await ctx.bot.sendMessage(
       chatId,
-      `📝 Looking for info on "${text}"...\n\n_Script generation coming soon! Use /today to see your current prospects._`,
+      "🤔 I didn't understand that. Try /help to see what I can do!"
+    );
+    return;
+  }
+
+  // For conversational messages, respond helpfully
+  // Common questions and friendly responses
+  const lowerText = text.toLowerCase();
+
+  if (lowerText.includes('internet') || lowerText.includes('search') || lowerText.includes('web')) {
+    await ctx.bot.sendMessage(
+      chatId,
+      `Great question, ${firstName}! 🌐\n\nYes, Tiger Bot can search social media platforms to find potential prospects for you. I look for people showing interest in wellness, health, extra income, and similar topics.\n\nUse /today to see prospects I've found for you!`,
       { parse_mode: 'Markdown' }
     );
     return;
   }
-  
+
+  if (lowerText.includes('how') && (lowerText.includes('work') || lowerText.includes('use'))) {
+    await ctx.bot.sendMessage(
+      chatId,
+      `Here's how I work, ${firstName}! 🐯\n\n1️⃣ I scan social media for people interested in wellness & business\n2️⃣ I score them based on how likely they are to be interested\n3️⃣ I send you a daily report at 7 AM\n4️⃣ You can also type /today anytime to check\n\nTry /today now to see your prospects!`,
+      { parse_mode: 'Markdown' }
+    );
+    return;
+  }
+
+  if (lowerText.includes('thank') || lowerText.includes('great') || lowerText.includes('awesome')) {
+    await ctx.bot.sendMessage(
+      chatId,
+      `You're welcome, ${firstName}! 😊\n\nI'm here to help you find great prospects. Let me know if you have any questions!\n\n/today - See today's prospects\n/help - See all commands`,
+      { parse_mode: 'Markdown' }
+    );
+    return;
+  }
+
+  if (lowerText.includes('script') || lowerText.includes('message') || lowerText.includes('what to say')) {
+    await ctx.bot.sendMessage(
+      chatId,
+      `Want help with what to say? 💬\n\nScript generation is coming soon! For now, here's a tip:\n\n_Start by commenting on something specific from their profile, then ask a genuine question about their interests._\n\nUse /today to see your prospects and their details!`,
+      { parse_mode: 'Markdown' }
+    );
+    return;
+  }
+
+  // Default friendly response
   await ctx.bot.sendMessage(
     chatId,
-    "🤔 I didn't understand that command. Try /help to see what I can do!"
+    `Thanks for your message, ${firstName}! 🐯\n\nI'm Tiger Bot, your AI recruiting assistant. Here's what I can help with:\n\n/today - See today's hot prospects\n/help - All available commands\n\nHave a specific question? Just ask!`,
+    { parse_mode: 'Markdown' }
   );
 }
 
