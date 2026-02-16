@@ -9,6 +9,7 @@ import { Worker, Job } from 'bullmq';
 import { Redis } from 'ioredis';
 import TelegramBot from 'node-telegram-bot-api';
 import { PrismaClient } from '@prisma/client';
+import OpenAI from 'openai';
 import { decrypt } from '../shared/crypto.js';
 import {
   InboundJobData,
@@ -17,6 +18,15 @@ import {
   TelegramMessage,
   QUEUE_NAMES,
 } from '../shared/types.js';
+
+// --- OpenAI Client for AI Conversations ---
+const openai = process.env.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
+
+if (!openai) {
+  console.warn('[worker] WARNING: OPENAI_API_KEY not set - AI conversations disabled');
+}
 
 // --- Configuration ---
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
@@ -220,50 +230,53 @@ async function handleUnknownMessage(
     return;
   }
 
-  // For conversational messages, respond helpfully
-  // Common questions and friendly responses
-  const lowerText = text.toLowerCase();
+  // Use OpenAI for intelligent conversation
+  if (openai) {
+    try {
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `You are Tiger Bot Scout, a friendly AI recruiting assistant for network marketers. Your job is to help users find and connect with prospects.
 
-  if (lowerText.includes('internet') || lowerText.includes('search') || lowerText.includes('web')) {
-    await ctx.bot.sendMessage(
-      chatId,
-      `Great question, ${firstName}! 🌐\n\nYes, Tiger Bot can search social media platforms to find potential prospects for you. I look for people showing interest in wellness, health, extra income, and similar topics.\n\nUse /today to see prospects I've found for you!`,
-      { parse_mode: 'Markdown' }
-    );
-    return;
+Key capabilities you can mention:
+- /today command shows today's hot prospects
+- /help shows all commands
+- Daily reports arrive at 7 AM
+- You scan social media to find people interested in wellness, health, and business opportunities
+
+Personality: Friendly, helpful, encouraging. Use emojis sparingly (1-2 per message max).
+Keep responses concise (2-4 sentences). Always be helpful and on-topic.
+If they ask about something unrelated to recruiting/prospecting, gently steer back to how you can help them find prospects.
+
+The user's first name is: ${firstName}`
+          },
+          {
+            role: 'user',
+            content: text
+          }
+        ],
+        max_tokens: 200,
+        temperature: 0.7,
+      });
+
+      const aiResponse = completion.choices[0]?.message?.content;
+
+      if (aiResponse) {
+        await ctx.bot.sendMessage(chatId, aiResponse, { parse_mode: 'Markdown' });
+        return;
+      }
+    } catch (error) {
+      console.error(`[worker] OpenAI error for tenant ${ctx.tenantId}:`, error);
+      // Fall through to default response
+    }
   }
 
-  if (lowerText.includes('how') && (lowerText.includes('work') || lowerText.includes('use'))) {
-    await ctx.bot.sendMessage(
-      chatId,
-      `Here's how I work, ${firstName}! 🐯\n\n1️⃣ I scan social media for people interested in wellness & business\n2️⃣ I score them based on how likely they are to be interested\n3️⃣ I send you a daily report at 7 AM\n4️⃣ You can also type /today anytime to check\n\nTry /today now to see your prospects!`,
-      { parse_mode: 'Markdown' }
-    );
-    return;
-  }
-
-  if (lowerText.includes('thank') || lowerText.includes('great') || lowerText.includes('awesome')) {
-    await ctx.bot.sendMessage(
-      chatId,
-      `You're welcome, ${firstName}! 😊\n\nI'm here to help you find great prospects. Let me know if you have any questions!\n\n/today - See today's prospects\n/help - See all commands`,
-      { parse_mode: 'Markdown' }
-    );
-    return;
-  }
-
-  if (lowerText.includes('script') || lowerText.includes('message') || lowerText.includes('what to say')) {
-    await ctx.bot.sendMessage(
-      chatId,
-      `Want help with what to say? 💬\n\nScript generation is coming soon! For now, here's a tip:\n\n_Start by commenting on something specific from their profile, then ask a genuine question about their interests._\n\nUse /today to see your prospects and their details!`,
-      { parse_mode: 'Markdown' }
-    );
-    return;
-  }
-
-  // Default friendly response
+  // Fallback if OpenAI is not configured or fails
   await ctx.bot.sendMessage(
     chatId,
-    `Thanks for your message, ${firstName}! 🐯\n\nI'm Tiger Bot, your AI recruiting assistant. Here's what I can help with:\n\n/today - See today's hot prospects\n/help - All available commands\n\nHave a specific question? Just ask!`,
+    `Hey ${firstName}! 🐯 I'm here to help you find great prospects. Try /today to see who I've found for you, or /help to see all my commands.`,
     { parse_mode: 'Markdown' }
   );
 }
