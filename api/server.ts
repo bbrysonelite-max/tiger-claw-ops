@@ -133,6 +133,237 @@ async function initDatabase() {
 
 await initDatabase();
 
+// ==================== ADMIN ALERT SYSTEM ====================
+
+// Create alerts table
+await db.query(`
+  CREATE TABLE IF NOT EXISTS admin_alerts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    type TEXT NOT NULL,
+    severity TEXT NOT NULL DEFAULT 'warning',
+    title TEXT NOT NULL,
+    message TEXT,
+    tenant_id TEXT,
+    resolved BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    resolved_at TIMESTAMP WITH TIME ZONE
+  )
+`).catch(() => {});
+
+// Alert types and their Telegram emoji
+const ALERT_ICONS: Record<string, string> = {
+  webhook_down: '🔴',
+  brain_dead: '🧠',
+  queue_backup: '📥',
+  customer_inactive: '😴',
+  error: '⚠️',
+  info: 'ℹ️'
+};
+
+// Send alert to admin via Telegram
+async function sendAdminAlert(type: string, title: string, message: string, tenantId?: string) {
+  const icon = ALERT_ICONS[type] || '⚠️';
+  const severity = ['webhook_down', 'brain_dead', 'error'].includes(type) ? 'critical' : 'warning';
+
+  // Store in database
+  await db.query(
+    'INSERT INTO admin_alerts (type, severity, title, message, tenant_id) VALUES ($1, $2, $3, $4, $5)',
+    [type, severity, title, message, tenantId]
+  ).catch(console.error);
+
+  // Send to Telegram if configured
+  const chatId = process.env.TELEGRAM_REPORT_CHAT_ID;
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+
+  if (chatId && botToken) {
+    const text = `${icon} *${title}*\n\n${message}`;
+    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' })
+    }).catch(console.error);
+  }
+
+  console.log(`[ALERT] ${icon} ${title}: ${message}`);
+}
+
+// Health check function - runs every 5 minutes
+async function runHealthCheck() {
+  try {
+    const CryptoJS = (await import('crypto-js')).default;
+    const encKey = process.env.ENCRYPTION_KEY || '';
+
+    // Check all bot webhooks
+    const tenants = await db.query('SELECT * FROM "Tenant" WHERE status = $1', ['active']);
+
+    for (const tenant of tenants.rows) {
+      try {
+        const token = CryptoJS.AES.decrypt(tenant.botToken, encKey).toString(CryptoJS.enc.Utf8);
+        if (!token) continue;
+
+        const res = await fetch(`https://api.telegram.org/bot${token}/getWebhookInfo`);
+        const data = await res.json();
+
+        // Check webhook connected
+        const webhookUrl = data.result?.url || '';
+        if (!webhookUrl.includes('botcraftwrks.ai')) {
+          await sendAdminAlert(
+            'webhook_down',
+            `Webhook Down: ${tenant.name || tenant.botUsername}`,
+            `Bot @${tenant.botUsername} has disconnected webhook.\nLast URL: ${webhookUrl || 'none'}`,
+            tenant.id
+          );
+        }
+
+        // Check pending updates (queue backup)
+        const pending = data.result?.pending_update_count || 0;
+        if (pending > 10) {
+          await sendAdminAlert(
+            'queue_backup',
+            `Queue Backup: ${tenant.name || tenant.botUsername}`,
+            `Bot @${tenant.botUsername} has ${pending} pending messages!`,
+            tenant.id
+          );
+        }
+      } catch (e) {
+        // Individual bot check failed
+      }
+    }
+
+    // Check for inactive customers (no activity in 7 days)
+    const inactiveResult = await db.query(`
+      SELECT id, name, email, "botUsername", "updatedAt"
+      FROM "Tenant"
+      WHERE status = 'active'
+        AND "updatedAt" < NOW() - INTERVAL '7 days'
+    `);
+
+    for (const tenant of inactiveResult.rows) {
+      const daysSince = Math.floor((Date.now() - new Date(tenant.updatedAt).getTime()) / (1000 * 60 * 60 * 24));
+      await sendAdminAlert(
+        'customer_inactive',
+        `Inactive Customer: ${tenant.name}`,
+        `${tenant.name} (${tenant.email}) hasn't used their bot in ${daysSince} days. Churn risk!`,
+        tenant.id
+      );
+    }
+
+  } catch (error) {
+    console.error('[HealthCheck] Error:', error);
+  }
+}
+
+// Run health check every 5 minutes
+setInterval(runHealthCheck, 5 * 60 * 1000);
+
+// Run initial health check after 30 seconds
+setTimeout(runHealthCheck, 30 * 1000);
+
+// ==================== DAILY ADMIN REPORT ====================
+
+async function sendDailyReport() {
+  try {
+    const chatId = process.env.TELEGRAM_REPORT_CHAT_ID;
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+
+    if (!chatId || !botToken) {
+      console.log('[DailyReport] Skipped - TELEGRAM_REPORT_CHAT_ID not set');
+      return;
+    }
+
+    // Gather stats
+    const tenantsResult = await db.query('SELECT COUNT(*) FROM "Tenant" WHERE status = $1', ['active']);
+    const totalTenants = parseInt(tenantsResult.rows[0]?.count || '0');
+
+    const prospectsResult = await db.query('SELECT COUNT(*) FROM "Prospect"');
+    const totalProspects = parseInt(prospectsResult.rows[0]?.count || '0');
+
+    const newProspectsResult = await db.query(`
+      SELECT COUNT(*) FROM "Prospect" WHERE "createdAt" > NOW() - INTERVAL '24 hours'
+    `);
+    const newProspects = parseInt(newProspectsResult.rows[0]?.count || '0');
+
+    const alertsResult = await db.query(`
+      SELECT COUNT(*) FROM admin_alerts WHERE resolved = false
+    `);
+    const unresolvedAlerts = parseInt(alertsResult.rows[0]?.count || '0');
+
+    // Check inactive customers
+    const inactiveResult = await db.query(`
+      SELECT COUNT(*) FROM "Tenant"
+      WHERE status = 'active' AND "updatedAt" < NOW() - INTERVAL '3 days'
+    `);
+    const inactiveCount = parseInt(inactiveResult.rows[0]?.count || '0');
+
+    // Check webhook status
+    const CryptoJS = (await import('crypto-js')).default;
+    const encKey = process.env.ENCRYPTION_KEY || '';
+    const tenants = await db.query('SELECT * FROM "Tenant" WHERE status = $1', ['active']);
+
+    let connectedBots = 0;
+    for (const tenant of tenants.rows) {
+      try {
+        const token = CryptoJS.AES.decrypt(tenant.botToken, encKey).toString(CryptoJS.enc.Utf8);
+        const res = await fetch(`https://api.telegram.org/bot${token}/getWebhookInfo`);
+        const data = await res.json();
+        if (data.result?.url?.includes('botcraftwrks.ai')) connectedBots++;
+      } catch {}
+    }
+
+    // Build report
+    const date = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+    const report = `
+🐯 *Tiger Bot Daily Report*
+📅 ${date}
+
+*System Status*
+├ Bots Online: ${connectedBots}/${totalTenants}
+├ Total Prospects: ${totalProspects}
+├ New Today: ${newProspects}
+└ Queue: Clear ✅
+
+*Attention Needed*
+├ Unresolved Alerts: ${unresolvedAlerts}
+└ Inactive Customers: ${inactiveCount}
+
+${unresolvedAlerts > 0 ? '⚠️ Check dashboard for alert details' : '✅ All systems healthy'}
+${inactiveCount > 0 ? `😴 ${inactiveCount} customer(s) inactive >3 days` : ''}
+
+_View details: botcraftwrks.ai/dashboard.html_
+    `.trim();
+
+    // Send report
+    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text: report, parse_mode: 'Markdown' })
+    });
+
+    console.log('[DailyReport] Sent successfully');
+  } catch (error) {
+    console.error('[DailyReport] Error:', error);
+  }
+}
+
+// Schedule daily report at 7 AM (server time)
+function scheduleDailyReport() {
+  const now = new Date();
+  const next7am = new Date(now);
+  next7am.setHours(7, 0, 0, 0);
+  if (now >= next7am) next7am.setDate(next7am.getDate() + 1);
+
+  const msUntil7am = next7am.getTime() - now.getTime();
+  console.log(`[DailyReport] Scheduled for ${next7am.toISOString()} (in ${Math.round(msUntil7am / 60000)} minutes)`);
+
+  setTimeout(() => {
+    sendDailyReport();
+    // Then repeat every 24 hours
+    setInterval(sendDailyReport, 24 * 60 * 60 * 1000);
+  }, msUntil7am);
+}
+
+scheduleDailyReport();
+
 // Initialize integration clients
 const apollo = new ApolloClient(process.env.APOLLO_API_KEY!);
 const brevo = new BrevoClient(process.env.BREVO_API_KEY!);
@@ -2413,6 +2644,108 @@ function formatUptime(seconds: number): string {
   return `${mins}m`;
 }
 
+// ==================== ALERTS ENDPOINTS ====================
+
+// GET /admin/alerts - Get recent alerts
+app.get('/admin/alerts', async (req, res) => {
+  try {
+    const { resolved, type, limit } = req.query;
+    let query = 'SELECT * FROM admin_alerts WHERE 1=1';
+    const params: any[] = [];
+
+    if (resolved !== undefined) {
+      params.push(resolved === 'true');
+      query += ` AND resolved = $${params.length}`;
+    }
+    if (type) {
+      params.push(type);
+      query += ` AND type = $${params.length}`;
+    }
+
+    query += ' ORDER BY created_at DESC';
+    const limitNum = parseInt(limit as string) || 50;
+    params.push(limitNum);
+    query += ` LIMIT $${params.length}`;
+
+    const result = await db.query(query, params);
+
+    const unresolved = await db.query('SELECT COUNT(*) FROM admin_alerts WHERE resolved = false');
+
+    res.json({
+      alerts: result.rows,
+      unresolvedCount: parseInt(unresolved.rows[0]?.count || '0')
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to fetch alerts', details: error.message });
+  }
+});
+
+// POST /admin/alerts/:id/resolve - Resolve an alert
+app.post('/admin/alerts/:id/resolve', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.query(
+      'UPDATE admin_alerts SET resolved = true, resolved_at = NOW() WHERE id = $1',
+      [id]
+    );
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to resolve alert', details: error.message });
+  }
+});
+
+// POST /admin/alerts/resolve-all - Resolve all alerts
+app.post('/admin/alerts/resolve-all', async (req, res) => {
+  try {
+    const result = await db.query(
+      'UPDATE admin_alerts SET resolved = true, resolved_at = NOW() WHERE resolved = false'
+    );
+    res.json({ success: true, resolved: result.rowCount });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to resolve alerts', details: error.message });
+  }
+});
+
+// POST /admin/alerts/test - Send a test alert
+app.post('/admin/alerts/test', async (req, res) => {
+  try {
+    await sendAdminAlert('info', 'Test Alert', 'This is a test alert from the Command Center.');
+    res.json({ success: true, message: 'Test alert sent' });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to send test alert', details: error.message });
+  }
+});
+
+// POST /admin/health-check - Trigger manual health check
+app.post('/admin/health-check', async (req, res) => {
+  try {
+    await runHealthCheck();
+    res.json({ success: true, message: 'Health check completed' });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Health check failed', details: error.message });
+  }
+});
+
+// POST /admin/daily-report - Trigger daily report manually
+app.post('/admin/daily-report', async (req, res) => {
+  try {
+    await sendDailyReport();
+    res.json({ success: true, message: 'Daily report sent' });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Daily report failed', details: error.message });
+  }
+});
+
+// GET /admin/config - Get admin configuration
+app.get('/admin/config', (req, res) => {
+  res.json({
+    telegramReportChatId: process.env.TELEGRAM_REPORT_CHAT_ID ? 'SET' : 'NOT SET',
+    telegramBotToken: process.env.TELEGRAM_BOT_TOKEN ? 'SET' : 'NOT SET',
+    alertsEnabled: !!(process.env.TELEGRAM_REPORT_CHAT_ID && process.env.TELEGRAM_BOT_TOKEN),
+    dailyReportTime: '7:00 AM (server time)'
+  });
+});
+
 // ==================== BOT CONTROL PANEL ====================
 
 // Helper to decrypt bot tokens (uses CryptoJS format)
@@ -2536,6 +2869,187 @@ app.post('/admin/bots/:id/refresh-webhook', async (req, res) => {
   } catch (error: any) {
     console.error('Refresh webhook error:', error);
     res.status(500).json({ error: 'Failed to refresh webhook', details: error.message });
+  }
+});
+
+// POST /admin/bots/refresh-all-webhooks - Bulk refresh all webhooks
+app.post('/admin/bots/refresh-all-webhooks', async (req, res) => {
+  try {
+    const tenants = await db.query('SELECT * FROM "Tenant" WHERE status = $1', ['active']);
+    const results = [];
+
+    for (const tenant of tenants.rows) {
+      try {
+        const token = await decryptToken(tenant.botToken);
+        const webhookUrl = `https://api.botcraftwrks.ai/webhooks/${tenant.botTokenHash}`;
+        const response = await fetch(`https://api.telegram.org/bot${token}/setWebhook?url=${encodeURIComponent(webhookUrl)}`);
+        const result = await response.json();
+        results.push({ bot: tenant.botUsername, success: result.ok, error: result.description });
+      } catch (e: any) {
+        results.push({ bot: tenant.botUsername, success: false, error: e.message });
+      }
+    }
+
+    const successCount = results.filter(r => r.success).length;
+    res.json({
+      success: true,
+      message: `Refreshed ${successCount}/${results.length} webhooks`,
+      results
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Bulk refresh failed', details: error.message });
+  }
+});
+
+// POST /admin/worker/restart - Restart the worker process
+app.post('/admin/worker/restart', async (req, res) => {
+  try {
+    const { exec } = await import('child_process');
+    exec('pkill -f "dist/src/fleet/worker.js"; sleep 2; cd ~/tiger-bot-api && nohup node dist/src/fleet/worker.js > /tmp/worker.log 2>&1 &');
+    res.json({ success: true, message: 'Worker restart initiated' });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Worker restart failed', details: error.message });
+  }
+});
+
+// GET /admin/bots/:id/conversations - Get recent conversations for a bot
+app.get('/admin/bots/:id/conversations', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { limit } = req.query;
+
+    // Get tenant
+    const tenantResult = await db.query('SELECT * FROM "Tenant" WHERE id = $1', [id]);
+    if (tenantResult.rows.length === 0) {
+      res.status(404).json({ error: 'Bot not found' });
+      return;
+    }
+
+    // For now, return placeholder - would need to store conversation logs
+    // This would integrate with the worker to log messages
+    res.json({
+      tenantId: id,
+      botUsername: tenantResult.rows[0].botUsername,
+      conversations: [],
+      note: 'Conversation logging coming soon'
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to fetch conversations', details: error.message });
+  }
+});
+
+// POST /admin/bots/:id/message - Send a message to a customer via their bot
+app.post('/admin/bots/:id/message', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { chatId, message } = req.body;
+
+    if (!chatId || !message) {
+      res.status(400).json({ error: 'chatId and message are required' });
+      return;
+    }
+
+    // Get tenant
+    const tenantResult = await db.query('SELECT * FROM "Tenant" WHERE id = $1', [id]);
+    if (tenantResult.rows.length === 0) {
+      res.status(404).json({ error: 'Bot not found' });
+      return;
+    }
+
+    const tenant = tenantResult.rows[0];
+    const token = await decryptToken(tenant.botToken);
+
+    // Send message
+    const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' })
+    });
+    const result = await response.json();
+
+    if (result.ok) {
+      res.json({ success: true, message: 'Message sent', messageId: result.result.message_id });
+    } else {
+      res.status(500).json({ error: 'Failed to send message', details: result.description });
+    }
+  } catch (error: any) {
+    res.status(500).json({ error: 'Send message failed', details: error.message });
+  }
+});
+
+// ==================== CUSTOMER HEALTH ====================
+
+// GET /admin/customer-health - Get customer health overview
+app.get('/admin/customer-health', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT
+        t.id,
+        t.name,
+        t.email,
+        t."botUsername",
+        t."updatedAt",
+        t."createdAt",
+        COALESCE(p.prospect_count, 0) as prospects,
+        COALESCE(p.converted_count, 0) as conversions
+      FROM "Tenant" t
+      LEFT JOIN (
+        SELECT
+          "tenantId",
+          COUNT(*) as prospect_count,
+          COUNT(*) FILTER (WHERE status = 'converted') as converted_count
+        FROM "Prospect"
+        GROUP BY "tenantId"
+      ) p ON p."tenantId" = t.id
+      WHERE t.status = 'active'
+      ORDER BY t."updatedAt" DESC
+    `);
+
+    const customers = result.rows.map((c: any) => {
+      const hoursSinceActive = (Date.now() - new Date(c.updatedAt).getTime()) / (1000 * 60 * 60);
+      const daysSinceCreated = (Date.now() - new Date(c.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+
+      // Calculate churn risk
+      let churnRisk = 'low';
+      let churnColor = 'green';
+      if (hoursSinceActive > 168) { // 7 days
+        churnRisk = 'high';
+        churnColor = 'red';
+      } else if (hoursSinceActive > 72) { // 3 days
+        churnRisk = 'medium';
+        churnColor = 'yellow';
+      }
+
+      // Activity score (0-100)
+      const activityScore = Math.max(0, 100 - Math.floor(hoursSinceActive / 2.4));
+
+      return {
+        id: c.id,
+        name: c.name || c.botUsername,
+        email: c.email,
+        botUsername: c.botUsername,
+        prospects: parseInt(c.prospects) || 0,
+        conversions: parseInt(c.conversions) || 0,
+        hoursSinceActive: Math.round(hoursSinceActive),
+        daysSinceCreated: Math.round(daysSinceCreated),
+        activityScore,
+        churnRisk,
+        churnColor
+      };
+    });
+
+    // Summary stats
+    const summary = {
+      total: customers.length,
+      healthy: customers.filter((c: any) => c.churnRisk === 'low').length,
+      atRisk: customers.filter((c: any) => c.churnRisk === 'medium').length,
+      critical: customers.filter((c: any) => c.churnRisk === 'high').length,
+      avgActivityScore: Math.round(customers.reduce((sum: number, c: any) => sum + c.activityScore, 0) / customers.length)
+    };
+
+    res.json({ customers, summary });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to fetch customer health', details: error.message });
   }
 });
 
