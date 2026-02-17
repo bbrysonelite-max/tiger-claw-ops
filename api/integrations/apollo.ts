@@ -15,16 +15,14 @@ export class ApolloClient {
     per_page?: number;
     page?: number;
   }) {
-    const response = await fetch(`${this.baseUrl}/mixed_people/search`, {
+    const response = await fetch(`${this.baseUrl}/mixed_people/api_search`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-cache',
+        'X-Api-Key': this.apiKey,
       },
-      body: JSON.stringify({
-        api_key: this.apiKey,
-        ...params,
-      }),
+      body: JSON.stringify(params),
     });
 
     if (!response.ok) {
@@ -39,11 +37,9 @@ export class ApolloClient {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'X-Api-Key': this.apiKey,
       },
-      body: JSON.stringify({
-        api_key: this.apiKey,
-        email,
-      }),
+      body: JSON.stringify({ email }),
     });
 
     if (!response.ok) {
