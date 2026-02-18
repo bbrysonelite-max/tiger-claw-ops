@@ -363,10 +363,10 @@ export async function handleStateBasedMessage(
   const state = (tenant.state || "IDLE") as CustomerState;
   const interviewData: InterviewData = (tenant.interview_data as InterviewData) || {};
 
-  // Update chat_id
+  // Update chat_id (convert to string for DB storage)
   await prisma.tenant.update({
     where: { id: tenantId },
-    data: { chat_id: chatId }
+    data: { chat_id: String(chatId) }
   });
 
   switch (state) {

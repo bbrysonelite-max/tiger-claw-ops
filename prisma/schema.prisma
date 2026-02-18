@@ -17,19 +17,24 @@ model Tenant {
   stripeId        String?  @unique
   email           String   @unique
   name            String?
-  
+
   // Bot Identity (Per-Customer Bot Architecture)
   botToken        String   @unique // AES-256 Encrypted
   botTokenHash    String   @unique // Public SHA-256 hash for Webhook Routing
   botUsername     String
-  
+
   // NEW: Track which Admin Account created this bot (Gemini Red Team - 20 bot limit)
   createdByAdminSession  String?
-  
+
+  // Conversation State (for onboarding interview flow)
+  state           String   @default("IDLE") // IDLE, WELCOME, INTERVIEW_1, INTERVIEW_2, KEY_PROMPT, ACTIVE, ERROR_RECOVERY
+  chat_id         String?  // Telegram chat ID for this tenant
+  interview_data  Json?    // Stores interview responses as JSON
+
   status          String   @default("provisioning") // provisioning, active, suspended
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  
+
   prospects       Prospect[]
   reports         DailyReport[]
   supportTickets  SupportTicket[]
