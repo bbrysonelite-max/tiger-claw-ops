@@ -131,7 +131,8 @@ export async function redditSearch(
           restrict_sr: subreddits ? "on" : "off"
         },
         headers: {
-          "User-Agent": "TigerBot/1.0"
+          // Reddit requires a descriptive User-Agent per their API rules
+          "User-Agent": "web:com.botcraftwrks.tiger-bot-scout:v3.1.0 (by /u/tigerbotscout)"
         }
       }
     );
