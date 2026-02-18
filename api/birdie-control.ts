@@ -47,6 +47,27 @@ async function isGatewayRunning(): Promise<boolean> {
   return result.success && result.output !== '';
 }
 
+// Check Tiger Bot cloud API status
+async function checkTigerBotAPI(): Promise<{ online: boolean; uptime?: string; error?: string }> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    const response = await fetch('https://api.botcraftwrks.ai/health', {
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+
+    if (response.ok) {
+      const data = await response.json();
+      return { online: true, uptime: data.uptime || 'unknown' };
+    }
+    return { online: false, error: `HTTP ${response.status}` };
+  } catch (error: any) {
+    return { online: false, error: error.message };
+  }
+}
+
 // Get OpenClaw version
 async function getVersion(): Promise<string> {
   const result = await runCommand('openclaw --version 2>/dev/null || echo "unknown"');
@@ -81,16 +102,35 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
 
     // Status check
     if (path === '/status' || path === '/v1/bots/birdie/status') {
-      const running = await isGatewayRunning();
-      const version = await getVersion();
+      const [openclawRunning, tigerBotStatus, version] = await Promise.all([
+        isGatewayRunning(),
+        checkTigerBotAPI(),
+        getVersion()
+      ]);
+
+      // System is "online" if Tiger Bot cloud API is up (main customer-facing system)
+      // OpenClaw is a separate local service
+      const systemOnline = tigerBotStatus.online;
 
       res.writeHead(200);
       res.end(JSON.stringify({
-        online: running,
-        version,
-        host: '192.168.0.136',
-        port: 18789,
-        engine: 'OpenClaw',
+        online: systemOnline,
+        tigerBot: {
+          online: tigerBotStatus.online,
+          uptime: tigerBotStatus.uptime,
+          error: tigerBotStatus.error,
+          url: 'https://api.botcraftwrks.ai'
+        },
+        openclaw: {
+          online: openclawRunning,
+          version,
+          host: '192.168.0.136',
+          port: 18789,
+          engine: 'OpenClaw',
+        },
+        message: systemOnline
+          ? `Tiger Bot API is UP${openclawRunning ? ', OpenClaw local gateway running' : ' (OpenClaw local gateway not running)'}`
+          : `Tiger Bot API is DOWN${tigerBotStatus.error ? ': ' + tigerBotStatus.error : ''}`
       }));
       return;
     }
