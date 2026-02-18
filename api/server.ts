@@ -2801,6 +2801,304 @@ app.get('/admin/config', (req, res) => {
   });
 });
 
+// ==================== OPS BULLETIN BOARD ====================
+// Universal bulletin board for all agents to read and post updates
+
+// Create ops_bulletins table
+await db.query(`
+  CREATE TABLE IF NOT EXISTS ops_bulletins (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    agent_id TEXT NOT NULL,
+    agent_name TEXT NOT NULL,
+    bulletin_type TEXT NOT NULL DEFAULT 'update',
+    priority TEXT NOT NULL DEFAULT 'normal',
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    metadata JSONB DEFAULT '{}',
+    acknowledged_by TEXT[] DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    expires_at TIMESTAMP WITH TIME ZONE
+  )
+`).catch(() => {});
+
+// Create ops_project_state table
+await db.query(`
+  CREATE TABLE IF NOT EXISTS ops_project_state (
+    id TEXT PRIMARY KEY DEFAULT 'current',
+    last_commit TEXT,
+    commit_date TIMESTAMP WITH TIME ZONE,
+    commit_message TEXT,
+    total_lines INTEGER DEFAULT 0,
+    phase TEXT DEFAULT 'development',
+    components JSONB DEFAULT '[]',
+    known_issues JSONB DEFAULT '[]',
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_by TEXT
+  )
+`).catch(() => {});
+
+// Create indexes
+await db.query(`CREATE INDEX IF NOT EXISTS idx_bulletins_agent ON ops_bulletins(agent_id)`).catch(() => {});
+await db.query(`CREATE INDEX IF NOT EXISTS idx_bulletins_type ON ops_bulletins(bulletin_type)`).catch(() => {});
+await db.query(`CREATE INDEX IF NOT EXISTS idx_bulletins_created ON ops_bulletins(created_at DESC)`).catch(() => {});
+
+// GET /ops/bulletins - Get all bulletins (optionally filter by agent or type)
+app.get('/ops/bulletins', async (req, res) => {
+  try {
+    const { agent, type, limit = 50, includeExpired } = req.query;
+
+    let query = `
+      SELECT * FROM ops_bulletins
+      WHERE 1=1
+    `;
+    const params: any[] = [];
+    let paramCount = 0;
+
+    if (agent) {
+      paramCount++;
+      query += ` AND agent_id = $${paramCount}`;
+      params.push(agent);
+    }
+
+    if (type) {
+      paramCount++;
+      query += ` AND bulletin_type = $${paramCount}`;
+      params.push(type);
+    }
+
+    if (!includeExpired) {
+      query += ` AND (expires_at IS NULL OR expires_at > NOW())`;
+    }
+
+    paramCount++;
+    query += ` ORDER BY
+      CASE priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END,
+      created_at DESC
+      LIMIT $${paramCount}`;
+    params.push(Number(limit));
+
+    const result = await db.query(query, params);
+
+    res.json({
+      bulletins: result.rows,
+      count: result.rows.length
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to fetch bulletins', details: error.message });
+  }
+});
+
+// POST /ops/bulletins - Post a new bulletin
+app.post('/ops/bulletins', async (req, res) => {
+  try {
+    const {
+      agent_id,
+      agent_name,
+      bulletin_type = 'update',
+      priority = 'normal',
+      title,
+      content,
+      metadata = {},
+      expires_in_hours
+    } = req.body;
+
+    if (!agent_id || !agent_name || !title || !content) {
+      return res.status(400).json({ error: 'Missing required fields: agent_id, agent_name, title, content' });
+    }
+
+    const expires_at = expires_in_hours
+      ? new Date(Date.now() + expires_in_hours * 60 * 60 * 1000).toISOString()
+      : null;
+
+    const result = await db.query(`
+      INSERT INTO ops_bulletins (agent_id, agent_name, bulletin_type, priority, title, content, metadata, expires_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
+    `, [agent_id, agent_name, bulletin_type, priority, title, content, JSON.stringify(metadata), expires_at]);
+
+    // If urgent, send admin alert
+    if (priority === 'urgent') {
+      await sendAdminAlert('info', `[${agent_name}] ${title}`, content);
+    }
+
+    res.json({ success: true, bulletin: result.rows[0] });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to post bulletin', details: error.message });
+  }
+});
+
+// POST /ops/bulletins/:id/acknowledge - Mark bulletin as acknowledged
+app.post('/ops/bulletins/:id/acknowledge', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { agent_id } = req.body;
+
+    if (!agent_id) {
+      return res.status(400).json({ error: 'agent_id is required' });
+    }
+
+    const result = await db.query(`
+      UPDATE ops_bulletins
+      SET acknowledged_by = array_append(acknowledged_by, $1)
+      WHERE id = $2 AND NOT ($1 = ANY(acknowledged_by))
+      RETURNING *
+    `, [agent_id, id]);
+
+    res.json({ success: true, bulletin: result.rows[0] });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to acknowledge bulletin', details: error.message });
+  }
+});
+
+// GET /ops/project-state - Get current project state
+app.get('/ops/project-state', async (req, res) => {
+  try {
+    // Get stored state
+    let result = await db.query('SELECT * FROM ops_project_state WHERE id = $1', ['current']);
+
+    if (result.rows.length === 0) {
+      // Initialize with defaults
+      await db.query(`
+        INSERT INTO ops_project_state (id, phase, components, known_issues)
+        VALUES ('current', 'production', '[]', '[]')
+        ON CONFLICT (id) DO NOTHING
+      `);
+      result = await db.query('SELECT * FROM ops_project_state WHERE id = $1', ['current']);
+    }
+
+    // Get live stats
+    const [leadsCount, tenantsCount, botsCount, integrationsHealth] = await Promise.all([
+      db.query('SELECT COUNT(*) FROM leads'),
+      db.query('SELECT COUNT(*) FROM "Tenant" WHERE status = $1', ['active']),
+      db.query('SELECT COUNT(*) FROM "Tenant" WHERE "botUsername" IS NOT NULL'),
+      Promise.resolve({ apollo: !!process.env.APOLLO_API_KEY, brevo: !!process.env.BREVO_API_KEY, twilio: !!process.env.TWILIO_ACCOUNT_SID, calendly: !!process.env.CALENDLY_API_KEY, line: !!process.env.LINE_CHANNEL_ACCESS_TOKEN })
+    ]);
+
+    const state = result.rows[0];
+
+    res.json({
+      ...state,
+      live_stats: {
+        leads: parseInt(leadsCount.rows[0].count),
+        tenants: parseInt(tenantsCount.rows[0].count),
+        bots: parseInt(botsCount.rows[0].count),
+        integrations: integrationsHealth
+      }
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to fetch project state', details: error.message });
+  }
+});
+
+// POST /ops/project-state - Update project state
+app.post('/ops/project-state', async (req, res) => {
+  try {
+    const {
+      last_commit,
+      commit_date,
+      commit_message,
+      total_lines,
+      phase,
+      components,
+      known_issues,
+      updated_by
+    } = req.body;
+
+    const result = await db.query(`
+      INSERT INTO ops_project_state (id, last_commit, commit_date, commit_message, total_lines, phase, components, known_issues, updated_at, updated_by)
+      VALUES ('current', $1, $2, $3, $4, $5, $6, $7, NOW(), $8)
+      ON CONFLICT (id) DO UPDATE SET
+        last_commit = COALESCE($1, ops_project_state.last_commit),
+        commit_date = COALESCE($2, ops_project_state.commit_date),
+        commit_message = COALESCE($3, ops_project_state.commit_message),
+        total_lines = COALESCE($4, ops_project_state.total_lines),
+        phase = COALESCE($5, ops_project_state.phase),
+        components = COALESCE($6, ops_project_state.components),
+        known_issues = COALESCE($7, ops_project_state.known_issues),
+        updated_at = NOW(),
+        updated_by = COALESCE($8, ops_project_state.updated_by)
+      RETURNING *
+    `, [last_commit, commit_date, commit_message, total_lines, phase, JSON.stringify(components), JSON.stringify(known_issues), updated_by]);
+
+    res.json({ success: true, state: result.rows[0] });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to update project state', details: error.message });
+  }
+});
+
+// GET /ops/agents - Get all agents status
+app.get('/ops/agents', async (req, res) => {
+  try {
+    // Get agent bulletins posted in last 24h grouped by agent
+    const recentActivity = await db.query(`
+      SELECT
+        agent_id,
+        agent_name,
+        MAX(created_at) as last_active,
+        COUNT(*) as bulletins_24h
+      FROM ops_bulletins
+      WHERE created_at > NOW() - INTERVAL '24 hours'
+      GROUP BY agent_id, agent_name
+    `);
+
+    // Known agents with their roles
+    const knownAgents = [
+      { id: 'claude-code', name: 'Claude Code', role: 'Implementation Specialist', shift: 'Night (BKK)' },
+      { id: 'birdie', name: 'Birdie', role: 'Operator', shift: 'Day (BKK)' },
+      { id: 'agent-zero', name: 'Agent Zero', role: 'Scout', shift: '24/7 (automated)' },
+      { id: 'scout-ops', name: 'Scout Ops', role: 'Maintenance', shift: '24/7 (automated)' }
+    ];
+
+    const agents = knownAgents.map(agent => {
+      const activity = recentActivity.rows.find(r => r.agent_id === agent.id);
+      return {
+        ...agent,
+        status: activity ? 'active' : 'idle',
+        last_active: activity?.last_active || null,
+        bulletins_24h: activity?.bulletins_24h || 0
+      };
+    });
+
+    res.json({ agents });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to fetch agents', details: error.message });
+  }
+});
+
+// GET /ops/briefings/today - Get today's briefings from files
+app.get('/ops/briefings/today', async (req, res) => {
+  try {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+
+    const today = new Date().toISOString().split('T')[0];
+    const briefingsDir = path.join(process.cwd(), '..', 'multiagent', 'briefings', 'daily', today);
+
+    let briefings: any[] = [];
+
+    try {
+      const files = await fs.readdir(briefingsDir);
+      for (const file of files) {
+        if (file.endsWith('.md')) {
+          const content = await fs.readFile(path.join(briefingsDir, file), 'utf-8');
+          briefings.push({
+            filename: file,
+            agent: file.replace('.md', '').replace('_', ' '),
+            content,
+            updated_at: (await fs.stat(path.join(briefingsDir, file))).mtime
+          });
+        }
+      }
+    } catch (e) {
+      // Directory doesn't exist yet
+    }
+
+    res.json({ date: today, briefings });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to fetch briefings', details: error.message });
+  }
+});
+
 // ==================== BOT CONTROL PANEL ====================
 
 // Helper to decrypt bot tokens (uses CryptoJS format)

@@ -1586,6 +1586,11 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 Settings
             </a>
+            <a href="#ops" onclick="showSection('ops')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800 transition" data-section="ops">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                Ops Center
+                <span class="ml-auto bg-green-500 text-white text-xs px-2 py-0.5 rounded-full" id="nav-ops-count">LIVE</span>
+            </a>
         </nav>
         <div class="border-t border-slate-800 pt-4 space-y-2">
             <div class="text-xs text-slate-500 px-4 mb-2">QUICK CONNECT</div>
@@ -2861,7 +2866,147 @@
                 </div>
             </div>
         </section>
-    
+
+        <!-- ===== OPS CENTER SECTION ===== -->
+        <section id="section-ops" class="section-content hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold flex items-center gap-3">
+                    <span class="text-3xl">🎯</span>
+                    Ops Center
+                </h2>
+                <div class="flex items-center gap-2">
+                    <span class="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium" id="ops-connection-status">Connecting...</span>
+                    <button onclick="refreshOpsCenter()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition">Refresh</button>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6 mb-6">
+                <!-- Project State Card -->
+                <div class="md:col-span-2 bg-slate-900 rounded-xl border border-slate-800 p-6">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <span>📊</span> Project State
+                    </h3>
+                    <div id="ops-project-state" class="space-y-3">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Last Commit:</span>
+                            <span id="ops-last-commit" class="text-white font-mono">Loading...</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Phase:</span>
+                            <span id="ops-phase" class="text-green-400">Loading...</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Active Tenants:</span>
+                            <span id="ops-tenants" class="text-white">Loading...</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Total Leads:</span>
+                            <span id="ops-leads" class="text-white">Loading...</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Active Bots:</span>
+                            <span id="ops-bots" class="text-white">Loading...</span>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-slate-700">
+                            <h4 class="text-sm font-medium text-slate-400 mb-2">Integrations</h4>
+                            <div id="ops-integrations" class="flex flex-wrap gap-2">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Agent Status Card -->
+                <div class="bg-slate-900 rounded-xl border border-slate-800 p-6">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <span>🤖</span> Agent Status
+                    </h3>
+                    <div id="ops-agents" class="space-y-3">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bulletin Board -->
+            <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold flex items-center gap-2">
+                        <span>📋</span> Agent Bulletin Board
+                    </h3>
+                    <button onclick="showPostBulletinModal()" class="px-4 py-2 bg-tiger-500 hover:bg-tiger-600 rounded-lg text-sm font-medium transition">
+                        + Post Update
+                    </button>
+                </div>
+                <div id="ops-bulletins" class="space-y-4">
+                    <div class="text-center text-slate-400 py-8">Loading bulletins...</div>
+                </div>
+            </div>
+
+            <!-- Today's Briefings -->
+            <div class="bg-slate-900 rounded-xl border border-slate-800 p-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <span>📝</span> Today's Briefings
+                </h3>
+                <div id="ops-briefings" class="grid md:grid-cols-2 gap-4">
+                    <div class="text-center text-slate-400 py-8 col-span-2">Loading briefings...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Post Bulletin Modal -->
+        <div id="post-bulletin-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+            <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 w-full max-w-lg mx-4">
+                <h3 class="text-xl font-bold mb-4">Post Bulletin</h3>
+                <form id="post-bulletin-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-slate-400 mb-1">Agent Name</label>
+                        <input type="text" id="bulletin-agent-name" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white" placeholder="e.g., Claude Code, Birdie" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-slate-400 mb-1">Agent ID</label>
+                        <select id="bulletin-agent-id" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white">
+                            <option value="claude-code">Claude Code</option>
+                            <option value="birdie">Birdie</option>
+                            <option value="agent-zero">Agent Zero</option>
+                            <option value="scout-ops">Scout Ops</option>
+                            <option value="brent">Brent (Admin)</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">Type</label>
+                            <select id="bulletin-type" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white">
+                                <option value="update">Update</option>
+                                <option value="task">Task</option>
+                                <option value="blocker">Blocker</option>
+                                <option value="question">Question</option>
+                                <option value="complete">Completed</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">Priority</label>
+                            <select id="bulletin-priority" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white">
+                                <option value="normal">Normal</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-slate-400 mb-1">Title</label>
+                        <input type="text" id="bulletin-title" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white" placeholder="Brief summary" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-slate-400 mb-1">Content</label>
+                        <textarea id="bulletin-content" rows="4" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white" placeholder="Detailed message..." required></textarea>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4">
+                        <button type="button" onclick="hidePostBulletinModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-tiger-500 hover:bg-tiger-600 rounded-lg font-medium transition">Post Bulletin</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
         <!-- ===== ADMIN DASHBOARD SECTION ===== -->
         <section id="section-admin" class="section-content hidden">
@@ -4803,7 +4948,8 @@ function startRefreshForCurrentSection() {
                 'scripts': 'Generated Scripts',
                 'hive': 'Hive Learnings',
                 'analytics': 'Analytics',
-                'settings': 'Settings'
+                'settings': 'Settings',
+                'ops': 'Ops Center'
             };
             document.getElementById('page-title').textContent = titles[sectionName] || 'Command Center';
             
@@ -4824,6 +4970,9 @@ function startRefreshForCurrentSection() {
             } else if (sectionName === 'hive') {
                 // Load hive learnings data
                 initHiveSection();
+            } else if (sectionName === 'ops') {
+                // Load ops center data
+                refreshOpsCenter();
             }
         }
 
@@ -7587,6 +7736,251 @@ ${'='.repeat(50)}
         document.addEventListener('DOMContentLoaded', () => {
             DailyGoals.init();
         });
+
+        // ============ OPS CENTER ============
+
+        async function refreshOpsCenter() {
+            try {
+                document.getElementById('ops-connection-status').textContent = 'Refreshing...';
+                document.getElementById('ops-connection-status').className = 'px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-sm font-medium';
+
+                await Promise.all([
+                    loadProjectState(),
+                    loadAgentStatus(),
+                    loadBulletins(),
+                    loadBriefings()
+                ]);
+
+                document.getElementById('ops-connection-status').textContent = 'Live';
+                document.getElementById('ops-connection-status').className = 'px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium';
+            } catch (error) {
+                console.error('Failed to refresh ops center:', error);
+                document.getElementById('ops-connection-status').textContent = 'Error';
+                document.getElementById('ops-connection-status').className = 'px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm font-medium';
+            }
+        }
+
+        async function loadProjectState() {
+            try {
+                const response = await fetch(`${API_BASE}/ops/project-state`);
+                const data = await response.json();
+
+                // Update display
+                document.getElementById('ops-last-commit').textContent = data.last_commit
+                    ? `${data.last_commit.substring(0, 7)} (${formatRelativeTime(data.commit_date)})`
+                    : 'Not tracked';
+                document.getElementById('ops-phase').textContent = data.phase || 'Production';
+                document.getElementById('ops-tenants').textContent = data.live_stats?.tenants || 0;
+                document.getElementById('ops-leads').textContent = data.live_stats?.leads || 0;
+                document.getElementById('ops-bots').textContent = data.live_stats?.bots || 0;
+
+                // Integrations
+                const intContainer = document.getElementById('ops-integrations');
+                const integrations = data.live_stats?.integrations || {};
+                intContainer.innerHTML = Object.entries(integrations).map(([name, connected]) => {
+                    const statusClass = connected ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400';
+                    const icon = connected ? '✓' : '✗';
+                    return `<span class="px-2 py-1 ${statusClass} rounded text-xs font-medium">${icon} ${name}</span>`;
+                }).join('');
+            } catch (error) {
+                console.error('Failed to load project state:', error);
+            }
+        }
+
+        async function loadAgentStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/ops/agents`);
+                const data = await response.json();
+
+                const container = document.getElementById('ops-agents');
+                container.innerHTML = data.agents.map(agent => {
+                    const statusColor = agent.status === 'active' ? 'bg-green-500' : 'bg-slate-500';
+                    const lastActive = agent.last_active
+                        ? formatRelativeTime(agent.last_active)
+                        : 'No recent activity';
+                    return `
+                        <div class="flex items-center justify-between p-2 bg-slate-800 rounded-lg">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 ${statusColor} rounded-full"></div>
+                                <span class="text-sm font-medium">${agent.name}</span>
+                            </div>
+                            <div class="text-xs text-slate-400">${lastActive}</div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Failed to load agent status:', error);
+            }
+        }
+
+        async function loadBulletins() {
+            try {
+                const response = await fetch(`${API_BASE}/ops/bulletins?limit=20`);
+                const data = await response.json();
+
+                const container = document.getElementById('ops-bulletins');
+
+                if (!data.bulletins || data.bulletins.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center text-slate-400 py-8">
+                            <p>No bulletins yet</p>
+                            <p class="text-sm mt-2">Post an update to start the conversation</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = data.bulletins.map(b => {
+                    const priorityColors = {
+                        urgent: 'border-red-500 bg-red-500/10',
+                        high: 'border-yellow-500 bg-yellow-500/10',
+                        normal: 'border-slate-700 bg-slate-800'
+                    };
+                    const typeIcons = {
+                        update: '📢',
+                        task: '📋',
+                        blocker: '🚫',
+                        question: '❓',
+                        complete: '✅'
+                    };
+                    const borderClass = priorityColors[b.priority] || priorityColors.normal;
+                    const icon = typeIcons[b.bulletin_type] || '📝';
+
+                    return `
+                        <div class="p-4 rounded-lg border ${borderClass}">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span>${icon}</span>
+                                    <span class="font-medium">${b.agent_name}</span>
+                                    <span class="text-xs px-2 py-0.5 bg-slate-700 rounded">${b.bulletin_type}</span>
+                                </div>
+                                <span class="text-xs text-slate-400">${formatRelativeTime(b.created_at)}</span>
+                            </div>
+                            <h4 class="font-semibold mb-1">${escapeHtml(b.title)}</h4>
+                            <p class="text-sm text-slate-300">${escapeHtml(b.content)}</p>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Failed to load bulletins:', error);
+                document.getElementById('ops-bulletins').innerHTML = `
+                    <div class="text-center text-red-400 py-8">Failed to load bulletins</div>
+                `;
+            }
+        }
+
+        async function loadBriefings() {
+            try {
+                const response = await fetch(`${API_BASE}/ops/briefings/today`);
+                const data = await response.json();
+
+                const container = document.getElementById('ops-briefings');
+
+                if (!data.briefings || data.briefings.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center text-slate-400 py-8 col-span-2">
+                            <p>No briefings for today (${data.date})</p>
+                            <p class="text-sm mt-2">Check the multiagent/briefings directory</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = data.briefings.map(b => {
+                    // Extract first 200 chars of content for preview
+                    const preview = b.content.substring(0, 300).replace(/[#*]/g, '') + '...';
+                    return `
+                        <div class="p-4 bg-slate-800 rounded-lg">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="font-semibold">${escapeHtml(b.agent)}</h4>
+                                <span class="text-xs text-slate-400">${formatRelativeTime(b.updated_at)}</span>
+                            </div>
+                            <p class="text-sm text-slate-300 line-clamp-3">${escapeHtml(preview)}</p>
+                            <button onclick="viewFullBriefing('${escapeHtml(b.filename)}')" class="text-tiger-400 text-sm mt-2 hover:underline">
+                                View Full Briefing →
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Failed to load briefings:', error);
+            }
+        }
+
+        function viewFullBriefing(filename) {
+            // For now, just show an alert - could open a modal
+            alert(`View briefing: ${filename}\n\nThis feature will open a modal with the full briefing content.`);
+        }
+
+        function showPostBulletinModal() {
+            document.getElementById('post-bulletin-modal').classList.remove('hidden');
+            document.getElementById('post-bulletin-modal').classList.add('flex');
+        }
+
+        function hidePostBulletinModal() {
+            document.getElementById('post-bulletin-modal').classList.add('hidden');
+            document.getElementById('post-bulletin-modal').classList.remove('flex');
+        }
+
+        // Handle bulletin form submission
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('post-bulletin-form');
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+
+                    const payload = {
+                        agent_id: document.getElementById('bulletin-agent-id').value,
+                        agent_name: document.getElementById('bulletin-agent-name').value,
+                        bulletin_type: document.getElementById('bulletin-type').value,
+                        priority: document.getElementById('bulletin-priority').value,
+                        title: document.getElementById('bulletin-title').value,
+                        content: document.getElementById('bulletin-content').value
+                    };
+
+                    try {
+                        const response = await fetch(`${API_BASE}/ops/bulletins`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (!response.ok) throw new Error('Failed to post');
+
+                        hidePostBulletinModal();
+                        form.reset();
+                        loadBulletins();
+                        showToast('Bulletin posted!', 'success');
+                    } catch (error) {
+                        console.error('Failed to post bulletin:', error);
+                        showToast('Failed to post bulletin', 'error');
+                    }
+                });
+            }
+        });
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatRelativeTime(dateStr) {
+            if (!dateStr) return 'unknown';
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+
+            if (diffMins < 1) return 'just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
+            return date.toLocaleDateString();
+        }
 
 </script>
 
