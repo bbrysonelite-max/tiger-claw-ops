@@ -105,10 +105,27 @@ module.exports = {
       kill_timeout: 10000,
     },
 
+    // Prospect Scheduler (hunts Reddit daily at 5 AM Bangkok, notifies customers)
+    {
+      name: 'prospect-scheduler',
+      script: 'dist/src/fleet/prospect-scheduler.js',
+      instances: 1,
+      exec_mode: 'fork',
+      watch: false,
+      max_memory_restart: '256M',
+      error_file: './logs/scheduler-error.log',
+      out_file: './logs/scheduler-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      merge_logs: true,
+      autorestart: true,
+      max_restarts: 10,
+      restart_delay: 5000,
+    },
+
     // Health Monitor (watchdog — checks Redis, DB, webhooks every 60s)
     {
       name: 'health-monitor',
-      script: 'dist/monitoring/health-monitor.js',
+      script: 'dist/src/monitoring/health-monitor.js',
       instances: 1,
       exec_mode: 'fork',
       watch: false,

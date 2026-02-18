@@ -392,14 +392,23 @@ async function processInboundJob(job: Job<InboundJobData>): Promise<void> {
   
   // Get or create bot instance
   const bot = getOrCreateBot(decryptedToken, tenant.id);
-  
+
+  // Capture chat_id from every inbound message — ensures daily reports can reach this customer
+  const incomingChatId = (update as TelegramUpdate).message?.chat?.id;
+  if (incomingChatId && !tenant.chat_id) {
+    prisma.tenant.update({
+      where: { id: tenant.id },
+      data: { chat_id: String(incomingChatId) },
+    }).catch(err => console.error(`[worker] Failed to save chat_id for tenant ${tenant.id}:`, err));
+  }
+
   // Create virtual bot context
   const ctx: VirtualBotContext = {
     tenantId: tenant.id,
     token: decryptedToken,
     bot,
   };
-  
+
   // Handle the update
   try {
     await handleTelegramUpdate(ctx, update as TelegramUpdate);
