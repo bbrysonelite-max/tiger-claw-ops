@@ -4,6 +4,10 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { Pool } from 'pg';
+import { PrismaClient } from '@prisma/client';
+import { Queue } from 'bullmq';
+import { Redis as IORedis } from 'ioredis';
+import crypto from 'crypto';
 import { ApolloClient } from './integrations/apollo.js';
 import { BrevoClient } from './integrations/brevo.js';
 import { TwilioClient } from './integrations/twilio.js';
@@ -13,6 +17,24 @@ import { startTelegramBot } from './telegram-bot.js';
 
 const app = express();
 const port = process.env.PORT || 4000;
+
+// Prisma client for invite/token operations
+const prisma = new PrismaClient();
+
+// BullMQ provision queue (same queue as gateway uses)
+const redisForQueue = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
+  maxRetriesPerRequest: null,
+  enableReadyCheck: false,
+});
+const provisionQueue = new Queue('provision', {
+  connection: redisForQueue,
+  defaultJobOptions: {
+    removeOnComplete: 50,
+    removeOnFail: 100,
+    attempts: 5,
+    backoff: { type: 'exponential', delay: 2000 },
+  },
+});
 
 // Database connection
 const db = new Pool({
@@ -1355,12 +1377,14 @@ app.get('/ai-crm/hive/my-contributions', async (req, res) => {
 
     const result = await db.query(`
       SELECT COUNT(*) as scripts_count,
-             COALESCE(SUM(success_count), 0) as total_success
+             COUNT(*) FILTER (WHERE feedback = 'converted') as total_success
       FROM script_feedback
       WHERE created_at > NOW() - INTERVAL '30 days'
     `);
     const recentScripts = await db.query(`
-      SELECT content, success_count FROM script_feedback
+      SELECT script_text as content,
+             CASE WHEN feedback = 'converted' THEN 1 ELSE 0 END as success_count
+      FROM script_feedback
       ORDER BY created_at DESC LIMIT 5
     `);
     res.json({
@@ -2573,6 +2597,23 @@ app.get('/admin/tenants', async (req, res) => {
   }
 });
 
+// GET /admin/tenants/db - Get tenants from actual database (not mock)
+// NOTE: Must be defined BEFORE /admin/tenants/:id to avoid route conflict
+app.get('/admin/tenants/db', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT t.*,
+             (SELECT COUNT(*) FROM "Prospect" WHERE "tenantId" = t.id) as prospect_count
+      FROM "Tenant" t
+      ORDER BY t."createdAt" DESC
+    `);
+    res.json({ tenants: result.rows, count: result.rows.length });
+  } catch (err) {
+    console.error('Get tenants DB error:', err);
+    res.status(500).json({ error: 'Failed to get tenants from DB', details: String(err) });
+  }
+});
+
 // GET /admin/tenants/:id - Get tenant details
 app.get('/admin/tenants/:id', (req, res) => {
   try {
@@ -3277,7 +3318,7 @@ app.post('/admin/bots/:id/refresh-webhook', async (req, res) => {
     const token = await decryptToken(tenant.botToken);
 
     // Set webhook to our gateway
-    const webhookUrl = `https://botcraftwrks.ai/webhooks/${tenant.botTokenHash}`;
+    const webhookUrl = `https://api.botcraftwrks.ai/webhooks/${tenant.botTokenHash}`;
     const response = await fetch(`https://api.telegram.org/bot${token}/setWebhook?url=${encodeURIComponent(webhookUrl)}`);
     const result = await response.json();
 
@@ -4318,22 +4359,6 @@ app.post('/admin/provision', async (req, res) => {
   }
 });
 
-// GET /admin/tenants/db - Get tenants from actual database (not mock)
-app.get('/admin/tenants/db', async (req, res) => {
-  try {
-    const result = await db.query(`
-      SELECT t.*,
-             (SELECT COUNT(*) FROM leads WHERE tenant_id = t.id) as prospect_count
-      FROM tenants t
-      ORDER BY t.created_at DESC
-    `);
-    res.json({ tenants: result.rows, count: result.rows.length });
-  } catch (err) {
-    console.error('Get tenants error:', err);
-    res.status(500).json({ error: 'Failed to get tenants', details: String(err) });
-  }
-});
-
 // POST /admin/provision/batch - Provision multiple customers at once
 app.post('/admin/provision/batch', async (req, res) => {
   try {
@@ -4377,6 +4402,222 @@ app.post('/admin/provision/batch', async (req, res) => {
   } catch (err) {
     console.error('Batch provision error:', err);
     res.status(500).json({ error: 'Failed to batch provision', details: String(err) });
+  }
+});
+
+// =============================================================================
+// INVITE / GIFTING SYSTEM
+// =============================================================================
+
+const GATEWAY_BASE = process.env.GATEWAY_URL || 'https://api.botcraftwrks.ai';
+const CLAIM_BASE = process.env.CLAIM_BASE_URL || 'https://botcraftwrks.ai';
+
+// POST /admin/invite/create - Generate a new invite link
+app.post('/admin/invite/create', async (req, res) => {
+  try {
+    const {
+      label,
+      fromName = 'Brent Bryson',
+      recipientEmail,
+      recipientName,
+      trialDays = 0,
+      expiresInDays,
+    } = req.body;
+
+    const token = crypto.randomBytes(16).toString('hex'); // 32-char URL-safe hex
+
+    const expiresAt = expiresInDays
+      ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000)
+      : null;
+
+    const invite = await prisma.inviteToken.create({
+      data: {
+        token,
+        label: label || null,
+        fromName,
+        recipientEmail: recipientEmail || null,
+        recipientName: recipientName || null,
+        trialDays: parseInt(trialDays, 10) || 0,
+        expiresAt,
+      },
+    });
+
+    const claimUrl = `${CLAIM_BASE}/claim.html?token=${token}`;
+
+    res.json({
+      success: true,
+      token,
+      claimUrl,
+      label: invite.label,
+      fromName: invite.fromName,
+      trialDays: invite.trialDays,
+      expiresAt: invite.expiresAt?.toISOString() || null,
+    });
+  } catch (err) {
+    console.error('Create invite error:', err);
+    res.status(500).json({ error: 'Failed to create invite', details: String(err) });
+  }
+});
+
+// GET /admin/invite/list - List all invite tokens with status
+app.get('/admin/invite/list', async (req, res) => {
+  try {
+    const invites = await prisma.inviteToken.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const now = new Date();
+    const enriched = invites.map((inv) => {
+      let status: string;
+      if (inv.claimedAt) {
+        status = 'claimed';
+      } else if (inv.revokedAt) {
+        status = 'revoked';
+      } else if (inv.expiresAt && now > inv.expiresAt) {
+        status = 'expired';
+      } else {
+        status = 'pending';
+      }
+      return {
+        id: inv.id,
+        token: inv.token,
+        label: inv.label,
+        fromName: inv.fromName,
+        recipientEmail: inv.recipientEmail,
+        recipientName: inv.recipientName,
+        trialDays: inv.trialDays,
+        status,
+        claimedBy: inv.claimedBy,
+        claimedAt: inv.claimedAt?.toISOString() || null,
+        tenantId: inv.tenantId,
+        expiresAt: inv.expiresAt?.toISOString() || null,
+        createdAt: inv.createdAt.toISOString(),
+        claimUrl: `${CLAIM_BASE}/claim.html?token=${inv.token}`,
+      };
+    });
+
+    res.json({ success: true, invites: enriched, count: enriched.length });
+  } catch (err) {
+    console.error('List invites error:', err);
+    res.status(500).json({ error: 'Failed to list invites', details: String(err) });
+  }
+});
+
+// DELETE /admin/invite/:token - Revoke an invite
+app.delete('/admin/invite/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    const invite = await prisma.inviteToken.findUnique({ where: { token } });
+    if (!invite) {
+      return res.status(404).json({ error: 'Invite not found' });
+    }
+    if (invite.claimedAt) {
+      return res.status(400).json({ error: 'Cannot revoke an already-claimed invite' });
+    }
+
+    await prisma.inviteToken.update({
+      where: { token },
+      data: { revokedAt: new Date() },
+    });
+
+    res.json({ success: true, message: 'Invite revoked' });
+  } catch (err) {
+    console.error('Revoke invite error:', err);
+    res.status(500).json({ error: 'Failed to revoke invite', details: String(err) });
+  }
+});
+
+// GET /claim/:token/info - Public: preview invite details (no auth)
+app.get('/claim/:token/info', async (req, res) => {
+  try {
+    const { token } = req.params;
+    const invite = await prisma.inviteToken.findUnique({ where: { token } });
+
+    if (!invite) {
+      return res.json({ valid: false, reason: 'not_found' });
+    }
+    if (invite.revokedAt) {
+      return res.json({ valid: false, reason: 'revoked' });
+    }
+    if (invite.claimedAt) {
+      return res.json({ valid: false, reason: 'already_claimed' });
+    }
+    if (invite.expiresAt && new Date() > invite.expiresAt) {
+      return res.json({ valid: false, reason: 'expired' });
+    }
+
+    res.json({
+      valid: true,
+      fromName: invite.fromName,
+      label: invite.label,
+      recipientName: invite.recipientName,
+      recipientEmail: invite.recipientEmail,
+      trialDays: invite.trialDays,
+      expiresAt: invite.expiresAt?.toISOString() || null,
+    });
+  } catch (err) {
+    console.error('Claim info error:', err);
+    res.status(500).json({ error: 'Failed to fetch invite info', details: String(err) });
+  }
+});
+
+// POST /claim/:token - Public: submit claim form (no auth)
+app.post('/claim/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { name, email } = req.body;
+
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Name and email are required' });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email address' });
+    }
+
+    const invite = await prisma.inviteToken.findUnique({ where: { token } });
+
+    if (!invite) return res.status(404).json({ error: 'Invite not found' });
+    if (invite.revokedAt) return res.status(410).json({ error: 'This invite has been revoked' });
+    if (invite.claimedAt) return res.status(409).json({ error: 'This invite has already been claimed' });
+    if (invite.expiresAt && new Date() > invite.expiresAt) {
+      return res.status(410).json({ error: 'This invite has expired' });
+    }
+
+    // Check if a tenant already exists with this email
+    const existing = await prisma.tenant.findUnique({ where: { email } });
+    if (existing) {
+      return res.status(409).json({ error: 'An account with this email already exists' });
+    }
+
+    // Queue provision job — same queue as Stripe webhooks
+    const jobId = `provision-invite-${token}-${Date.now()}`;
+    await provisionQueue.add('provision', {
+      email,
+      name,
+      inviteTokenId: invite.id,
+      trialDays: invite.trialDays,
+    }, { jobId, priority: 2 });
+
+    // Mark invite as pending-claim (full claim recorded by provision-worker on success)
+    // We do a soft pre-mark so double-submits are blocked immediately
+    await prisma.inviteToken.update({
+      where: { token },
+      data: { claimedBy: email, claimedAt: new Date() },
+    });
+
+    res.json({
+      success: true,
+      message: 'Your Tiger Bot is being set up. You should receive a Telegram message within 60 seconds.',
+      email,
+      trialDays: invite.trialDays,
+    });
+  } catch (err) {
+    console.error('Claim submit error:', err);
+    res.status(500).json({ error: 'Failed to process claim', details: String(err) });
   }
 });
 

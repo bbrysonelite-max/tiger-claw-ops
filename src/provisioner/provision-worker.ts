@@ -61,7 +61,7 @@ function hashToken(token: string): string {
  * Process a provision job
  */
 async function processProvisionJob(job: Job<ProvisionJobData>): Promise<any> {
-  const { email, name, stripeId } = job.data;
+  const { email, name, stripeId, inviteTokenId, trialDays } = job.data;
 
   console.log(`[provision-worker] Processing provision for: ${email}`);
 
@@ -83,6 +83,10 @@ async function processProvisionJob(job: Job<ProvisionJobData>): Promise<any> {
 
     const encryptedToken = encryptToken(result.token);
 
+    const trialEndsAt = trialDays && trialDays > 0
+      ? new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000)
+      : null;
+
     tenant = await prisma.tenant.create({
       data: {
         email,
@@ -91,6 +95,8 @@ async function processProvisionJob(job: Job<ProvisionJobData>): Promise<any> {
         botToken: encryptedToken,
         botTokenHash: result.hash,
         botUsername: result.username,
+        inviteTokenId: inviteTokenId || null,
+        trialEndsAt,
         status: 'active',
       }
     });
@@ -115,12 +121,21 @@ async function processProvisionJob(job: Job<ProvisionJobData>): Promise<any> {
       }).catch(console.error);
     }
 
+    // Mark invite token as claimed
+    if (inviteTokenId) {
+      await prisma.inviteToken.update({
+        where: { id: inviteTokenId },
+        data: { claimedBy: email, claimedAt: new Date(), tenantId: tenant.id },
+      }).catch(console.error);
+    }
+
     return {
       success: true,
       tenantId: tenant.id,
       email,
       status: 'active',
       botUsername: result.username,
+      trialEndsAt: trialEndsAt?.toISOString() || null,
     };
 
   } catch (provisionError: any) {

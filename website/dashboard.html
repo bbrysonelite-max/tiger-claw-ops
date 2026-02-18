@@ -3025,6 +3025,7 @@
                 <button onclick="showAdminTab('costs')" class="admin-tab px-4 py-3 text-slate-400 hover:text-white border-b-2 border-transparent whitespace-nowrap" data-tab="costs">💰 API Costs</button>
                 <button onclick="showAdminTab('hive-admin')" class="admin-tab px-4 py-3 text-slate-400 hover:text-white border-b-2 border-transparent whitespace-nowrap" data-tab="hive-admin">🐝 Hive Management</button>
                 <button onclick="showAdminTab('agents')" class="admin-tab px-4 py-3 text-slate-400 hover:text-white border-b-2 border-transparent whitespace-nowrap" data-tab="agents">🤖 Agent Manager</button>
+                <button onclick="showAdminTab('invites')" class="admin-tab px-4 py-3 text-slate-400 hover:text-white border-b-2 border-transparent whitespace-nowrap" data-tab="invites">🎁 Invite &amp; Gift</button>
             </div>
 
             <!-- ===== TENANT OVERVIEW TAB ===== -->
@@ -3506,6 +3507,145 @@
     </div>
 </div>
 
+            </div>
+
+            <!-- ===== INVITE & GIFT TAB ===== -->
+            <div id="admin-tab-invites" class="admin-tab-content hidden">
+
+                <!-- Stats row -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-slate-800 rounded-xl p-4">
+                        <div class="text-xs text-slate-400 mb-1">Total Invites</div>
+                        <div class="text-2xl font-bold text-white" id="inv-total">--</div>
+                    </div>
+                    <div class="bg-slate-800 rounded-xl p-4">
+                        <div class="text-xs text-slate-400 mb-1">Pending</div>
+                        <div class="text-2xl font-bold text-yellow-400" id="inv-pending">--</div>
+                    </div>
+                    <div class="bg-slate-800 rounded-xl p-4">
+                        <div class="text-xs text-slate-400 mb-1">Claimed</div>
+                        <div class="text-2xl font-bold text-green-400" id="inv-claimed">--</div>
+                    </div>
+                    <div class="bg-slate-800 rounded-xl p-4">
+                        <div class="text-xs text-slate-400 mb-1">Conversion</div>
+                        <div class="text-2xl font-bold text-purple-400" id="inv-conversion">--%</div>
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="flex flex-wrap gap-3 mb-6">
+                    <button onclick="Invites.openGiftModal()" class="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold px-4 py-2.5 rounded-xl text-sm transition">
+                        🎁 Gift a Bot
+                    </button>
+                    <button onclick="Invites.openDirectModal()" class="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition">
+                        ⚡ Provision Directly
+                    </button>
+                    <button onclick="Invites.load()" class="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2.5 rounded-xl text-sm transition">
+                        ↻ Refresh
+                    </button>
+                </div>
+
+                <!-- Invite list -->
+                <div class="bg-slate-800 rounded-2xl overflow-hidden">
+                    <div class="px-5 py-4 border-b border-slate-700">
+                        <h3 class="font-semibold text-white">Invite Links</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Send these links to gift someone a Tiger Bot</p>
+                    </div>
+                    <div id="invites-list-body">
+                        <div class="px-5 py-8 text-center text-slate-500 text-sm">Loading invites...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gift a Bot Modal -->
+            <div id="modal-gift" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 hidden">
+                <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                    <div class="flex items-center justify-between mb-5">
+                        <h3 class="text-lg font-bold text-white">🎁 Gift a Bot</h3>
+                        <button onclick="Invites.closeModal('modal-gift')" class="text-slate-400 hover:text-white text-xl leading-none">&times;</button>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">Label <span class="text-slate-500">(for your reference)</span></label>
+                            <input type="text" id="gift-label" placeholder="For Phil Hillibrand" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:border-yellow-500 outline-none" />
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">From Name <span class="text-slate-500">(shown on claim page)</span></label>
+                            <input type="text" id="gift-from-name" placeholder="Brent Bryson" value="Brent Bryson" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:border-yellow-500 outline-none" />
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">Recipient Name <span class="text-slate-500">(optional)</span></label>
+                                <input type="text" id="gift-recipient-name" placeholder="Phil" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:border-yellow-500 outline-none" />
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">Recipient Email <span class="text-slate-500">(optional)</span></label>
+                                <input type="email" id="gift-recipient-email" placeholder="phil@..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:border-yellow-500 outline-none" />
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">Trial Period</label>
+                                <select id="gift-trial-days" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:border-yellow-500 outline-none">
+                                    <option value="0">Permanent Gift</option>
+                                    <option value="7">7-day trial</option>
+                                    <option value="14" selected>14-day trial</option>
+                                    <option value="30">30-day trial</option>
+                                    <option value="90">90-day trial</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">Link Expires In</label>
+                                <select id="gift-expires-in" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:border-yellow-500 outline-none">
+                                    <option value="">Never</option>
+                                    <option value="7">7 days</option>
+                                    <option value="30" selected>30 days</option>
+                                    <option value="90">90 days</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="Invites.createInvite()" id="gift-submit-btn" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-2.5 rounded-xl text-sm transition">
+                            Generate Invite Link
+                        </button>
+                        <div id="gift-result" class="hidden bg-slate-800 border border-slate-600 rounded-xl p-3">
+                            <div class="text-xs text-slate-400 mb-1">Share this link:</div>
+                            <div class="flex items-center gap-2">
+                                <input type="text" id="gift-result-url" readonly class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-yellow-400 font-mono" />
+                                <button onclick="Invites.copyLink()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition">Copy</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Provision Directly Modal -->
+            <div id="modal-direct" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 hidden">
+                <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                    <div class="flex items-center justify-between mb-5">
+                        <h3 class="text-lg font-bold text-white">⚡ Provision Directly</h3>
+                        <button onclick="Invites.closeModal('modal-direct')" class="text-slate-400 hover:text-white text-xl leading-none">&times;</button>
+                    </div>
+                    <p class="text-sm text-slate-400 mb-4">For cash customers or people you're setting up yourself — no invite link needed.</p>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">Full Name</label>
+                            <input type="text" id="direct-name" placeholder="Rebecca Bryson" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:border-purple-500 outline-none" />
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">Email</label>
+                            <input type="email" id="direct-email" placeholder="rebecca@example.com" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:border-purple-500 outline-none" />
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">Trial Days <span class="text-slate-500">(0 = permanent)</span></label>
+                            <input type="number" id="direct-trial" value="0" min="0" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:border-purple-500 outline-none" />
+                        </div>
+                        <button onclick="Invites.provisionDirect()" id="direct-submit-btn" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded-xl text-sm transition">
+                            Provision Bot Now
+                        </button>
+                        <div id="direct-result" class="hidden text-sm text-green-400 text-center py-1"></div>
+                        <div id="direct-error" class="hidden text-sm text-red-400 text-center py-1"></div>
+                    </div>
+                </div>
             </div>
 
         </section>
@@ -10749,6 +10889,233 @@ if (document.readyState === 'loading') {
 
 
         console.log('🤖 AgentManager loaded');
+
+// ============================================================
+// INVITE & GIFTING SYSTEM
+// ============================================================
+const Invites = {
+    _invites: [],
+
+    async load() {
+        const apiKey = localStorage.getItem('admin_api_key') || '';
+        const body = document.getElementById('invites-list-body');
+        body.innerHTML = '<div class="px-5 py-8 text-center text-slate-500 text-sm">Loading...</div>';
+
+        try {
+            const res = await fetch(`${API_BASE}/admin/invite/list`, {
+                headers: { 'X-API-Key': apiKey }
+            });
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error || 'Failed');
+
+            this._invites = data.invites || [];
+            this._renderStats();
+            this._renderList();
+        } catch (err) {
+            body.innerHTML = `<div class="px-5 py-8 text-center text-red-400 text-sm">Error loading invites: ${err.message}</div>`;
+        }
+    },
+
+    _renderStats() {
+        const total = this._invites.length;
+        const pending = this._invites.filter(i => i.status === 'pending').length;
+        const claimed = this._invites.filter(i => i.status === 'claimed').length;
+        const pct = total > 0 ? Math.round((claimed / total) * 100) : 0;
+        document.getElementById('inv-total').textContent = total;
+        document.getElementById('inv-pending').textContent = pending;
+        document.getElementById('inv-claimed').textContent = claimed;
+        document.getElementById('inv-conversion').textContent = pct + '%';
+    },
+
+    _renderList() {
+        const body = document.getElementById('invites-list-body');
+        if (this._invites.length === 0) {
+            body.innerHTML = '<div class="px-5 py-8 text-center text-slate-500 text-sm">No invites yet. Click "Gift a Bot" to create your first one.</div>';
+            return;
+        }
+
+        const statusColors = {
+            pending: 'text-yellow-400 bg-yellow-400/10',
+            claimed: 'text-green-400 bg-green-400/10',
+            expired: 'text-slate-400 bg-slate-400/10',
+            revoked: 'text-red-400 bg-red-400/10',
+        };
+
+        body.innerHTML = this._invites.map(inv => `
+            <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-700/50 last:border-0 hover:bg-slate-700/20 transition">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-sm font-medium text-white truncate">${inv.label || 'Unlabeled invite'}</span>
+                        <span class="text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[inv.status] || 'text-slate-400 bg-slate-400/10'}">${inv.status}</span>
+                        ${inv.trialDays > 0 ? `<span class="text-xs text-amber-400/80">${inv.trialDays}d trial</span>` : '<span class="text-xs text-purple-400/80">permanent</span>'}
+                    </div>
+                    <div class="text-xs text-slate-500 mt-0.5 truncate">
+                        ${inv.recipientEmail || inv.recipientName || 'Open invite'} &bull;
+                        ${inv.claimedBy ? `Claimed by ${inv.claimedBy}` : `Created ${new Date(inv.createdAt).toLocaleDateString()}`}
+                        ${inv.expiresAt ? ` &bull; Expires ${new Date(inv.expiresAt).toLocaleDateString()}` : ''}
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 ml-3 flex-shrink-0">
+                    ${inv.status === 'pending' ? `
+                        <button onclick="Invites.copyUrl('${inv.claimUrl}')" title="Copy link" class="text-slate-400 hover:text-yellow-400 transition text-lg leading-none">⧉</button>
+                        <button onclick="Invites.revoke('${inv.token}')" title="Revoke" class="text-slate-400 hover:text-red-400 transition text-base leading-none">✕</button>
+                    ` : ''}
+                </div>
+            </div>
+        `).join('');
+    },
+
+    copyUrl(url) {
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Link copied to clipboard!');
+        });
+    },
+
+    async revoke(token) {
+        if (!confirm('Revoke this invite? The link will stop working.')) return;
+        const apiKey = localStorage.getItem('admin_api_key') || '';
+        try {
+            const res = await fetch(`${API_BASE}/admin/invite/${token}`, {
+                method: 'DELETE',
+                headers: { 'X-API-Key': apiKey }
+            });
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error || 'Failed');
+            await this.load();
+        } catch (err) {
+            alert('Failed to revoke: ' + err.message);
+        }
+    },
+
+    openGiftModal() {
+        document.getElementById('gift-result').classList.add('hidden');
+        document.getElementById('gift-label').value = '';
+        document.getElementById('gift-from-name').value = 'Brent Bryson';
+        document.getElementById('gift-recipient-name').value = '';
+        document.getElementById('gift-recipient-email').value = '';
+        document.getElementById('gift-submit-btn').textContent = 'Generate Invite Link';
+        document.getElementById('gift-submit-btn').disabled = false;
+        document.getElementById('modal-gift').classList.remove('hidden');
+    },
+
+    openDirectModal() {
+        document.getElementById('direct-name').value = '';
+        document.getElementById('direct-email').value = '';
+        document.getElementById('direct-trial').value = '0';
+        document.getElementById('direct-result').classList.add('hidden');
+        document.getElementById('direct-error').classList.add('hidden');
+        document.getElementById('direct-submit-btn').textContent = 'Provision Bot Now';
+        document.getElementById('direct-submit-btn').disabled = false;
+        document.getElementById('modal-direct').classList.remove('hidden');
+    },
+
+    closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+    },
+
+    async createInvite() {
+        const apiKey = localStorage.getItem('admin_api_key') || '';
+        const btn = document.getElementById('gift-submit-btn');
+        btn.textContent = 'Generating…';
+        btn.disabled = true;
+
+        const payload = {
+            label: document.getElementById('gift-label').value.trim() || null,
+            fromName: document.getElementById('gift-from-name').value.trim() || 'Brent Bryson',
+            recipientName: document.getElementById('gift-recipient-name').value.trim() || null,
+            recipientEmail: document.getElementById('gift-recipient-email').value.trim() || null,
+            trialDays: parseInt(document.getElementById('gift-trial-days').value, 10),
+            expiresInDays: parseInt(document.getElementById('gift-expires-in').value, 10) || null,
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/admin/invite/create`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+                body: JSON.stringify(payload),
+            });
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error || 'Failed');
+
+            document.getElementById('gift-result-url').value = data.claimUrl;
+            document.getElementById('gift-result').classList.remove('hidden');
+            btn.textContent = 'Generate Another';
+            btn.disabled = false;
+            await this.load();
+        } catch (err) {
+            btn.textContent = 'Error: ' + err.message;
+            btn.disabled = false;
+        }
+    },
+
+    copyLink() {
+        const url = document.getElementById('gift-result-url').value;
+        navigator.clipboard.writeText(url).then(() => {
+            const btn = document.querySelector('#gift-result button');
+            const orig = btn.textContent;
+            btn.textContent = 'Copied!';
+            setTimeout(() => { btn.textContent = orig; }, 1500);
+        });
+    },
+
+    async provisionDirect() {
+        const apiKey = localStorage.getItem('admin_api_key') || '';
+        const btn = document.getElementById('direct-submit-btn');
+        const resultEl = document.getElementById('direct-result');
+        const errorEl = document.getElementById('direct-error');
+        resultEl.classList.add('hidden');
+        errorEl.classList.add('hidden');
+
+        const name = document.getElementById('direct-name').value.trim();
+        const email = document.getElementById('direct-email').value.trim();
+        const trialDays = parseInt(document.getElementById('direct-trial').value, 10) || 0;
+
+        if (!name || !email) { errorEl.textContent = 'Name and email required'; errorEl.classList.remove('hidden'); return; }
+
+        btn.textContent = 'Provisioning…';
+        btn.disabled = true;
+
+        try {
+            // Use the gateway provision endpoint so it goes through the same BullMQ queue
+            const res = await fetch(`${API_BASE}/admin/provision`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+                body: JSON.stringify({ email, name, trialDays }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed');
+
+            resultEl.textContent = `Bot provisioning started for ${email}. Check pm2 logs in ~60s.`;
+            resultEl.classList.remove('hidden');
+            btn.textContent = 'Provision Another';
+            btn.disabled = false;
+        } catch (err) {
+            errorEl.textContent = 'Error: ' + err.message;
+            errorEl.classList.remove('hidden');
+            btn.textContent = 'Provision Bot Now';
+            btn.disabled = false;
+        }
+    },
+};
+
+// Load invites when admin section / invites tab is shown
+const _origShowAdminTab = typeof showAdminTab !== 'undefined' ? showAdminTab : null;
+document.addEventListener('DOMContentLoaded', () => {
+    // Patch tab switching to load invites on demand
+    const origFn = window.showAdminTab;
+    window.showAdminTab = function(tab) {
+        if (origFn) origFn(tab);
+        if (tab === 'invites') Invites.load();
+    };
+    // Close modals on backdrop click
+    ['modal-gift', 'modal-direct'].forEach(id => {
+        document.getElementById(id)?.addEventListener('click', (e) => {
+            if (e.target.id === id) Invites.closeModal(id);
+        });
+    });
+});
+
+console.log('🎁 Invites system loaded');
 
     </script>
 

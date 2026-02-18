@@ -31,6 +31,11 @@ model Tenant {
   chat_id         String?  // Telegram chat ID for this tenant
   interview_data  Json?    // Stores interview responses as JSON
 
+  // Invite / Trial Tracking
+  inviteTokenId   String?                            // Which invite was used to create this tenant
+  trialEndsAt     DateTime?                          // null = permanent; set for trial tenants
+  tier            String   @default("scout")         // scout, pro, enterprise
+
   status          String   @default("provisioning") // provisioning, active, suspended
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -161,4 +166,38 @@ model SystemUpdate {
   createdAt       DateTime  @default(now())
   completedAt     DateTime?
   errorLog        String?   // If failed, capture error
+}
+
+// ==========================================
+// INVITE / GIFTING SYSTEM
+// Added: 2026-02-18
+// ==========================================
+
+model InviteToken {
+  id              String    @id @default(uuid())
+  token           String    @unique               // URL-safe random hex (32 chars) - the claim URL key
+  label           String?                         // Human label: "For Phil Hillibrand"
+  fromName        String    @default("Brent Bryson") // Shown on claim page: "X has set you up with Tiger Bot Scout"
+  createdBy       String    @default("admin")     // Admin who generated this invite
+
+  // Pre-fill recipient info (optional)
+  recipientEmail  String?                         // Pre-fills the claim form
+  recipientName   String?                         // Pre-fills the claim form
+
+  // Claim tracking
+  claimedBy       String?                         // Email used to claim
+  claimedAt       DateTime?
+  tenantId        String?                         // Tenant created by this invite
+
+  // Expiry & trial
+  expiresAt       DateTime?                       // null = never expires
+  trialDays       Int       @default(0)           // 0 = permanent gift; N = trial period
+
+  // Soft revocation
+  revokedAt       DateTime?
+
+  createdAt       DateTime  @default(now())
+
+  @@index([token])
+  @@index([claimedBy])
 }

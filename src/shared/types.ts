@@ -17,9 +17,11 @@ export interface InboundJobData {
 }
 
 export interface ProvisionJobData {
-  stripeId: string;
+  stripeId?: string;       // Stripe customer ID (not present for invite flow)
   email: string;
   name: string;
+  inviteTokenId?: string;  // InviteToken.id that triggered this provision
+  trialDays?: number;      // 0 = permanent; N = trial period in days
 }
 
 export interface EnrichmentJobData {

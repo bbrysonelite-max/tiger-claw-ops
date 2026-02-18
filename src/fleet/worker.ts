@@ -217,6 +217,10 @@ async function handleUnknownMessage(
   ctx: VirtualBotContext,
   message: TelegramMessage
 ): Promise<void> {
+  if (!message.chat) {
+    console.log('[worker] Skipping message without chat object');
+    return;
+  }
   const chatId = message.chat.id;
   const text = message.text || '';
   const firstName = message.from?.first_name || 'there';
@@ -297,8 +301,8 @@ async function handleTelegramUpdate(
 ): Promise<void> {
   const message = update.message;
   
-  if (!message || !message.text) {
-    // Ignore non-text messages for now
+  if (!message || !message.chat || !message.text) {
+    // Ignore non-text messages or malformed updates
     return;
   }
   
@@ -333,16 +337,47 @@ async function processInboundJob(job: Job<InboundJobData>): Promise<void> {
   
   console.log(`[worker] Processing job ${job.id} for hash: ${hash.substring(0, 8)}...`);
   
-  // Look up tenant by botTokenHash
+  // Look up tenant by botTokenHash (include suspended for trial-expiry messaging)
   const tenant = await prisma.tenant.findFirst({
     where: {
       botTokenHash: hash,
-      status: 'active',
+      status: { in: ['active', 'suspended'] },
     },
   });
-  
+
   if (!tenant) {
     console.warn(`[worker] No active tenant found for hash: ${hash.substring(0, 8)}...`);
+    return;
+  }
+
+  // If suspended, drop silently
+  if (tenant.status === 'suspended') {
+    console.log(`[worker] Dropped job for suspended tenant ${tenant.id}`);
+    return;
+  }
+
+  // Check trial expiry
+  if (tenant.trialEndsAt && new Date() > tenant.trialEndsAt) {
+    console.log(`[worker] Trial expired for tenant ${tenant.id} - suspending`);
+    await prisma.tenant.update({
+      where: { id: tenant.id },
+      data: { status: 'suspended' },
+    });
+    // Notify the customer on Telegram if we have their chat_id
+    if (tenant.chat_id) {
+      let decryptedToken: string;
+      try {
+        decryptedToken = decrypt(tenant.botToken);
+        const bot = getOrCreateBot(decryptedToken, tenant.id);
+        await bot.sendMessage(
+          tenant.chat_id,
+          `Your Tiger Bot trial has ended. 🐯\n\nTo keep your bot running, visit *botcraftwrks.ai* to upgrade.`,
+          { parse_mode: 'Markdown' }
+        );
+      } catch (e) {
+        console.error(`[worker] Failed to send trial-expiry message to tenant ${tenant.id}:`, e);
+      }
+    }
     return;
   }
   
