@@ -68,16 +68,69 @@ module.exports = {
       // Cluster-specific
       increment_var: 'WORKER_ID',
     },
+
+    // Tiger Bot API (Express — admin commands, AI CRM, daily reports)
+    {
+      name: 'tiger-bot',
+      script: 'api/server.js',
+      instances: 1,
+      exec_mode: 'fork',
+      watch: false,
+      max_memory_restart: '512M',
+      error_file: './logs/tiger-bot-error.log',
+      out_file: './logs/tiger-bot-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      merge_logs: true,
+      autorestart: true,
+      max_restarts: 20,
+      restart_delay: 2000,
+      kill_timeout: 5000,
+    },
+
+    // Provision Worker (BullMQ — creates new bots via BotFather)
+    {
+      name: 'provision-worker',
+      script: 'dist/provisioner/provision-worker.js',
+      instances: 1,
+      exec_mode: 'fork',
+      watch: false,
+      max_memory_restart: '256M',
+      error_file: './logs/provision-error.log',
+      out_file: './logs/provision-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      merge_logs: true,
+      autorestart: true,
+      max_restarts: 10,
+      restart_delay: 5000,
+      kill_timeout: 10000,
+    },
+
+    // Health Monitor (watchdog — checks Redis, DB, webhooks every 60s)
+    {
+      name: 'health-monitor',
+      script: 'dist/monitoring/health-monitor.js',
+      instances: 1,
+      exec_mode: 'fork',
+      watch: false,
+      max_memory_restart: '128M',
+      error_file: './logs/monitor-error.log',
+      out_file: './logs/monitor-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      merge_logs: true,
+      autorestart: true,
+      max_restarts: 20,
+      restart_delay: 5000,
+    },
   ],
 
-  // Deployment configuration (optional - for pm2 deploy)
+  // Deployment configuration
   deploy: {
     production: {
       user: 'ubuntu',
       host: '208.113.131.83',
       ref: 'origin/main',
       repo: 'git@github.com:bbrysonelite-max/tiger-bot-scout.git',
-      path: '/home/ubuntu/tiger-bot-scout',
+      path: '/home/ubuntu/tiger-bot-api',
       'pre-deploy-local': '',
       'post-deploy': 'npm ci && npm run build && npm run db:generate && pm2 reload ecosystem.config.js --env production',
       'pre-setup': '',
