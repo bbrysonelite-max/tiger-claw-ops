@@ -105,6 +105,30 @@ You should see both `tigerBot` and `openclaw` status in the response.
 
 ---
 
+### Priority 0.5: Update Landing Page (www.botcraftwrks.ai)
+
+The public landing page is outdated (last updated Feb 3). Needs major updates:
+
+**ADD these new capabilities:**
+- LINE integration (Thailand market - huge for our Thai customers)
+- Apollo contact enrichment (find emails, phones, LinkedIn)
+- Calendly meeting scheduling
+- Smarter AI conversations (Gemini 2.0)
+- 10 active customers now live
+
+**MISSING content:**
+- No mention of LINE anywhere
+- No dashboard preview/screenshots
+- No customer testimonials
+- Pricing may need review
+
+**File location on server:** `/var/www/tiger-bot/index.html`
+**Source file:** `/Users/brentbryson/tiger-bot-scout/website/index.html`
+
+This is customer-facing - make it compelling!
+
+---
+
 ### Priority 1: Send Customer Email
 Use the email draft above to notify all 10 customers about the enhanced capabilities.
 
