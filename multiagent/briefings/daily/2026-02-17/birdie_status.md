@@ -2,7 +2,7 @@
 
 ## System Health: ALL SYSTEMS OPERATIONAL
 
-All 10 customer bots connected. All 4 integrations active.
+All 10 customer bots connected. All 5 integrations active (+ LINE).
 
 ---
 
@@ -16,6 +16,7 @@ All 10 customer bots connected. All 4 integrations active.
 | **Brevo** | ✅ Connected | Email campaigns, transactional emails |
 | **Twilio** | ✅ Connected | SMS notifications, phone verification |
 | **Calendly** | ✅ Connected | Meeting scheduling, booking links |
+| **LINE** | ✅ Connected | Thailand messaging, LINE Official Account |
 
 ### 2. Apollo API Updated
 - Fixed authentication (now uses X-Api-Key header)
@@ -72,6 +73,38 @@ The Tiger Bot Scout Team
 
 ## Tasks for Birdie
 
+### URGENT Priority 0: Update Your Status Reporting
+
+**Problem Fixed:** Your `/status` endpoint was reporting "system down" because it only checked if OpenClaw was running locally. The Tiger Bot cloud API has been UP for 21+ days, but you weren't checking it.
+
+**The fix is pushed to GitHub.** Run these commands on the Mac Pro (192.168.0.136):
+
+```bash
+cd /Users/birdie/clawd/tiger-bot-scout
+git pull origin main
+npm install
+
+# Restart birdie-control (use one of these methods):
+pm2 restart birdie-control
+# OR if not using pm2:
+npx tsx api/birdie-control.ts
+```
+
+**What Changed:**
+- `/status` endpoint now checks Tiger Bot cloud API at `api.botcraftwrks.ai`
+- Reports both Tiger Bot (cloud) and OpenClaw (local) status separately
+- System is considered "online" based on Tiger Bot cloud API status
+- No more false "system down" alerts when OpenClaw isn't running locally
+
+**After updating, test with:**
+```bash
+curl http://localhost:3001/status
+```
+
+You should see both `tigerBot` and `openclaw` status in the response.
+
+---
+
 ### Priority 1: Send Customer Email
 Use the email draft above to notify all 10 customers about the enhanced capabilities.
 
@@ -124,6 +157,7 @@ Try the new integrations from the dashboard:
 | Calendly | ✅ Connected | Configured |
 | Gemini | ✅ Connected | Configured |
 | Anthropic | ✅ Connected | Configured |
+| LINE | ✅ Connected | Configured |
 
 ---
 
@@ -147,4 +181,6 @@ Try the new integrations from the dashboard:
 
 ---
 
-*Updated: 2026-02-17 22:40 UTC*
+*Updated: 2026-02-17 23:15 UTC*
+
+**IMPORTANT:** The false "system down" status has been fixed. See Priority 0 task above to deploy the fix.
