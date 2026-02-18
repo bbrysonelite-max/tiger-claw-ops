@@ -8,6 +8,7 @@ import { ApolloClient } from './integrations/apollo.js';
 import { BrevoClient } from './integrations/brevo.js';
 import { TwilioClient } from './integrations/twilio.js';
 import { CalendlyClient } from './integrations/calendly.js';
+import { createLineWebhookHandler, getUserProfile, pushMessage, formatForLine } from '../src/channels/line-channel.js';
 import { startTelegramBot } from './telegram-bot.js';
 
 const app = express();
@@ -1426,7 +1427,61 @@ app.get('/integrations/health', async (req, res) => {
   try { await brevo.getStatistics(1); integrations.brevo = { status: 'connected' }; } catch (e: any) { integrations.brevo = { status: 'error', message: e.message }; }
   try { await twilio.getRecentMessages(1); integrations.twilio = { status: 'connected' }; } catch (e: any) { integrations.twilio = { status: 'error', message: e.message }; }
   try { await calendly.getCurrentUser(); integrations.calendly = { status: 'connected' }; } catch (e: any) { integrations.calendly = { status: 'error', message: e.message }; }
+  // LINE integration check
+  if (process.env.LINE_CHANNEL_ACCESS_TOKEN) {
+    integrations.line = { status: 'connected' };
+  } else {
+    integrations.line = { status: 'not_configured', message: 'LINE_CHANNEL_ACCESS_TOKEN not set' };
+  }
   res.json({ integrations });
+});
+
+// ==================== LINE MESSAGING API ====================
+
+// LINE webhook handler
+app.post('/line/webhook', createLineWebhookHandler(async (userId, text, replyFn) => {
+  console.log(`[line] Message from ${userId}: ${text}`);
+
+  // Get user profile for personalization
+  const profile = await getUserProfile(userId);
+  const firstName = profile?.displayName?.split(' ')[0] || 'there';
+
+  // Simple command handling
+  const command = text.toLowerCase().trim();
+
+  if (command === 'start' || command === '/start') {
+    await replyFn(`สวัสดี ${firstName}! 🐯\n\nWelcome to Tiger Bot Scout!\n\nI'm your AI-powered recruiting assistant. I help network marketers find and connect with prospects.\n\nCommands:\n• today - Get today's prospects\n• help - See all commands\n\nType "today" to see your hot prospects!`);
+    return;
+  }
+
+  if (command === 'today' || command === '/today') {
+    // TODO: Fetch prospects from database for this LINE user
+    await replyFn(`📊 Today's Hot Prospects\n\nYour prospect list is being prepared. Check back soon!\n\nTip: The more you use Tiger Bot, the smarter it gets at finding the right people for you.`);
+    return;
+  }
+
+  if (command === 'help' || command === '/help') {
+    await replyFn(`🐯 Tiger Bot Commands\n\n• start - Welcome message\n• today - Get today's prospects\n• help - Show this help\n\nOr just chat with me! I'm here to help you grow your business.`);
+    return;
+  }
+
+  // Default: AI conversation (similar to Telegram bot)
+  await replyFn(`Hey ${firstName}! 🐯 Great to hear from you. Type "today" to see your prospects, or "help" for all commands.`);
+}));
+
+// LINE push message endpoint (for sending messages to users)
+app.post('/line/push', async (req, res) => {
+  try {
+    const { userId, message } = req.body;
+    if (!userId || !message) {
+      res.status(400).json({ error: 'userId and message required' });
+      return;
+    }
+    const success = await pushMessage(userId, formatForLine(message));
+    res.json({ success });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // ==================== ANALYTICS API ====================
