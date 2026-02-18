@@ -3046,7 +3046,8 @@ app.get('/ops/agents', async (req, res) => {
       { id: 'claude-code', name: 'Claude Code', role: 'Implementation Specialist', shift: 'Night (BKK)' },
       { id: 'birdie', name: 'Birdie', role: 'Operator', shift: 'Day (BKK)' },
       { id: 'agent-zero', name: 'Agent Zero', role: 'Scout', shift: '24/7 (automated)' },
-      { id: 'scout-ops', name: 'Scout Ops', role: 'Maintenance', shift: '24/7 (automated)' }
+      { id: 'scout-ops', name: 'Scout Ops', role: 'Maintenance', shift: '24/7 (automated)' },
+      { id: 'tiger-api', name: 'Tiger API', role: 'System', shift: '24/7 (automated)' }
     ];
 
     const agents = knownAgents.map(agent => {
@@ -3096,6 +3097,72 @@ app.get('/ops/briefings/today', async (req, res) => {
     res.json({ date: today, briefings });
   } catch (error: any) {
     res.status(500).json({ error: 'Failed to fetch briefings', details: error.message });
+  }
+});
+
+// ==================== OPS WEBHOOKS ====================
+// External services can post to Ops Center via webhooks
+
+// GitHub webhook - auto-posts on push/PR/deploy
+app.post('/ops/webhooks/github', async (req, res) => {
+  try {
+    const event = req.headers['x-github-event'];
+    const payload = req.body;
+
+    let title = '';
+    let content = '';
+    let priority = 'normal';
+
+    if (event === 'push') {
+      const commits = payload.commits || [];
+      const branch = payload.ref?.replace('refs/heads/', '') || 'unknown';
+      title = `GitHub Push: ${branch}`;
+      content = `${commits.length} commit(s) pushed to ${branch} by ${payload.pusher?.name || 'unknown'}`;
+      if (commits.length > 0) {
+        content += `\n\nLatest: ${commits[commits.length - 1]?.message || 'No message'}`;
+      }
+    } else if (event === 'pull_request') {
+      const pr = payload.pull_request;
+      title = `PR ${payload.action}: ${pr?.title || 'Unknown'}`;
+      content = `Pull request #${pr?.number} ${payload.action} by ${pr?.user?.login || 'unknown'}`;
+      priority = payload.action === 'opened' ? 'high' : 'normal';
+    } else if (event === 'deployment' || event === 'deployment_status') {
+      title = `Deployment: ${payload.deployment_status?.state || payload.action || 'triggered'}`;
+      content = `Deployment to ${payload.deployment?.environment || 'production'}`;
+      priority = 'high';
+    } else {
+      title = `GitHub: ${event}`;
+      content = JSON.stringify(payload).substring(0, 200);
+    }
+
+    await db.query(`
+      INSERT INTO ops_bulletins (agent_id, agent_name, bulletin_type, priority, title, content, metadata, expires_at)
+      VALUES ('github', 'GitHub', 'update', $1, $2, $3, $4, NOW() + INTERVAL '7 days')
+    `, [priority, title, content, JSON.stringify({ event, sender: payload.sender?.login })]);
+
+    res.json({ success: true, event });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Webhook failed', details: error.message });
+  }
+});
+
+// Generic webhook - any service can post bulletins
+app.post('/ops/webhooks/generic', async (req, res) => {
+  try {
+    const { source, title, content, priority = 'normal', type = 'update' } = req.body;
+
+    if (!source || !title || !content) {
+      return res.status(400).json({ error: 'Missing required fields: source, title, content' });
+    }
+
+    await db.query(`
+      INSERT INTO ops_bulletins (agent_id, agent_name, bulletin_type, priority, title, content, expires_at)
+      VALUES ($1, $2, $3, $4, $5, $6, NOW() + INTERVAL '7 days')
+    `, [source.toLowerCase().replace(/\s/g, '-'), source, type, priority, title, content]);
+
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Webhook failed', details: error.message });
   }
 });
 
@@ -3720,11 +3787,24 @@ app.get('/admin/activity-log', (req, res) => {
 
 
 // Start server
-app.listen(port, () => {
+app.listen(port, async () => {
   console.log(`🚀 Tiger Bot API running on port ${port}`);
   console.log(`📍 Health: http://localhost:${port}/health`);
   console.log(`📍 Leads: http://localhost:${port}/ai-crm/leads`);
   console.log(`📍 Integrations: http://localhost:${port}/integrations/health`);
+
+  // Auto-post server startup to Ops Center
+  try {
+    await db.query(`
+      INSERT INTO ops_bulletins (agent_id, agent_name, bulletin_type, priority, title, content, expires_at)
+      VALUES ('tiger-api', 'Tiger API', 'update', 'normal', 'Server Started',
+        'Tiger Bot API started on port ${port}. All systems initializing.',
+        NOW() + INTERVAL '24 hours')
+    `);
+    console.log('📋 Posted startup bulletin to Ops Center');
+  } catch (e) {
+    // Ops table might not exist yet on first run
+  }
 });
 
 // Start Telegram bot
