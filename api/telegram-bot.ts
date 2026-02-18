@@ -52,8 +52,24 @@ export function startTelegramBot(db: Pool) {
     .map(s => s.trim())
     .filter(Boolean);
 
-  const bot = new TelegramBot(token, { polling: true });
-  console.log(`${TIGER_EMOJI} Tiger Bot Scout Telegram connected`);
+  // Use webhook mode — polling causes ETIMEDOUT crashes every ~10 min and restarts the whole process
+  const bot = new TelegramBot(token, { polling: false });
+
+  // Register the admin bot webhook with Telegram
+  const adminWebhookUrl = `${process.env.GATEWAY_URL || 'https://api.botcraftwrks.ai'}/admin-bot/webhook`;
+  fetch(`https://api.telegram.org/bot${token}/setWebhook`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url: adminWebhookUrl, allowed_updates: ['message', 'callback_query'] }),
+  })
+    .then(r => r.json())
+    .then((d: any) => {
+      if (d.ok) console.log(`${TIGER_EMOJI} Admin bot webhook registered: ${adminWebhookUrl}`);
+      else console.error(`${TIGER_EMOJI} Admin bot webhook registration failed:`, d.description);
+    })
+    .catch((e: Error) => console.error(`${TIGER_EMOJI} Failed to register admin bot webhook:`, e.message));
+
+  console.log(`${TIGER_EMOJI} Tiger Bot Scout Telegram connected (webhook mode)`);
 
   function isAllowed(chatId: number): boolean {
     if (allowedUsers.length === 0) return true; // no whitelist = allow all

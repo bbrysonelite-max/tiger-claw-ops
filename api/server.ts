@@ -14,6 +14,8 @@ import { TwilioClient } from './integrations/twilio.js';
 import { CalendlyClient } from './integrations/calendly.js';
 import { createLineWebhookHandler, getUserProfile, pushMessage, formatForLine } from '../src/channels/line-channel.js';
 import { startTelegramBot } from './telegram-bot.js';
+import cron from 'node-cron';
+import CryptoJSLib from 'crypto-js';
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -386,6 +388,82 @@ function scheduleDailyReport() {
 }
 
 scheduleDailyReport();
+
+// ==================== CUSTOMER DAILY REPORTS ====================
+// Send each customer a personalized daily report via their own bot at 7 AM Bangkok time
+
+async function sendCustomerDailyReports() {
+  const encKey = process.env.ENCRYPTION_KEY || '';
+  if (!encKey) {
+    console.error('[CustomerReport] ENCRYPTION_KEY not set — cannot decrypt bot tokens');
+    return;
+  }
+
+  console.log('[CustomerReport] Starting customer daily reports...');
+
+  let tenants: any[] = [];
+  try {
+    const result = await db.query(
+      `SELECT id, name, "botToken", chat_id FROM "Tenant" WHERE status = 'active' AND chat_id IS NOT NULL`
+    );
+    tenants = result.rows;
+  } catch (err) {
+    console.error('[CustomerReport] DB error fetching tenants:', err);
+    return;
+  }
+
+  console.log(`[CustomerReport] Sending to ${tenants.length} customers with chat_id`);
+
+  for (const tenant of tenants) {
+    try {
+      const token = CryptoJSLib.AES.decrypt(tenant.botToken, encKey).toString(CryptoJSLib.enc.Utf8);
+      if (!token) continue;
+
+      // Get this tenant's top prospects
+      const prospects = await db.query(
+        `SELECT name, score, summary FROM "Prospect"
+         WHERE "tenantId" = $1 AND status = 'new'
+         ORDER BY score DESC LIMIT 3`,
+        [tenant.id]
+      ).catch(() => ({ rows: [] }));
+
+      const date = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'Asia/Bangkok' });
+
+      let report = `🐯 *Good morning, ${tenant.name.split(' ')[0]}!*\n📅 ${date}\n\n`;
+
+      if (prospects.rows.length > 0) {
+        report += `*Your top prospects today:*\n`;
+        prospects.rows.forEach((p: any, i: number) => {
+          const stars = '⭐'.repeat(Math.min(Math.floor(p.score / 20), 5));
+          report += `\n*${i + 1}. ${p.name}* ${stars}\n`;
+          if (p.summary) report += `${p.summary}\n`;
+        });
+        report += `\n_Use /today to see all prospects_`;
+      } else {
+        report += `I'm scanning for new prospects now. Check back with /today in a few minutes.\n\n_Remember: Talk to 3 new people today! 💪_`;
+      }
+
+      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: tenant.chat_id, text: report, parse_mode: 'Markdown' }),
+      });
+
+      console.log(`[CustomerReport] Sent to ${tenant.name} (${tenant.id})`);
+    } catch (err: any) {
+      console.error(`[CustomerReport] Failed for tenant ${tenant.id}:`, err.message);
+    }
+  }
+
+  console.log('[CustomerReport] Done');
+}
+
+// 7:00 AM Bangkok time (UTC+7) = 00:00 UTC
+cron.schedule('0 0 * * *', () => {
+  sendCustomerDailyReports();
+}, { timezone: 'Asia/Bangkok' });
+
+console.log('[CustomerReport] Scheduled for 7:00 AM Bangkok time daily');
 
 // Initialize integration clients
 const apollo = new ApolloClient(process.env.APOLLO_API_KEY!);
@@ -3852,8 +3930,20 @@ app.listen(port, async () => {
   }
 });
 
-// Start Telegram bot
-startTelegramBot(db);
+// Start admin Telegram bot (webhook mode — no more polling crashes)
+const adminBot = startTelegramBot(db);
+
+// Receive admin bot commands via webhook (Telegram POSTs here)
+app.post('/admin-bot/webhook', express.json(), (req, res) => {
+  res.sendStatus(200); // Acknowledge immediately — Telegram requires fast response
+  if (adminBot) {
+    try {
+      adminBot.processUpdate(req.body);
+    } catch (err) {
+      console.error('[AdminBot] processUpdate error:', err);
+    }
+  }
+});
 
 // ==================== DASHBOARD OVERVIEW ====================
 // Consolidated endpoint for dashboard overview cards (per PRD)
