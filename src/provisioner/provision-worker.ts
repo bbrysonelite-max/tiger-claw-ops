@@ -11,6 +11,7 @@ import { PrismaClient } from '@prisma/client';
 import CryptoJS from 'crypto-js';
 import crypto from 'crypto';
 import { QUEUE_NAMES, ProvisionJobData } from '../shared/types.js';
+import { provisionNewBot } from './userbot.js';
 
 // --- Configuration ---
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
@@ -74,54 +75,100 @@ async function processProvisionJob(job: Job<ProvisionJobData>): Promise<any> {
     return { success: true, existing: true, tenantId: existing.id };
   }
 
-  // For now, we can't auto-create bots without BotFather interaction
-  // This would require the gramjs session to create bots programmatically
-  // Instead, we'll create a pending tenant record
+  // Auto-provision a real bot via BotFather using gramjs MTProto
+  let tenant;
+  try {
+    console.log(`[provision-worker] Starting auto-provision via BotFather for: ${email}`);
+    const result = await provisionNewBot(name || 'New Customer', email);
 
-  const botUsername = generateBotUsername();
+    const encryptedToken = encryptToken(result.token);
 
-  // Create a placeholder tenant that needs manual bot creation
-  const tenant = await prisma.tenant.create({
-    data: {
-      email,
-      name: name || 'New Customer',
-      stripeId: stripeId || null,
-      botToken: 'PENDING', // Placeholder
-      botTokenHash: crypto.randomBytes(16).toString('hex'),
-      botUsername,
-      status: 'provisioning', // Not active until bot is created
+    tenant = await prisma.tenant.create({
+      data: {
+        email,
+        name: name || 'New Customer',
+        stripeId: stripeId || null,
+        botToken: encryptedToken,
+        botTokenHash: result.hash,
+        botUsername: result.username,
+        status: 'active',
+      }
+    });
+
+    console.log(`[provision-worker] Bot provisioned and tenant created: ${tenant.id} (@${result.username})`);
+
+    if (ADMIN_BOT_TOKEN && process.env.TELEGRAM_REPORT_CHAT_ID) {
+      const message = `✅ *New Customer Bot Created!*\n\n` +
+        `Email: ${email}\n` +
+        `Name: ${name || 'Not provided'}\n` +
+        `Bot: @${result.username}\n` +
+        `Stripe: ${stripeId || 'N/A'}`;
+
+      await fetch(`https://api.telegram.org/bot${ADMIN_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: process.env.TELEGRAM_REPORT_CHAT_ID,
+          text: message,
+          parse_mode: 'Markdown'
+        })
+      }).catch(console.error);
     }
-  });
 
-  console.log(`[provision-worker] Created pending tenant: ${tenant.id} for ${email}`);
+    return {
+      success: true,
+      tenantId: tenant.id,
+      email,
+      status: 'active',
+      botUsername: result.username,
+    };
 
-  // Send notification to admin about new customer needing bot setup
-  if (ADMIN_BOT_TOKEN && process.env.TELEGRAM_REPORT_CHAT_ID) {
-    const message = `🆕 *New Customer Signup!*\n\n` +
-      `Email: ${email}\n` +
-      `Name: ${name || 'Not provided'}\n` +
-      `Stripe: ${stripeId || 'N/A'}\n\n` +
-      `⚠️ Bot needs manual creation.\n` +
-      `Run: /provision ${email}`;
+  } catch (provisionError: any) {
+    console.error(`[provision-worker] Auto-provision failed for ${email}:`, provisionError.message);
 
-    await fetch(`https://api.telegram.org/bot${ADMIN_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: process.env.TELEGRAM_REPORT_CHAT_ID,
-        text: message,
-        parse_mode: 'Markdown'
-      })
-    }).catch(console.error);
+    // Fall back to a pending record so the signup isn't lost
+    const uniquePlaceholder = `PENDING_${crypto.randomBytes(16).toString('hex')}`;
+    tenant = await prisma.tenant.create({
+      data: {
+        email,
+        name: name || 'New Customer',
+        stripeId: stripeId || null,
+        botToken: uniquePlaceholder,
+        botTokenHash: crypto.randomBytes(16).toString('hex'),
+        botUsername: generateBotUsername(),
+        status: 'provisioning',
+      }
+    });
+
+    console.log(`[provision-worker] Created pending tenant: ${tenant.id} (auto-provision failed)`);
+
+    if (ADMIN_BOT_TOKEN && process.env.TELEGRAM_REPORT_CHAT_ID) {
+      const message = `⚠️ *New Signup - Manual Bot Needed*\n\n` +
+        `Email: ${email}\n` +
+        `Name: ${name || 'Not provided'}\n` +
+        `Stripe: ${stripeId || 'N/A'}\n\n` +
+        `Auto-provision failed: ${provisionError.message}\n` +
+        `Run: /provision ${email}`;
+
+      await fetch(`https://api.telegram.org/bot${ADMIN_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: process.env.TELEGRAM_REPORT_CHAT_ID,
+          text: message,
+          parse_mode: 'Markdown'
+        })
+      }).catch(console.error);
+    }
+
+    return {
+      success: true,
+      tenantId: tenant.id,
+      email,
+      status: 'provisioning',
+      note: `Auto-provision failed: ${provisionError.message}`,
+    };
   }
-
-  return {
-    success: true,
-    tenantId: tenant.id,
-    email,
-    status: 'provisioning',
-    note: 'Bot needs manual creation via BotFather'
-  };
 }
 
 // --- Worker Instance ---
