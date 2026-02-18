@@ -399,6 +399,10 @@ const calendly = new CalendlyClient(process.env.CALENDLY_API_KEY!, process.env.C
 
 // ==================== SECURITY MIDDLEWARE ====================
 
+// Trust the nginx reverse proxy - required for express-rate-limit to read real client IPs
+// from X-Forwarded-For header; without this, rate limiting throws ValidationError
+app.set('trust proxy', 1);
+
 // Security headers (helmet)
 app.use(helmet({
   contentSecurityPolicy: {
