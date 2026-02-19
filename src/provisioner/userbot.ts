@@ -70,30 +70,34 @@ function createClient(): TelegramClient {
 }
 
 /**
- * Send a message to BotFather and wait for response
+ * Send a message to BotFather and wait for a NEW response.
+ * Polls until BotFather sends a message with a higher ID than before we sent,
+ * avoiding stale responses from previous steps being captured by a fixed wait.
  */
 async function sendToBotFather(
   client: TelegramClient,
   message: string,
-  waitMs: number = 2000
+  maxWaitMs: number = 12000
 ): Promise<string> {
-  // Get BotFather entity
   const botFather = await client.getEntity(BOTFATHER_USERNAME);
-  
-  // Send message
+
+  // Snapshot highest known message ID before we send
+  const before = await client.getMessages(botFather, { limit: 1 });
+  const lastKnownId = before.length > 0 ? before[0].id : 0;
+
   await client.sendMessage(botFather, { message });
-  
-  // Wait for response
-  await sleep(waitMs);
-  
-  // Get latest messages from BotFather
-  const messages = await client.getMessages(botFather, { limit: 1 });
-  
-  if (messages.length === 0) {
-    throw new Error('No response from BotFather');
+
+  // Poll until BotFather sends a genuinely new message
+  const deadline = Date.now() + maxWaitMs;
+  while (Date.now() < deadline) {
+    await sleep(1500);
+    const latest = await client.getMessages(botFather, { limit: 1 });
+    if (latest.length > 0 && latest[0].id > lastKnownId) {
+      return latest[0].message || '';
+    }
   }
-  
-  return messages[0].message || '';
+
+  throw new Error(`BotFather did not respond within ${maxWaitMs / 1000}s`);
 }
 
 /**
