@@ -35,75 +35,64 @@ export interface ProspectData {
 // --- Search Engines ---
 
 /**
- * Google Custom Search API
- * Requires: GOOGLE_SEARCH_API_KEY and GOOGLE_SEARCH_CX in env
+ * Serper.dev — Google search with automatic key rotation.
+ * Tries SERPER_KEY_1 first, falls back to SERPER_KEY_2, then SERPER_KEY_3.
+ * Rotates on quota exhaustion (403) or rate limit (429).
  */
+async function serperSearch(query: string, siteFilter?: string): Promise<SearchResult[]> {
+  const keys = [
+    process.env.SERPER_KEY_1,
+    process.env.SERPER_KEY_2,
+    process.env.SERPER_KEY_3,
+  ].filter(Boolean) as string[];
+
+  if (keys.length === 0) {
+    console.log("[web-search] No Serper keys configured");
+    return [];
+  }
+
+  const fullQuery = siteFilter ? `site:${siteFilter} ${query}` : query;
+
+  for (let i = 0; i < keys.length; i++) {
+    try {
+      const response = await axios.post(
+        "https://google.serper.dev/search",
+        { q: fullQuery, num: 10 },
+        { headers: { "X-API-KEY": keys[i], "Content-Type": "application/json" } }
+      );
+
+      const results = (response.data.organic || []).map((item: any) => ({
+        source: "google",
+        title: item.title,
+        url: item.link,
+        snippet: item.snippet || "",
+      }));
+
+      if (i > 0) {
+        console.log(`[web-search] Using Serper key ${i + 1} (key ${i} exhausted)`);
+      }
+
+      return results;
+    } catch (error: any) {
+      const status = error.response?.status;
+      if (status === 403 || status === 429) {
+        console.warn(`[web-search] Serper key ${i + 1} quota/rate limit hit, trying next key`);
+        continue;
+      }
+      console.error(`[web-search] Serper search failed:`, error.message);
+      return [];
+    }
+  }
+
+  console.error("[web-search] All Serper keys exhausted");
+  return [];
+}
+
 export async function googleSearch(
   query: string,
   siteFilter?: string
 ): Promise<SearchResult[]> {
-  const apiKey = process.env.GOOGLE_SEARCH_API_KEY;
-  const cx = process.env.GOOGLE_SEARCH_CX;
-
-  if (!apiKey || !cx) {
-    console.log("[web-search] Google API not configured, using SerpAPI fallback");
-    return await serpApiSearch(query, siteFilter);
-  }
-
-  try {
-    const siteQuery = siteFilter ? `site:${siteFilter} ${query}` : query;
-    const response = await axios.get("https://www.googleapis.com/customsearch/v1", {
-      params: {
-        key: apiKey,
-        cx: cx,
-        q: siteQuery,
-        num: 10
-      }
-    });
-
-    return (response.data.items || []).map((item: any) => ({
-      source: "google",
-      title: item.title,
-      url: item.link,
-      snippet: item.snippet || ""
-    }));
-  } catch (error: any) {
-    console.error("[web-search] Google search failed:", error.message);
-    return [];
-  }
-}
-
-/**
- * SerpAPI fallback (works without custom search setup)
- */
-async function serpApiSearch(query: string, siteFilter?: string): Promise<SearchResult[]> {
-  const apiKey = process.env.SERPAPI_KEY;
-  if (!apiKey) {
-    console.log("[web-search] SerpAPI not configured");
-    return [];
-  }
-
-  try {
-    const fullQuery = siteFilter ? `site:${siteFilter} ${query}` : query;
-    const response = await axios.get("https://serpapi.com/search", {
-      params: {
-        api_key: apiKey,
-        q: fullQuery,
-        engine: "google",
-        num: 10
-      }
-    });
-
-    return (response.data.organic_results || []).map((item: any) => ({
-      source: "google",
-      title: item.title,
-      url: item.link,
-      snippet: item.snippet || ""
-    }));
-  } catch (error: any) {
-    console.error("[web-search] SerpAPI search failed:", error.message);
-    return [];
-  }
+  return serperSearch(query, siteFilter);
 }
 
 /**
