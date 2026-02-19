@@ -20,6 +20,22 @@ const BOTFATHER_USERNAME = 'BotFather';
 // Regex to extract bot token from BotFather response
 const TOKEN_REGEX = /\d+:[A-Za-z0-9_-]+/;
 
+// Rate limiting: minimum 90 seconds between BotFather bot creation calls
+// Telegram will lock the account for 24 hours if you create bots too fast
+const BOTFATHER_MIN_INTERVAL_MS = 90_000;
+let lastProvisionTime = 0;
+
+async function enforceBotFatherRateLimit(): Promise<void> {
+  const now = Date.now();
+  const elapsed = now - lastProvisionTime;
+  if (lastProvisionTime > 0 && elapsed < BOTFATHER_MIN_INTERVAL_MS) {
+    const waitMs = BOTFATHER_MIN_INTERVAL_MS - elapsed;
+    console.log(`[provisioner] Rate limit: waiting ${Math.ceil(waitMs / 1000)}s before next BotFather call`);
+    await sleep(waitMs);
+  }
+  lastProvisionTime = Date.now();
+}
+
 // Random ID generator for unique usernames
 function generateRandomId(): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -140,96 +156,88 @@ export interface ProvisionResult {
  * @param email - Customer email (for logging)
  * @returns Bot token, username, and webhook hash
  */
+async function runBotFatherFlow(
+  client: TelegramClient,
+  customerName: string,
+  email: string
+): Promise<ProvisionResult> {
+  // Cancel any stuck flow first — always start clean
+  console.log('[provisioner] Sending /cancel to clear any stuck BotFather state...');
+  await sendToBotFather(client, '/cancel', 3000);
+
+  // Start new bot creation
+  console.log('[provisioner] Sending /newbot...');
+  await sendToBotFather(client, '/newbot', 3000);
+
+  // Send bot display name
+  const botName = `Tiger Bot - ${customerName}`.substring(0, 64);
+  console.log(`[provisioner] Setting bot name: ${botName}`);
+  await sendToBotFather(client, botName, 3000);
+
+  // Send unique username and wait for token
+  const randomId = generateRandomId();
+  const botUsername = `Tiger_${randomId}_bot`;
+  console.log(`[provisioner] Setting username: ${botUsername}`);
+  const response = await sendToBotFather(client, botUsername, 5000);
+
+  const tokenMatch = response.match(TOKEN_REGEX);
+
+  if (!tokenMatch) {
+    console.warn(`[provisioner] No token in BotFather response. Response was: "${response.substring(0, 200)}"`);
+
+    // Username was likely taken — restart the full flow cleanly, don't just send another username
+    console.log('[provisioner] Restarting flow with new username...');
+    await sendToBotFather(client, '/cancel', 3000);
+    await sendToBotFather(client, '/newbot', 3000);
+    await sendToBotFather(client, botName, 3000);
+
+    const retryId = generateRandomId();
+    const retryUsername = `Tiger_${retryId}_bot`;
+    console.log(`[provisioner] Retry username: ${retryUsername}`);
+    const retryResponse = await sendToBotFather(client, retryUsername, 5000);
+
+    const retryMatch = retryResponse.match(TOKEN_REGEX);
+    if (!retryMatch) {
+      console.error(`[provisioner] Retry also failed. BotFather said: "${retryResponse.substring(0, 200)}"`);
+      throw new Error(`Failed to create bot - BotFather did not return a token. Last response: "${retryResponse.substring(0, 100)}"`);
+    }
+
+    const token = retryMatch[0];
+    const hash = hashToken(token).substring(0, 16);
+    const webhookUrl = `${GATEWAY_URL}/webhooks/${hash}`;
+    await setWebhook(token, webhookUrl);
+    const botInfo = await getBotInfo(token);
+    const actualUsername = botInfo?.username || retryUsername;
+    console.log(`[provisioner] Bot provisioned successfully: @${actualUsername}`);
+    return { token, username: actualUsername, hash, webhookUrl };
+  }
+
+  const token = tokenMatch[0];
+  const hash = hashToken(token).substring(0, 16);
+  const webhookUrl = `${GATEWAY_URL}/webhooks/${hash}`;
+  await setWebhook(token, webhookUrl);
+  const botInfo = await getBotInfo(token);
+  const actualUsername = botInfo?.username || botUsername;
+  console.log(`[provisioner] Bot provisioned successfully: @${actualUsername}`);
+  return { token, username: actualUsername, hash, webhookUrl };
+}
+
 export async function provisionNewBot(
   customerName: string,
   email: string
 ): Promise<ProvisionResult> {
   console.log(`[provisioner] Starting bot provision for: ${email}`);
-  
+
+  // Enforce 90-second minimum between BotFather calls to avoid 24-hour lockout
+  await enforceBotFatherRateLimit();
+
   const client = createClient();
-  
+
   try {
-    // Connect to Telegram
     await client.connect();
     console.log('[provisioner] Connected to Telegram');
-    
-    // Step 1: Start new bot creation
-    console.log('[provisioner] Sending /newbot command...');
-    await sendToBotFather(client, '/newbot', 2000);
-    
-    // Step 2: Send bot display name
-    const botName = `Tiger Bot - ${customerName}`.substring(0, 64);
-    console.log(`[provisioner] Setting bot name: ${botName}`);
-    await sendToBotFather(client, botName, 2000);
-    
-    // Step 3: Send unique username
-    const randomId = generateRandomId();
-    const botUsername = `Tiger_${randomId}_bot`;
-    console.log(`[provisioner] Setting username: ${botUsername}`);
-    
-    const response = await sendToBotFather(client, botUsername, 3000);
-    
-    // Step 4: Extract token from response
-    const tokenMatch = response.match(TOKEN_REGEX);
-    
-    if (!tokenMatch) {
-      // Username might be taken, try again with different ID
-      console.log('[provisioner] Username taken, retrying with new ID...');
-      
-      const retryId = generateRandomId();
-      const retryUsername = `Tiger_${retryId}_bot`;
-      const retryResponse = await sendToBotFather(client, retryUsername, 3000);
-      
-      const retryMatch = retryResponse.match(TOKEN_REGEX);
-      if (!retryMatch) {
-        throw new Error('Failed to create bot - could not extract token from BotFather response');
-      }
-      
-      const token = retryMatch[0];
-      const hash = hashToken(token).substring(0, 16);
-      const webhookUrl = `${GATEWAY_URL}/webhooks/${hash}`;
-      
-      // Set webhook
-      console.log(`[provisioner] Setting webhook: ${webhookUrl}`);
-      await setWebhook(token, webhookUrl);
-      
-      // Get actual username from bot info
-      const botInfo = await getBotInfo(token);
-      const actualUsername = botInfo?.username || retryUsername;
-      
-      console.log(`[provisioner] Bot provisioned successfully: @${actualUsername}`);
-      
-      return {
-        token,
-        username: actualUsername,
-        hash,
-        webhookUrl,
-      };
-    }
-    
-    const token = tokenMatch[0];
-    const hash = hashToken(token).substring(0, 16);
-    const webhookUrl = `${GATEWAY_URL}/webhooks/${hash}`;
-    
-    // Set webhook
-    console.log(`[provisioner] Setting webhook: ${webhookUrl}`);
-    await setWebhook(token, webhookUrl);
-    
-    // Get actual username from bot info
-    const botInfo = await getBotInfo(token);
-    const actualUsername = botInfo?.username || botUsername;
-    
-    console.log(`[provisioner] Bot provisioned successfully: @${actualUsername}`);
-    
-    return {
-      token,
-      username: actualUsername,
-      hash,
-      webhookUrl,
-    };
-    
+    return await runBotFatherFlow(client, customerName, email);
   } finally {
-    // Always disconnect
     await client.disconnect();
     console.log('[provisioner] Disconnected from Telegram');
   }
