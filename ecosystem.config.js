@@ -29,7 +29,7 @@ module.exports = {
       // Restart policy
       autorestart: true,
       max_restarts: 10,
-      restart_delay: 1000,
+      restart_delay: 3000,
       // Graceful shutdown
       kill_timeout: 5000,
       wait_ready: true,
