@@ -106,8 +106,58 @@ async function serpApiSearch(query: string, siteFilter?: string): Promise<Search
   }
 }
 
+// --- Reddit OAuth2 (App-Only / Client Credentials) ---
+// VPS IPs are blocked by Reddit's public JSON API.
+// App-Only OAuth uses oauth.reddit.com which works from servers.
+// Requires REDDIT_CLIENT_ID + REDDIT_CLIENT_SECRET in env.
+// Get credentials at: https://www.reddit.com/prefs/apps (create "script" type app)
+
+const REDDIT_USER_AGENT = "web:com.botcraftwrks.tiger-bot-scout:v3.1.0 (by /u/tigerbotscout)";
+
+let redditTokenCache: { value: string; expiresAt: number } | null = null;
+
+async function getRedditAccessToken(): Promise<string | null> {
+  const clientId = process.env.REDDIT_CLIENT_ID;
+  const clientSecret = process.env.REDDIT_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) return null;
+
+  // Return cached token if still valid (tokens last 1 hour)
+  if (redditTokenCache && Date.now() < redditTokenCache.expiresAt) {
+    return redditTokenCache.value;
+  }
+
+  try {
+    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+    const response = await axios.post(
+      "https://www.reddit.com/api/v1/access_token",
+      "grant_type=client_credentials",
+      {
+        headers: {
+          Authorization: `Basic ${credentials}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+          "User-Agent": REDDIT_USER_AGENT
+        }
+      }
+    );
+
+    const { access_token, expires_in } = response.data;
+    // Cache with 60s buffer before actual expiry
+    redditTokenCache = {
+      value: access_token,
+      expiresAt: Date.now() + (expires_in - 60) * 1000
+    };
+
+    console.log("[web-search] Reddit OAuth token acquired");
+    return access_token;
+  } catch (error: any) {
+    console.error("[web-search] Reddit OAuth token fetch failed:", error.message);
+    return null;
+  }
+}
+
 /**
- * Reddit Search via their JSON API (no auth needed for public data)
+ * Reddit Search via OAuth2 (works from server IPs) with public JSON fallback
  */
 export async function redditSearch(
   query: string,
@@ -116,26 +166,32 @@ export async function redditSearch(
   const results: SearchResult[] = [];
 
   try {
-    // Search specific subreddits or all of reddit
+    const token = await getRedditAccessToken();
     const subredditStr = subreddits?.length
       ? subreddits.map(s => s.replace("r/", "")).join("+")
       : "all";
 
-    const response = await axios.get(
-      `https://www.reddit.com/r/${subredditStr}/search.json`,
-      {
-        params: {
-          q: query,
-          sort: "relevance",
-          limit: 25,
-          restrict_sr: subreddits ? "on" : "off"
-        },
-        headers: {
-          // Reddit requires a descriptive User-Agent per their API rules
-          "User-Agent": "web:com.botcraftwrks.tiger-bot-scout:v3.1.0 (by /u/tigerbotscout)"
-        }
-      }
-    );
+    // OAuth endpoint works from VPS IPs; public endpoint is blocked
+    const baseUrl = token
+      ? `https://oauth.reddit.com/r/${subredditStr}/search`
+      : `https://www.reddit.com/r/${subredditStr}/search.json`;
+
+    const headers: Record<string, string> = {
+      "User-Agent": REDDIT_USER_AGENT
+    };
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await axios.get(baseUrl, {
+      params: {
+        q: query,
+        sort: "relevance",
+        limit: 25,
+        restrict_sr: subreddits ? "on" : "off"
+      },
+      headers
+    });
 
     for (const post of response.data.data.children || []) {
       const data = post.data;
@@ -146,6 +202,10 @@ export async function redditSearch(
         snippet: data.selftext?.substring(0, 300) || "",
         name: data.author
       });
+    }
+
+    if (!token) {
+      console.warn("[web-search] Reddit running without OAuth — may get 403 from VPS IPs. Set REDDIT_CLIENT_ID + REDDIT_CLIENT_SECRET.");
     }
   } catch (error: any) {
     console.error("[web-search] Reddit search failed:", error.message);
