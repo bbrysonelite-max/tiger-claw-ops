@@ -265,22 +265,8 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// --- Graceful Shutdown ---
-const shutdown = async () => {
-  console.log('[gateway] Shutting down...');
-  
-  await inboundQueue.close();
-  await provisionQueue.close();
-  await redisConnection.quit();
-  
-  process.exit(0);
-};
-
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
-
 // --- Start Server ---
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`[gateway] Tiger Bot Gateway running on port ${PORT}`);
   console.log(`[gateway] Redis: ${REDIS_URL}`);
   console.log(`[gateway] Endpoints:`);
@@ -288,5 +274,22 @@ app.listen(PORT, () => {
   console.log(`[gateway]   POST /stripe/webhook - Stripe webhooks`);
   console.log(`[gateway]   GET  /health - Health check`);
 });
+
+// --- Graceful Shutdown ---
+const shutdown = async () => {
+  console.log('[gateway] Shutting down...');
+
+  // Close HTTP server first so the port is released before PM2 restarts
+  await new Promise<void>((resolve) => server.close(() => resolve()));
+
+  await inboundQueue.close();
+  await provisionQueue.close();
+  await redisConnection.quit();
+
+  process.exit(0);
+};
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
 
 export { app };
