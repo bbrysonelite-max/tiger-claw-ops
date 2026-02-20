@@ -34,10 +34,13 @@ export interface ProspectData {
 
 // --- Search Engines ---
 
+// Module-level: persists across calls so exhausted keys are skipped immediately
+let serperKeyIndex = 0;
+
 /**
  * Serper.dev — Google search with automatic key rotation.
- * Tries SERPER_KEY_1 first, falls back to SERPER_KEY_2, then SERPER_KEY_3.
- * Rotates on quota exhaustion (403) or rate limit (429).
+ * Tracks the last working key index at module level — exhausted keys are never
+ * retried on subsequent calls within the same process lifetime.
  */
 async function serperSearch(query: string, siteFilter?: string): Promise<SearchResult[]> {
   const keys = [
@@ -53,7 +56,9 @@ async function serperSearch(query: string, siteFilter?: string): Promise<SearchR
 
   const fullQuery = siteFilter ? `site:${siteFilter} ${query}` : query;
 
-  for (let i = 0; i < keys.length; i++) {
+  // Start from last known good key, wrap around if needed
+  for (let attempt = 0; attempt < keys.length; attempt++) {
+    const i = (serperKeyIndex + attempt) % keys.length;
     try {
       const response = await axios.post(
         "https://google.serper.dev/search",
@@ -68,8 +73,9 @@ async function serperSearch(query: string, siteFilter?: string): Promise<SearchR
         snippet: item.snippet || "",
       }));
 
-      if (i > 0) {
-        console.log(`[web-search] Using Serper key ${i + 1} (key ${i} exhausted)`);
+      if (i !== serperKeyIndex) {
+        console.log(`[web-search] Advanced to Serper key ${i + 1}`);
+        serperKeyIndex = i;
       }
 
       return results;

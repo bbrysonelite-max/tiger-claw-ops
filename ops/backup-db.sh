@@ -24,8 +24,12 @@ echo "[backup] Saved: $BACKUP_FILE ($SIZE)"
 
 # Upload to Backblaze B2
 if command -v rclone &>/dev/null; then
-  rclone copy "$BACKUP_FILE" backblaze:tigerclawbackup/
-  echo "[backup] Uploaded to Backblaze: tigerclawbackup/$(basename "$BACKUP_FILE")"
+  if rclone copy "$BACKUP_FILE" backblaze:tigerclawbackup/; then
+    echo "[backup] Uploaded to Backblaze: tigerclawbackup/$(basename "$BACKUP_FILE")"
+  else
+    echo "[backup] ERROR: rclone upload FAILED — backup is local only" >&2
+    exit 1
+  fi
 else
   echo "[backup] WARNING: rclone not found, skipping Backblaze upload"
 fi

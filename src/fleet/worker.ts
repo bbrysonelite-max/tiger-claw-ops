@@ -400,9 +400,15 @@ async function handleFeedbackOutcome(
       converted: 'converted',
     };
 
+    const timestampMap: Record<string, object> = {
+      no_response: { contactedAt: new Date() },
+      replied:     { contactedAt: new Date(), repliedAt: new Date() },
+      converted:   { contactedAt: new Date(), repliedAt: new Date(), convertedAt: new Date() },
+    };
+
     await prisma.prospect.update({
       where: { id: script.prospectId },
-      data: { status: statusMap[outcome] },
+      data: { status: statusMap[outcome], ...timestampMap[outcome] },
     });
 
     const replies: Record<string, string> = {
