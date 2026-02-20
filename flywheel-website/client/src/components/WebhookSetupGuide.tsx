@@ -343,7 +343,7 @@ export default function WebhookSetupGuide() {
             style={{ fontFamily: '"Outfit", sans-serif' }}
           >
             Exact URLs, event types, and step-by-step configuration for connecting
-            Stripe and Stan Store to your Tiger Bot provisioning engine. Copy, paste, done.
+            Stripe and Stan Store to your Tiger Claw provisioning engine. Copy, paste, done.
           </p>
         </AnimateIn>
 
@@ -484,7 +484,7 @@ STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`}
 [WEBHOOK] Stripe event received: payment_intent.succeeded
 [WEBHOOK] Signature verified ✓
 [PROVISION] Starting bot provisioning for: customer@email.com
-[PROVISION] Bot @Tiger_customer_bot created ✓
+[PROVISION] Bot @Claw_customer created ✓
 [EMAIL] Welcome email sent to customer@email.com ✓`}
                         filename="server.log"
                       />
@@ -715,7 +715,7 @@ stripeWebhook.post(
       "metadata": {
         "name": "Pat",
         "email": "pat@contatta.com",
-        "plan": "tiger-bot-pro"
+        "plan": "tiger-claw-pro"
       },
       "customer": "cus_RBxyz123456789"
     }
@@ -752,7 +752,7 @@ stripeWebhook.post(
                       <div className="mt-3 space-y-2">
                         <div className="flex items-center gap-2 text-xs text-zinc-400">
                           <ChevronRight className="w-3 h-3 text-amber-400" />
-                          Product name: <strong className="text-zinc-300">"Try Tiger Bot Free"</strong>
+                          Product name: <strong className="text-zinc-300">"Try Tiger Claw Free"</strong>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-zinc-400">
                           <ChevronRight className="w-3 h-3 text-amber-400" />
@@ -840,10 +840,10 @@ STAN_STORE_WEBHOOK_SECRET=your_stan_store_secret_here`}
                       <CodeBlock
                         code={`# Expected server log output:
 [WEBHOOK] Stan Store event received: order.completed
-[WEBHOOK] Product: "Try Tiger Bot Free" (price: $0)
+[WEBHOOK] Product: "Try Tiger Claw Free" (price: $0)
 [WEBHOOK] Customer: pat@contatta.com (name: Pat)
 [PROVISION] Starting trial bot provisioning for: pat@contatta.com
-[PROVISION] Bot @Tiger_Pat_bot created ✓
+[PROVISION] Bot @Claw_Pat created ✓
 [EMAIL] Trial welcome email sent to pat@contatta.com ✓`}
                         filename="server.log"
                       />
@@ -1080,7 +1080,7 @@ stanStoreWebhook.post(
     },
     "product": {
       "id": "prod_tiger_trial",
-      "name": "Try Tiger Bot Free",
+      "name": "Try Tiger Claw Free",
       "price": 0,
       "currency": "USD"
     },

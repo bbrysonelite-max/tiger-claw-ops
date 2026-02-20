@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Onboarding & Flywheel System
+ * Tiger Claw Onboarding & Flywheel System
  * Design: "Predator's Path" — Bold editorial, black/orange, oversized display type
  * Font: Bebas Neue (display) + Outfit (body)
  * Palette: #09090B black, #F97316 tiger orange, #FBBF24 amber, #27272A dark gray
@@ -185,7 +185,7 @@ const TELEGRAM_STEPS = [
   {
     icon: MessageSquare,
     label: "Bot says hello",
-    desc: "Your Tiger Bot greets you and starts Interview 1",
+    desc: "Your Tiger Claw greets you and starts Interview 1",
     time: "Instant",
   },
   {
@@ -305,7 +305,7 @@ function TelegramLaunch({ telegramUrl, customerName, botUsername }: { telegramUr
             className="tracking-wider text-xl"
             style={{ fontFamily: '"Bebas Neue", sans-serif' }}
           >
-            Open Your Tiger Bot in Telegram
+            Open Your Tiger Claw in Telegram
           </span>
           <ArrowUpRight className="w-6 h-6 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
           {/* Pulse ring */}
@@ -327,7 +327,7 @@ function TelegramLaunch({ telegramUrl, customerName, botUsername }: { telegramUr
           <p className="mt-4 text-zinc-500 text-sm">
             Check your welcome email for the link to this page with your bot attached.
             <br />
-            <span className="text-zinc-600 text-xs">It looks like: yoursite.com<span className="text-orange-400">?bot=Tiger_YourName_bot</span></span>
+            <span className="text-zinc-600 text-xs">It looks like: yoursite.com<span className="text-orange-400">?bot=Claw_YourName</span></span>
           </p>
         </div>
       )}
@@ -341,7 +341,7 @@ function TelegramLaunch({ telegramUrl, customerName, botUsername }: { telegramUr
           className="inline-flex items-center gap-2 text-zinc-500 hover:text-orange-400 transition-colors text-sm"
         >
           <DollarSign className="w-3.5 h-3.5" />
-          <span>Don't have a Tiger Bot yet? Get one here</span>
+          <span>Don't have a Tiger Claw yet? Get one here</span>
           <ExternalLink className="w-3 h-3" />
         </a>
       </div>
@@ -632,7 +632,7 @@ const psychPrinciples = [
     name: "Reciprocity",
     icon: Gift,
     description: "People tend to return a favor. Offering something of value can prompt a response or action in return.",
-    botApplication: "Tiger Bot opens with a free gift — an ebook, guide, or tool — before ever making an ask. The prospect feels compelled to reciprocate.",
+    botApplication: "Tiger Claw opens with a free gift — an ebook, guide, or tool — before ever making an ask. The prospect feels compelled to reciprocate.",
     example: '"Download our free ebook, and get a month\'s trial of our premium service."',
   },
   {
@@ -640,7 +640,7 @@ const psychPrinciples = [
     name: "Commitment & Consistency",
     icon: CheckCircle,
     description: "If people commit to an idea or goal, they are more likely to honor that commitment.",
-    botApplication: "Tiger Bot invites micro-commitments early — a 30-day challenge, a free audit, a quick quiz. Once they say yes to something small, they follow through on bigger asks.",
+    botApplication: "Tiger Claw invites micro-commitments early — a 30-day challenge, a free audit, a quick quiz. Once they say yes to something small, they follow through on bigger asks.",
     example: '"Sign up for 30-day challenge, and stick to your fitness goals."',
   },
   {
@@ -648,7 +648,7 @@ const psychPrinciples = [
     name: "Social Proof",
     icon: Users,
     description: "People will follow the actions of the majority, especially in uncertain situations.",
-    botApplication: "Tiger Bot weaves testimonials, case studies, and \"join thousands\" language into every nurture sequence. Numbers build trust.",
+    botApplication: "Tiger Claw weaves testimonials, case studies, and \"join thousands\" language into every nurture sequence. Numbers build trust.",
     example: '"Join thousands of satisfied customers and try our top-rated product today."',
   },
   {
@@ -656,7 +656,7 @@ const psychPrinciples = [
     name: "Authority",
     icon: Award,
     description: "People will follow credible and knowledgeable experts.",
-    botApplication: "Tiger Bot positions the owner as the expert by sharing industry insights, myth-busting content, and credentials in every touchpoint.",
+    botApplication: "Tiger Claw positions the owner as the expert by sharing industry insights, myth-busting content, and credentials in every touchpoint.",
     example: '"Our investment strategies are endorsed by leading financial advisors."',
   },
   {
@@ -664,7 +664,7 @@ const psychPrinciples = [
     name: "Liking",
     icon: ThumbsUp,
     description: "People are more likely to be persuaded by people they like.",
-    botApplication: "Tiger Bot uses the owner's authentic brand voice, shares personal stories, and builds rapport before any sales pitch.",
+    botApplication: "Tiger Claw uses the owner's authentic brand voice, shares personal stories, and builds rapport before any sales pitch.",
     example: '"Meet our friendly team, dedicated to helping you reach your fitness goals."',
   },
   {
@@ -672,7 +672,7 @@ const psychPrinciples = [
     name: "Scarcity",
     icon: Clock,
     description: "Opportunities seem more valuable when they are less available.",
-    botApplication: "Tiger Bot creates urgency with limited spots, time-sensitive offers, and exclusive access windows in conversion-stage messages.",
+    botApplication: "Tiger Claw creates urgency with limited spots, time-sensitive offers, and exclusive access windows in conversion-stage messages.",
     example: '"Only a few items left in stock. Buy now before they\'re gone!"',
   },
   {
@@ -680,7 +680,7 @@ const psychPrinciples = [
     name: "Loss Aversion",
     icon: AlertTriangle,
     description: "People are more likely to take action to avoid a loss than to achieve a gain.",
-    botApplication: "Tiger Bot frames inaction as the risk — \"Don't miss out,\" \"Your competitors are already doing this\" — to trigger action.",
+    botApplication: "Tiger Claw frames inaction as the risk — \"Don't miss out,\" \"Your competitors are already doing this\" — to trigger action.",
     example: '"Don\'t miss out on savings. Book your early bird discount now!"',
   },
   {
@@ -688,7 +688,7 @@ const psychPrinciples = [
     name: "Anchoring",
     icon: DollarSign,
     description: "People often rely heavily on the first piece of information they receive when making decisions.",
-    botApplication: "Tiger Bot presents the highest-value option first, making the actual offer feel like a bargain by comparison.",
+    botApplication: "Tiger Claw presents the highest-value option first, making the actual offer feel like a bargain by comparison.",
     example: '"Originally priced at $500, now available for $250."',
   },
   {
@@ -696,7 +696,7 @@ const psychPrinciples = [
     name: "The Decoy Effect",
     icon: Layers,
     description: "People change their preference between two options when presented with a third option.",
-    botApplication: "Tiger Bot presents Bronze/Silver/Gold tiers where Silver is the obvious best value — the decoy makes the target tier irresistible.",
+    botApplication: "Tiger Claw presents Bronze/Silver/Gold tiers where Silver is the obvious best value — the decoy makes the target tier irresistible.",
     example: '"Offering three subscription levels (Basic, Pro, and Premium), where the Pro seems like the most cost-effective choice."',
   },
   {
@@ -704,7 +704,7 @@ const psychPrinciples = [
     name: "Baader-Meinhof Phenomenon",
     icon: Brain,
     description: "After noticing something for the first time, there is a tendency to notice it more often.",
-    botApplication: "Tiger Bot maintains persistent multi-channel presence — email, SMS, social comments — so the prospect keeps \"seeing\" the brand everywhere.",
+    botApplication: "Tiger Claw maintains persistent multi-channel presence — email, SMS, social comments — so the prospect keeps \"seeing\" the brand everywhere.",
     example: '"After seeing an ad for a product, the product seems to appear everywhere online."',
   },
 ];
@@ -819,7 +819,7 @@ export default function Home() {
               className="text-2xl tracking-wider text-white"
               style={{ fontFamily: '"Bebas Neue", sans-serif' }}
             >
-              Tiger Bot
+              Tiger Claw
             </span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-400">
@@ -868,7 +868,7 @@ export default function Home() {
         >
           <img
             src={HERO_IMG}
-            alt="Tiger Bot"
+            alt="Tiger Claw"
             className="w-full h-full object-cover object-center"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/60 to-transparent" />
@@ -899,7 +899,7 @@ export default function Home() {
               <>Your<br /></>
             )}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-400">
-              Tiger Bot is Ready
+              Tiger Claw is Ready
             </span>
           </motion.h1>
           <motion.p
@@ -978,7 +978,7 @@ export default function Home() {
                 <span className="text-black/60">System</span>
               </SectionHeading>
               <p className="mt-6 text-lg text-black/70 max-w-2xl leading-relaxed">
-                Before the Tiger Bot can hunt, it needs to know its owner and its prey.
+                Before the Tiger Claw can hunt, it needs to know its owner and its prey.
                 Two automated interviews build the intelligence briefing that powers
                 every action the bot takes.
               </p>
@@ -1036,12 +1036,12 @@ export default function Home() {
             <AnimateIn delay={0.3}>
               <div className="mt-12 bg-gradient-to-r from-orange-500/10 to-transparent border-l-4 border-orange-500 p-6 rounded-r-lg">
                 <p className="text-zinc-300 italic leading-relaxed">
-                  "Hello, I am your new Tiger Bot. To be the most effective partner for your
+                  "Hello, I am your new Tiger Claw. To be the most effective partner for your
                   business, I need to understand who you are and what you do. Please answer the
                   following questions so I can get to work for you."
                 </p>
                 <span className="text-xs text-orange-400 mt-3 block font-semibold tracking-wider uppercase">
-                  — Tiger Bot, Interview 1
+                  — Tiger Claw, Interview 1
                 </span>
               </div>
             </AnimateIn>
@@ -1105,7 +1105,7 @@ export default function Home() {
                   ideal customer or prospect."
                 </p>
                 <span className="text-xs text-orange-400 mt-3 block font-semibold tracking-wider uppercase">
-                  — Tiger Bot, Interview 2
+                  — Tiger Claw, Interview 2
                 </span>
               </div>
             </AnimateIn>
@@ -1132,7 +1132,7 @@ export default function Home() {
                 </span>
               </SectionHeading>
               <p className="mt-6 text-lg text-zinc-400 max-w-2xl leading-relaxed">
-                Your Tiger Bot is powered by an AI brain that costs money to run. During
+                Your Tiger Claw is powered by an AI brain that costs money to run. During
                 onboarding, we provide our key for a 72-hour free trial. After that, the
                 customer must rotate to their own key. One button. Done.
               </p>
@@ -1145,7 +1145,7 @@ export default function Home() {
                   icon: Unlock,
                   phase: "Hour 0",
                   title: "Onboarding Begins",
-                  description: "Customer signs up. Tiger Bot is activated using our provisioned API key. The bot immediately begins Interview 1 and Interview 2. Full functionality from minute one.",
+                  description: "Customer signs up. Tiger Claw is activated using our provisioned API key. The bot immediately begins Interview 1 and Interview 2. Full functionality from minute one.",
                   status: "active",
                   detail: "Our key — our cost exposure",
                 },
@@ -1248,22 +1248,22 @@ export default function Home() {
                   {[
                     {
                       q: "What is an API key?",
-                      a: "Think of it like a password that lets your Tiger Bot talk to an AI brain (like ChatGPT). Without it, the bot cannot think. With it, the bot comes alive. You get one from the AI company, paste it in, and you are done.",
+                      a: "Think of it like a password that lets your Tiger Claw talk to an AI brain (like ChatGPT). Without it, the bot cannot think. With it, the bot comes alive. You get one from the AI company, paste it in, and you are done.",
                     },
                     {
                       q: "Why do I need my own key?",
-                      a: "For the first 72 hours, Tiger Bot runs on our key — that is your free trial. After that, you need your own so the AI costs go to your account, not ours. It is like getting your own Netflix login instead of borrowing someone else's.",
+                      a: "For the first 72 hours, Tiger Claw runs on our key — that is your free trial. After that, you need your own so the AI costs go to your account, not ours. It is like getting your own Netflix login instead of borrowing someone else's.",
                     },
                     {
                       q: "How much does it cost?",
-                      a: "Most people spend between $1–$10 per month. The AI charges tiny fractions of a cent per message. A typical Tiger Bot sends a few hundred messages a month, so the cost is very low. Some providers even have a free tier.",
+                      a: "Most people spend between $1–$10 per month. The AI charges tiny fractions of a cent per message. A typical Tiger Claw sends a few hundred messages a month, so the cost is very low. Some providers even have a free tier.",
                     },
                     {
                       q: "Is it hard to get one?",
                       a: "No. You go to a website, sign in (most people already have a Google or OpenAI account), click 'Create API Key', and copy the text it gives you. That is it. We show you exactly which button to click below.",
                     },
                     {
-                      q: "Is it safe to share my API key with Tiger Bot?",
+                      q: "Is it safe to share my API key with Tiger Claw?",
                       a: "Your key is stored securely in your bot's private configuration file. It is never shared with other users, never visible on any dashboard, and never leaves your bot's environment. You can revoke it at any time from the provider's website.",
                     },
                     {
@@ -1347,7 +1347,7 @@ export default function Home() {
                     { step: "1", label: "Sign Up / Sign In", desc: "Create a free account or log in" },
                     { step: "2", label: "Find API Keys", desc: "Navigate to the keys section" },
                     { step: "3", label: "Create & Copy", desc: "Click create, then copy your key" },
-                    { step: "4", label: "Paste in Tiger Bot", desc: "One click and you are live" },
+                    { step: "4", label: "Paste in Tiger Claw", desc: "One click and you are live" },
                   ].map((s, i) => (
                     <div
                       key={i}
@@ -1377,7 +1377,7 @@ export default function Home() {
                   </span>
                 </h4>
                 <p className="text-zinc-500 text-sm mb-8 max-w-xl">
-                  Pick the LLM that powers your Tiger Bot. Each provider has different strengths.
+                  Pick the LLM that powers your Tiger Claw. Each provider has different strengths.
                   Click one to see the details and get your key.
                 </p>
 
@@ -1642,7 +1642,7 @@ export default function Home() {
                       const prefix = { openai: "sk-", openrouter: "sk-or-", qwen: "sk-", gemini: "AIza" }[selectedProvider] || "sk-";
                       const providerName = { openai: "OpenAI", openrouter: "OpenRouter", qwen: "Qwen", gemini: "Google Gemini" }[selectedProvider] || selectedProvider;
                       navigator.clipboard.writeText(
-                        `#!/bin/bash\n# Tiger Bot API Key Rotation Script\n# Provider: ${providerName}\n# Usage: ./rotate-key.sh YOUR_NEW_API_KEY\n\nNEW_KEY="$1"\n\nif [ -z "$NEW_KEY" ]; then\n  echo "Usage: ./rotate-key.sh YOUR_API_KEY"\n  exit 1\nfi\n\n# Validate key format\nif [[ ! "$NEW_KEY" =~ ^${prefix} ]]; then\n  echo "Error: Key must start with ${prefix}"\n  exit 1\nfi\n\n# Set provider\nsed -i "s/^LLM_PROVIDER=.*/LLM_PROVIDER=${selectedProvider}/" .env\n\n# Update API key\nsed -i "s/^${envVar}=.*/${envVar}=$NEW_KEY/" .env\n\n# Restart the bot\ndocker compose restart tiger-bot\n\necho "Key rotated successfully."\necho "Provider: ${providerName}"\necho "Tiger Bot is now running on YOUR key."`
+                        `#!/bin/bash\n# Tiger Claw API Key Rotation Script\n# Provider: ${providerName}\n# Usage: ./rotate-key.sh YOUR_NEW_API_KEY\n\nNEW_KEY="$1"\n\nif [ -z "$NEW_KEY" ]; then\n  echo "Usage: ./rotate-key.sh YOUR_API_KEY"\n  exit 1\nfi\n\n# Validate key format\nif [[ ! "$NEW_KEY" =~ ^${prefix} ]]; then\n  echo "Error: Key must start with ${prefix}"\n  exit 1\nfi\n\n# Set provider\nsed -i "s/^LLM_PROVIDER=.*/LLM_PROVIDER=${selectedProvider}/" .env\n\n# Update API key\nsed -i "s/^${envVar}=.*/${envVar}=$NEW_KEY/" .env\n\n# Restart the bot\ndocker compose restart tiger-claw\n\necho "Key rotated successfully."\necho "Provider: ${providerName}"\necho "Tiger Claw is now running on YOUR key."`
                       );
                     }}
                     className="flex items-center gap-2 text-xs text-zinc-500 hover:text-orange-400 transition-colors"
@@ -1654,7 +1654,7 @@ export default function Home() {
                 <div className="p-6 font-mono text-sm leading-relaxed overflow-x-auto">
                   <div className="text-zinc-600">#!/bin/bash</div>
                   <div className="text-zinc-600">
-                    # Tiger Bot API Key Rotation Script
+                    # Tiger Claw API Key Rotation Script
                   </div>
                   <div className="text-zinc-600">
                     # Provider:{" "}
@@ -1735,7 +1735,7 @@ export default function Home() {
                   <div className="mt-3 text-zinc-600"># Restart the bot</div>
                   <div>
                     <span className="text-zinc-400">docker compose restart </span>
-                    <span className="text-orange-400">tiger-bot</span>
+                    <span className="text-orange-400">tiger-claw</span>
                   </div>
                   <div className="mt-3">
                     <span className="text-zinc-400">echo </span>
@@ -1749,7 +1749,7 @@ export default function Home() {
                   </div>
                   <div>
                     <span className="text-zinc-400">echo </span>
-                    <span className="text-emerald-400">"Tiger Bot is now running on YOUR key."</span>
+                    <span className="text-emerald-400">"Tiger Claw is now running on YOUR key."</span>
                   </div>
                 </div>
               </motion.div>
@@ -1806,7 +1806,7 @@ export default function Home() {
                     {
                       time: "24 Hours",
                       channel: "Email",
-                      message: "Your Tiger Bot is running great! Reminder: you have 48 hours left on the free trial. Here's how to add your own API key.",
+                      message: "Your Tiger Claw is running great! Reminder: you have 48 hours left on the free trial. Here's how to add your own API key.",
                       icon: Mail,
                     },
                     {
@@ -1818,7 +1818,7 @@ export default function Home() {
                     {
                       time: "64 Hours",
                       channel: "SMS (Urgent)",
-                      message: "8 hours left on your free trial. One click to keep your Tiger Bot running. Tap here to rotate your key now.",
+                      message: "8 hours left on your free trial. One click to keep your Tiger Claw running. Tap here to rotate your key now.",
                       icon: AlertTriangle,
                     },
                   ].map((reminder, i) => (
@@ -1905,7 +1905,7 @@ export default function Home() {
                       </h4>
                     </div>
                     <p className="text-zinc-400 text-sm">
-                      Your Tiger Bot is configured and running. Scrolling you to the Aftercare &amp; Retention system...
+                      Your Tiger Claw is configured and running. Scrolling you to the Aftercare &amp; Retention system...
                     </p>
                   </motion.div>
                 )}
@@ -2004,7 +2004,7 @@ export default function Home() {
 
                 <div className="space-y-3">
                   <h4 className="text-xs font-semibold tracking-[0.2em] uppercase text-zinc-500 mb-3">
-                    Tiger Bot Actions
+                    Tiger Claw Actions
                   </h4>
                   {flywheelStages[activeStage].actions.map((action, i) => (
                     <motion.div
@@ -2190,7 +2190,7 @@ export default function Home() {
                 <span className="text-black/60">Campaigns</span>
               </SectionHeading>
               <p className="mt-4 text-lg text-black/70 max-w-2xl leading-relaxed">
-                Template sequences the Tiger Bot customizes using the owner's brand voice
+                Template sequences the Tiger Claw customizes using the owner's brand voice
                 and the prospect's pain points. Every gig economy worker gets a campaign
                 tailored to their world.
               </p>
@@ -2332,7 +2332,7 @@ export default function Home() {
               </SectionHeading>
               <p className="mt-6 text-lg text-zinc-400 max-w-2xl leading-relaxed">
                 The numbers don't lie. Most people quit before the sale ever happens.
-                Tiger Bot never quits. It follows up relentlessly through contacts 5
+                Tiger Claw never quits. It follows up relentlessly through contacts 5
                 through 12 — where 80% of all sales are made.
               </p>
             </AnimateIn>
@@ -2450,7 +2450,7 @@ export default function Home() {
               </AnimateIn>
             </div>
 
-            {/* Tiger Bot Advantage Callout */}
+            {/* Tiger Claw Advantage Callout */}
             <AnimateIn delay={0.3}>
               <div className="mt-16 bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl p-8 md:p-12">
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
@@ -2462,10 +2462,10 @@ export default function Home() {
                       className="text-3xl md:text-4xl text-black mb-2"
                       style={{ fontFamily: '"Bebas Neue", sans-serif' }}
                     >
-                      Tiger Bot Never Quits at Contact #2
+                      Tiger Claw Never Quits at Contact #2
                     </h3>
                     <p className="text-black/70 leading-relaxed">
-                      While 48% of salespeople never follow up at all, Tiger Bot executes
+                      While 48% of salespeople never follow up at all, Tiger Claw executes
                       a minimum 12-touch nurture sequence across email, SMS, and social
                       media. It operates in the zone where 80% of sales are made —
                       automatically, relentlessly, and without human fatigue.
@@ -2492,7 +2492,7 @@ export default function Home() {
                 </span>
               </SectionHeading>
               <p className="mt-6 text-lg text-zinc-400 max-w-2xl leading-relaxed">
-                Every nurture sequence Tiger Bot sends is engineered around these
+                Every nurture sequence Tiger Claw sends is engineered around these
                 proven psychological principles. This is not random outreach — it is
                 a science-backed system designed to influence and convert.
               </p>
@@ -2567,7 +2567,7 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Right: How Tiger Bot Uses It */}
+              {/* Right: How Tiger Claw Uses It */}
               <div className="bg-gradient-to-br from-orange-500/10 to-transparent border border-orange-500/20 rounded-2xl p-8">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-lg bg-orange-500 flex items-center justify-center">
@@ -2577,7 +2577,7 @@ export default function Home() {
                     className="text-xl text-white"
                     style={{ fontFamily: '"Bebas Neue", sans-serif' }}
                   >
-                    How Tiger Bot Applies This
+                    How Tiger Claw Applies This
                   </h4>
                 </div>
                 <p className="text-zinc-300 leading-relaxed">
@@ -2623,7 +2623,7 @@ export default function Home() {
               </span>
             </SectionHeading>
             <p className="mt-6 text-lg text-zinc-400 max-w-2xl leading-relaxed">
-              The sale is not the finish line — it is the starting line. Tiger Bot's aftercare
+              The sale is not the finish line — it is the starting line. Tiger Claw's aftercare
               system turns every converted customer into a referral engine, a repeat buyer,
               and a brand advocate. This is where the flywheel accelerates.
             </p>
@@ -2653,7 +2653,7 @@ export default function Home() {
                 title: "Referral Campaigns",
                 subtitle: "Turn customers into recruiters",
                 color: "from-orange-500 to-amber-500",
-                description: "Every happy customer knows 5-10 people who need the same solution. Tiger Bot activates that network with incentivized, automated referral sequences.",
+                description: "Every happy customer knows 5-10 people who need the same solution. Tiger Claw activates that network with incentivized, automated referral sequences.",
                 steps: [
                   { timing: "Day 7", action: "Soft ask: 'Know anyone who could use this?'", channel: "SMS" },
                   { timing: "Day 14", action: "Referral link with tracking + incentive offer", channel: "Email" },
@@ -2916,7 +2916,7 @@ export default function Home() {
       {/* ═══════ WEBHOOK SETUP GUIDE ═══════ */}
       <WebhookSetupGuide />
 
-      {/* ═══════ CTA — GET YOUR TIGER BOT ═══════ */}
+      {/* ═══════ CTA — GET YOUR TIGER CLAW ═══════ */}
       <section className="relative py-32 overflow-hidden">
         {/* Background glow */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#09090b] via-orange-950/20 to-[#09090b]" />
@@ -2945,7 +2945,7 @@ export default function Home() {
               </h2>
 
               <p className="text-zinc-400 text-lg md:text-xl max-w-xl mx-auto mb-4" style={{ fontFamily: '"Outfit", sans-serif' }}>
-                Your Tiger Bot is waiting. One tap and it takes over from here.
+                Your Tiger Claw is waiting. One tap and it takes over from here.
               </p>
 
               <p className="text-zinc-600 text-sm mb-10">
@@ -2992,7 +2992,7 @@ export default function Home() {
                   className="inline-flex items-center gap-2 border border-zinc-700 text-zinc-300 font-medium px-8 py-5 rounded-xl transition-all duration-300 hover:border-orange-500/40 hover:text-orange-400"
                 >
                   <DollarSign className="w-4 h-4" />
-                  <span>Don't have one? Buy a Tiger Bot</span>
+                  <span>Don't have one? Buy a Tiger Claw</span>
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </div>
@@ -3028,7 +3028,7 @@ export default function Home() {
                 className="text-2xl tracking-wider text-white"
                 style={{ fontFamily: '"Bebas Neue", sans-serif' }}
               >
-                Tiger Bot
+                Tiger Claw
               </span>
             </div>
             <p className="text-sm text-zinc-600">

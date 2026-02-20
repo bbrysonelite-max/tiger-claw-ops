@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Scout - Provision Customer Bots + Send Welcome Email
+ * Tiger Claw Scout - Provision Customer Bots + Send Welcome Email
  * Pure CommonJS script - runs with node directly
  *
  * Flow per customer:
@@ -25,21 +25,21 @@ const path = require('path');
 // ── Config ──────────────────────────────────────────────────────────────────
 
 const CUSTOMERS = [
-  { name: 'Nancy Lim', email: 'nancynutcha@gmail.com', bot: 'Tiger_5g6swcaw_bot' },
-  { name: 'Phaitoon S.', email: 'phaitoon2010@gmail.com', bot: 'Tiger_urkz4hwl_bot' },
-  { name: 'Tarida', email: 'taridadew@gmail.com', bot: 'Tiger_d8a671af_bot' },
-  { name: 'Lily Vergara', email: 'lilyrosev@gmail.com', bot: 'Tiger_d0aa5717_bot' },
-  { name: 'Theera', email: 'theeraphet@gmail.com', bot: 'Tiger_Theera_bot' },
-  { name: 'Chana', email: 'chanaloha7777@gmail.com', bot: 'Tiger_ga2jqc3a_bot' },
-  { name: 'John & Noon', email: 'johnnoon.biz@gmail.com', bot: 'Tiger_vqp62i4p_bot' },
-  { name: 'Debbie Cameron', email: 'justagreatdirector@outlook.com', bot: 'Tiger_Debbie_bot' },
-  { name: 'Pat Sullivan', email: 'pat@contatta.com', bot: 'Tiger_17rmwyej_bot' },
-  { name: 'Brent Bryson', email: 'bbrysonelite@gmail.com', bot: 'Tiger_Brent_bot' },
+  { name: 'Nancy Lim', email: 'nancynutcha@gmail.com', bot: 'Claw_5g6swcaw' },
+  { name: 'Phaitoon S.', email: 'phaitoon2010@gmail.com', bot: 'Claw_urkz4hwl' },
+  { name: 'Tarida', email: 'taridadew@gmail.com', bot: 'Claw_d8a671af' },
+  { name: 'Lily Vergara', email: 'lilyrosev@gmail.com', bot: 'Claw_d0aa5717' },
+  { name: 'Theera', email: 'theeraphet@gmail.com', bot: 'Claw_Theera' },
+  { name: 'Chana', email: 'chanaloha7777@gmail.com', bot: 'Claw_ga2jqc3a' },
+  { name: 'John & Noon', email: 'johnnoon.biz@gmail.com', bot: 'Claw_vqp62i4p' },
+  { name: 'Debbie Cameron', email: 'justagreatdirector@outlook.com', bot: 'Claw_Debbie' },
+  { name: 'Pat Sullivan', email: 'pat@contatta.com', bot: 'Claw_17rmwyej' },
+  { name: 'Brent Bryson', email: 'bbrysonelite@gmail.com', bot: 'Claw_Brent' },
 ];
 
 const DELAY_SECONDS = 30;
 const GATEWAY_URL = 'https://api.botcraftwrks.ai';
-const SENDER = { email: 'noreply@botcraftwrks.ai', name: 'Tiger Bot Scout' };
+const SENDER = { email: 'noreply@botcraftwrks.ai', name: 'Tiger Claw Scout' };
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -77,12 +77,12 @@ async function sendWelcomeEmail(brevoApiKey, customerName, customerEmail, botUse
   const payload = {
     sender: SENDER,
     to: [{ email: customerEmail, name: customerName }],
-    subject: `${customerName}, your Tiger Bot is ready — open Telegram to start`,
+    subject: `${customerName}, your Tiger Claw is ready — open Telegram to start`,
     htmlContent,
     textContent: [
       `Hi ${customerName},`,
       '',
-      'Your Tiger Bot is ready!',
+      'Your Tiger Claw is ready!',
       '',
       `Open it in Telegram: ${telegramUrl}`,
       '',
@@ -93,7 +93,7 @@ async function sendWelcomeEmail(brevoApiKey, customerName, customerEmail, botUse
       '',
       'Total setup: under 5 minutes. Everything happens inside Telegram.',
       '',
-      '— Tiger Bot Scout',
+      '— Tiger Claw Scout',
     ].join('\n'),
   };
 
@@ -126,7 +126,7 @@ async function createBot(client, customerName) {
   await client.sendMessage('BotFather', { message: '/newbot' });
   await sleep(2);
 
-  const displayName = `TigerBot for ${customerName}`;
+  const displayName = `TigerClaw for ${customerName}`;
   await client.sendMessage('BotFather', { message: displayName });
   await sleep(2);
 
@@ -154,7 +154,7 @@ async function createBot(client, customerName) {
 
 async function main() {
   console.log('='.repeat(60));
-  console.log('Tiger Bot Scout - Provision + Welcome Email');
+  console.log('Tiger Claw Scout - Provision + Welcome Email');
   console.log('='.repeat(60));
   console.log(`Customers: ${CUSTOMERS.length}`);
   console.log(`Delay: ${DELAY_SECONDS}s between bots`);
@@ -163,7 +163,7 @@ async function main() {
   // Validate env
   const sessionString = process.env.TELEGRAM_SESSION_STRING;
   const brevoApiKey = process.env.BREVO_API_KEY;
-  const onboardingSiteUrl = process.env.ONBOARDING_SITE_URL || 'https://tiger-bot-flywheel.manus.space';
+  const onboardingSiteUrl = process.env.ONBOARDING_SITE_URL || 'https://tiger-claw-flywheel.manus.space';
 
   if (!sessionString) {
     console.error('ERROR: TELEGRAM_SESSION_STRING not set');

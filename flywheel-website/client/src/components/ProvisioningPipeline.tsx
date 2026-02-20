@@ -377,7 +377,7 @@ export default function ProvisioningPipeline() {
                   <PipelineStep
                     icon={Bot}
                     label="Bot Provisioned"
-                    sublabel="@Tiger_{name}_bot"
+                    sublabel="@Claw_{name}"
                     color="emerald"
                     delay={0.35}
                     pulse
@@ -421,7 +421,7 @@ export default function ProvisioningPipeline() {
                   <PipelineStep
                     icon={Bot}
                     label="Bot Provisioned"
-                    sublabel="@Tiger_{name}_bot"
+                    sublabel="@Claw_{name}"
                     color="emerald"
                     delay={0.35}
                     pulse
@@ -470,7 +470,7 @@ export default function ProvisioningPipeline() {
                   <PipelineStep
                     icon={Bot}
                     label="Bot Provisioned"
-                    sublabel="@Tiger_{name}_bot"
+                    sublabel="@Claw_{name}"
                     color="emerald"
                     delay={0.35}
                     pulse
@@ -514,7 +514,7 @@ export default function ProvisioningPipeline() {
                   <PipelineStep
                     icon={Bot}
                     label="Bot Provisioned"
-                    sublabel="@Tiger_{name}_bot"
+                    sublabel="@Claw_{name}"
                     color="emerald"
                     delay={0.35}
                     pulse
@@ -684,7 +684,7 @@ export default function ProvisioningPipeline() {
                 <TimelineEvent
                   time="T+30s"
                   event="Bot is live on Telegram"
-                  detail="@Tiger_{name}_bot active with brain, memory, and ICP loaded"
+                  detail="@Claw_{name} active with brain, memory, and ICP loaded"
                   icon={Bot}
                   color="emerald"
                 />
@@ -751,7 +751,7 @@ export default function ProvisioningPipeline() {
                 <TimelineEvent
                   time="T+30s"
                   event="Trial bot is live on Telegram"
-                  detail="@Tiger_{name}_bot active with trial limits configured"
+                  detail="@Claw_{name} active with trial limits configured"
                   icon={Bot}
                   color="emerald"
                 />

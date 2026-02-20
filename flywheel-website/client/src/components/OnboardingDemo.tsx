@@ -1,5 +1,5 @@
 /**
- * OnboardingDemo — Interactive walkthrough of the full Tiger Bot customer journey
+ * OnboardingDemo — Interactive walkthrough of the full Tiger Claw customer journey
  * Design: "Predator's Path" dark theme, orange accents
  * 5 stages: Purchase → Bot Provisioned → Email Arrives → Telegram Chat → Bot Goes Live
  */
@@ -97,7 +97,7 @@ interface ChatMessage {
 }
 
 const INTERVIEW_1_MESSAGES: ChatMessage[] = [
-  { sender: "bot", text: "Welcome! I'm your Tiger Bot. Let's get you set up in under 5 minutes.", delay: 0 },
+  { sender: "bot", text: "Welcome! I'm your Tiger Claw. Let's get you set up in under 5 minutes.", delay: 0 },
   { sender: "bot", text: "First, what's your name and what do you do?", delay: 800 },
   { sender: "user", text: "I'm Sarah, I sell health supplements in Bangkok", delay: 2000 },
   { sender: "bot", text: "Great to meet you, Sarah! What company or brand are you with?", delay: 3000 },
@@ -114,7 +114,7 @@ const INTERVIEW_2_MESSAGES: ChatMessage[] = [
   { sender: "user", text: "They want to lose weight but don't have time for the gym", delay: 4000 },
   { sender: "bot", text: "Where do these people hang out online?", delay: 5200 },
   { sender: "user", text: "Facebook groups, LINE groups, Instagram health pages", delay: 6500 },
-  { sender: "bot", text: "That's everything I need. Your Tiger Bot is now configured and going live!", delay: 7800 },
+  { sender: "bot", text: "That's everything I need. Your Tiger Claw is now configured and going live!", delay: 7800 },
 ];
 
 /* ─── Stage Content Renderers ─── */
@@ -131,7 +131,7 @@ function PurchaseStage() {
             <div className="w-3 h-3 rounded-full bg-red-500/60" />
             <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
             <div className="w-3 h-3 rounded-full bg-green-500/60" />
-            <span className="ml-3 text-xs text-zinc-500 font-mono">stan.store/tigerbot</span>
+            <span className="ml-3 text-xs text-zinc-500 font-mono">stan.store/tigerclaw</span>
           </div>
           <div className="p-8 text-center">
             <div className="text-4xl mb-3">🐯</div>
@@ -139,7 +139,7 @@ function PurchaseStage() {
               className="text-2xl font-bold text-white mb-2"
               style={{ fontFamily: '"Bebas Neue", sans-serif' }}
             >
-              Tiger Bot — AI Prospecting Agent
+              Tiger Claw — AI Prospecting Agent
             </h4>
             <p className="text-zinc-400 text-sm mb-6">
               Your personal AI employee that finds, contacts, and nurtures leads 24/7
@@ -250,7 +250,7 @@ function ProvisioningStage() {
               animate={{ opacity: 1 }}
             >
               <Sparkles className="w-4 h-4" />
-              @Tiger_Sarah_bot is ready — 15 seconds total
+              @Claw_Sarah is ready — 15 seconds total
             </motion.div>
           )}
         </div>
@@ -286,11 +286,11 @@ function EmailStage() {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="font-bold text-white text-sm">Tiger Bot Scout</span>
+                  <span className="font-bold text-white text-sm">Tiger Claw</span>
                   <span className="text-xs text-zinc-500">just now</span>
                 </div>
                 <p className="font-semibold text-blue-300 text-sm">
-                  Sarah, your Tiger Bot is ready — open Telegram to start
+                  Sarah, your Tiger Claw is ready — open Telegram to start
                 </p>
                 <p className="text-zinc-500 text-xs mt-1 truncate">
                   One tap opens Telegram. Your bot handles everything from there...
@@ -312,10 +312,10 @@ function EmailStage() {
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-sm">
                   🐯
                 </div>
-                <span className="font-bold text-white text-sm">Tiger Bot Scout</span>
+                <span className="font-bold text-white text-sm">Tiger Claw</span>
               </div>
               <p className="text-zinc-300 text-sm font-medium">
-                Sarah, your Tiger Bot is ready — open Telegram to start
+                Sarah, your Tiger Claw is ready — open Telegram to start
               </p>
             </div>
             <div className="p-6 text-center">
@@ -323,13 +323,13 @@ function EmailStage() {
                 Welcome — You're In
               </p>
               <h4 className="text-xl font-bold text-white mb-1">Sarah's</h4>
-              <h4 className="text-xl font-bold text-orange-400 mb-4">Tiger Bot is Ready</h4>
+              <h4 className="text-xl font-bold text-orange-400 mb-4">Tiger Claw is Ready</h4>
               <p className="text-zinc-400 text-sm mb-6">
                 One tap opens Telegram. Your bot handles everything from there.
               </p>
               <div className="bg-[#0088cc] text-white font-bold py-3 px-6 rounded-xl inline-flex items-center gap-2 text-sm">
                 <Send className="w-4 h-4" />
-                OPEN YOUR TIGER BOT IN TELEGRAM
+                OPEN YOUR TIGER CLAW IN TELEGRAM
               </div>
               <div className="flex justify-center gap-4 mt-6">
                 {[
@@ -417,7 +417,7 @@ function TelegramStage() {
               🐯
             </div>
             <div>
-              <p className="text-white text-sm font-semibold">Tiger Bot</p>
+              <p className="text-white text-sm font-semibold">Tiger Claw</p>
               <p className="text-[10px] text-green-400">online</p>
             </div>
           </div>
@@ -535,7 +535,7 @@ function LiveStage() {
           <div className="bg-gradient-to-r from-orange-500/10 to-amber-500/10 px-5 py-4 border-b border-orange-500/10 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Bot className="w-5 h-5 text-orange-400" />
-              <span className="text-sm font-bold text-white">@Tiger_Sarah_bot</span>
+              <span className="text-sm font-bold text-white">@Claw_Sarah</span>
             </div>
             <div className="flex items-center gap-2">
               {scanning ? (

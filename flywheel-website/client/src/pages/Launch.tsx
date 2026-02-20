@@ -1,6 +1,6 @@
 /**
  * ═══════════════════════════════════════════════════════════════
- *  PROMOTIONAL LANDING PAGE — start.thegoods.ai
+ *  PROMOTIONAL LANDING PAGE — start.tigerclaw.io
  *  Design: Dark cinematic, psychology-driven sales page
  *  Psychology: Pain → Dream → Bridge → Proof → Benefits → Price → CTA
  *  Price: $149/mo (anchored against $247), 72h free trial
@@ -263,7 +263,7 @@ export default function Launch() {
             >
               <img
                 src={HERO_IMG}
-                alt="Tiger Bot — AI Prospecting Agent"
+                alt="Tiger Claw — AI Prospecting Agent"
                 className="w-full max-w-xl mx-auto"
                 style={{
                   filter: "drop-shadow(0 0 80px oklch(0.75 0.18 55 / 0.25))",
@@ -359,7 +359,7 @@ export default function Launch() {
         </div>
       </section>
 
-      {/* ═══ SECTION 3: THE BRIDGE — Meet Tiger Bot ═══ */}
+      {/* ═══ SECTION 3: THE BRIDGE — Meet Tiger Claw ═══ */}
       <section className="relative py-24 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-black via-[oklch(0.07_0.005_250)] to-black" />
         <div className="relative z-10 container max-w-5xl mx-auto px-4">
@@ -381,7 +381,7 @@ export default function Launch() {
                   backgroundImage: "linear-gradient(135deg, oklch(0.85 0.14 70), oklch(0.75 0.18 55), oklch(0.60 0.22 30))",
                 }}
               >
-                TIGER BOT
+                TIGER CLAW
               </span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
@@ -403,13 +403,13 @@ export default function Launch() {
               {
                 step: "02",
                 title: "Quick Chat on Telegram",
-                desc: "Your Tiger Bot messages you. It asks 2 simple questions: Who are you? Who's your ideal customer?",
+                desc: "Your Tiger Claw messages you. It asks 2 simple questions: Who are you? Who's your ideal customer?",
                 icon: MessageSquare,
               },
               {
                 step: "03",
                 title: "Bot Goes Hunting",
-                desc: "Tiger Bot starts scanning 40+ platforms, finding prospects, and reaching out. You get leads delivered.",
+                desc: "Tiger Claw starts scanning 40+ platforms, finding prospects, and reaching out. You get leads delivered.",
                 icon: Target,
               },
             ].map((item, i) => (
@@ -451,7 +451,7 @@ export default function Launch() {
           <blockquote className="space-y-6">
             <div className="text-6xl text-[oklch(0.75_0.18_55/0.3)] leading-none">"</div>
             <p className="text-xl sm:text-2xl lg:text-3xl font-medium leading-relaxed text-foreground/90 -mt-8">
-              Tiger Bot represents the future of relationship management. What took teams of people
+              Tiger Claw represents the future of relationship management. What took teams of people
               and months of effort can now happen automatically, intelligently, and at scale.
             </p>
             <footer className="space-y-2">
@@ -475,7 +475,7 @@ export default function Launch() {
               className="text-sm font-bold tracking-[0.3em] uppercase"
               style={{ color: "oklch(0.75 0.18 55)" }}
             >
-              What Tiger Bot Does For You
+              What Tiger Claw Does For You
             </p>
             <h2
               className="text-4xl sm:text-5xl font-bold"
@@ -499,7 +499,7 @@ export default function Launch() {
               {
                 icon: Target,
                 title: "Find prospects while you sleep",
-                desc: "Tiger Bot scans LinkedIn, forums, and 40+ platforms around the clock. You wake up to warm leads.",
+                desc: "Tiger Claw scans LinkedIn, forums, and 40+ platforms around the clock. You wake up to warm leads.",
               },
               {
                 icon: Brain,
@@ -514,12 +514,12 @@ export default function Launch() {
               {
                 icon: Timer,
                 title: "Replace 4 hours of daily work",
-                desc: "One Tiger Bot does what used to take half your day. Manual prospecting is over.",
+                desc: "One Tiger Claw does what used to take half your day. Manual prospecting is over.",
               },
               {
                 icon: Globe,
                 title: "Works wherever your people are",
-                desc: "LINE in Thailand, WhatsApp in Europe, LinkedIn globally — Tiger Bot speaks the language of your market.",
+                desc: "LINE in Thailand, WhatsApp in Europe, LinkedIn globally — Tiger Claw speaks the language of your market.",
               },
               {
                 icon: TrendingUp,
@@ -589,7 +589,7 @@ export default function Launch() {
               CHOOSE YOUR PLAN
             </h2>
             <p className="text-muted-foreground text-lg">
-              Both plans include the full Tiger Bot. No feature gates. No gotchas.
+              Both plans include the full Tiger Claw. No feature gates. No gotchas.
             </p>
           </div>
 
@@ -615,7 +615,7 @@ export default function Launch() {
 
                 <ul className="space-y-3">
                   {[
-                    "Full Tiger Bot — zero limits",
+                    "Full Tiger Claw — zero limits",
                     "All 40+ platform sources active",
                     "10-touch nurture sequence",
                     "72 hours of live prospecting",
@@ -651,7 +651,7 @@ export default function Launch() {
               <div className="space-y-6">
                 <div>
                   <p className="text-sm font-bold tracking-widest uppercase text-[oklch(0.75_0.18_55)]">
-                    Tiger Bot Pro
+                    Tiger Claw Pro
                   </p>
                   <div className="flex items-baseline gap-3 mt-2">
                     <span
@@ -686,7 +686,7 @@ export default function Launch() {
                 <GlowRing>
                   <a href={STRIPE_PAID_URL} target="_blank" rel="noopener noreferrer" className="block">
                     <Button className="relative z-10 w-full h-12 text-base font-bold rounded-xl bg-[oklch(0.75_0.18_55)] hover:bg-[oklch(0.80_0.20_55)] text-black transition-all duration-300">
-                      Get Tiger Bot Pro — $149/mo
+                      Get Tiger Claw Pro — $149/mo
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </a>
@@ -702,7 +702,7 @@ export default function Launch() {
               <div className="text-left">
                 <p className="font-bold text-sm">14-Day Money-Back Guarantee</p>
                 <p className="text-xs text-muted-foreground">
-                  If Tiger Bot doesn't find you qualified prospects within 14 days,
+                  If Tiger Claw doesn't find you qualified prospects within 14 days,
                   we'll refund every penny. No questions asked. No hoops. Just email us.
                 </p>
               </div>
@@ -730,7 +730,7 @@ export default function Launch() {
           >
             EVERY MINUTE WITHOUT
             <br />
-            TIGER BOT IS A MINUTE
+            TIGER CLAW IS A MINUTE
             <br />
             <span
               className="bg-clip-text text-transparent"
@@ -789,13 +789,13 @@ export default function Launch() {
                 color: "oklch(0.75 0.18 55)",
               }}
             >
-              TIGER BOT
+              TIGER CLAW
             </span>
             <span>by The Goods AI</span>
           </div>
           <div className="flex gap-6">
             <a
-              href="https://thegoods.ai"
+              href="https://tigerclaw.io"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-[oklch(0.75_0.18_55)] transition-colors"

@@ -4,7 +4,7 @@
  *
  * Required env vars:
  *   BREVO_API_KEY        - Brevo (Sendinblue) transactional email key
- *   ONBOARDING_SITE_URL  - Base URL of the onboarding site (default: https://thegoods.ai)
+ *   ONBOARDING_SITE_URL  - Base URL of the onboarding site (default: https://tigerclaw.io)
  */
 
 require('dotenv').config();
@@ -14,20 +14,20 @@ const path = require('path');
 // ── Config ──────────────────────────────────────────────────────────────────
 
 const CUSTOMERS = [
-  { name: 'Nancy Lim', email: 'nancynutcha@gmail.com', bot: 'Tiger_5g6swcaw_bot' },
-  { name: 'Phaitoon S.', email: 'phaitoon2010@gmail.com', bot: 'Tiger_urkz4hwl_bot' },
-  { name: 'Tarida', email: 'taridadew@gmail.com', bot: 'Tiger_d8a671af_bot' },
-  { name: 'Lily Vergara', email: 'lilyrosev@gmail.com', bot: 'Tiger_d0aa5717_bot' },
-  { name: 'Theera', email: 'theeraphet@gmail.com', bot: 'Tiger_Theera_bot' },
-  { name: 'Chana', email: 'chanaloha7777@gmail.com', bot: 'Tiger_ga2jqc3a_bot' },
-  { name: 'John & Noon', email: 'johnnoon.biz@gmail.com', bot: 'Tiger_vqp62i4p_bot' },
-  { name: 'Debbie Cameron', email: 'justagreatdirector@outlook.com', bot: 'Tiger_Debbie_bot' },
-  { name: 'Pat Sullivan', email: 'pat@contatta.com', bot: 'Tiger_17rmwyej_bot' },
-  { name: 'Brent Bryson', email: 'bbrysonelite@gmail.com', bot: 'Tiger_Brent_bot' },
+  { name: 'Nancy Lim', email: 'nancynutcha@gmail.com', bot: 'Claw_5g6swcaw' },
+  { name: 'Phaitoon S.', email: 'phaitoon2010@gmail.com', bot: 'Claw_urkz4hwl' },
+  { name: 'Tarida', email: 'taridadew@gmail.com', bot: 'Claw_d8a671af' },
+  { name: 'Lily Vergara', email: 'lilyrosev@gmail.com', bot: 'Claw_d0aa5717' },
+  { name: 'Theera', email: 'theeraphet@gmail.com', bot: 'Claw_Theera' },
+  { name: 'Chana', email: 'chanaloha7777@gmail.com', bot: 'Claw_ga2jqc3a' },
+  { name: 'John & Noon', email: 'johnnoon.biz@gmail.com', bot: 'Claw_vqp62i4p' },
+  { name: 'Debbie Cameron', email: 'justagreatdirector@outlook.com', bot: 'Claw_Debbie' },
+  { name: 'Pat Sullivan', email: 'pat@contatta.com', bot: 'Claw_17rmwyej' },
+  { name: 'Brent Bryson', email: 'bbrysonelite@gmail.com', bot: 'Claw_Brent' },
 ];
 
-const SENDER = { email: 'noreply@botcraftwrks.ai', name: 'Tiger Bot Scout' };
-const ONBOARDING_SITE_URL = process.env.ONBOARDING_SITE_URL || 'https://thegoods.ai';
+const SENDER = { email: 'noreply@botcraftwrks.ai', name: 'Tiger Claw Scout' };
+const ONBOARDING_SITE_URL = process.env.ONBOARDING_SITE_URL || 'https://tigerclaw.io';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -55,7 +55,7 @@ async function sendWelcomeEmail(brevoApiKey, customerName, customerEmail, botUse
   const payload = {
     sender: SENDER,
     to: [{ email: customerEmail, name: customerName }],
-    subject: `${customerName}, your Tiger Bot is ready — open Telegram to start`,
+    subject: `${customerName}, your Tiger Claw is ready — open Telegram to start`,
     htmlContent,
   };
 
@@ -81,7 +81,7 @@ async function sendWelcomeEmail(brevoApiKey, customerName, customerEmail, botUse
 
 async function main() {
   console.log('='.repeat(60));
-  console.log('TIGER BOT SCOUT — Send Welcome Emails');
+  console.log('TIGER CLAW SCOUT — Send Welcome Emails');
   console.log('='.repeat(60));
   console.log(`Customers: ${CUSTOMERS.length}`);
   console.log(`Onboarding Site: ${ONBOARDING_SITE_URL}`);

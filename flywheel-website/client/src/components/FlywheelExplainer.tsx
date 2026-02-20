@@ -1,5 +1,5 @@
 /**
- * FlywheelExplainer — Visual deep-dive into the 5 stages of the Tiger Bot flywheel.
+ * FlywheelExplainer — Visual deep-dive into the 5 stages of the Tiger Claw flywheel.
  * Design: "Predator's Path" — Bold editorial, black/orange, oversized display type
  */
 
@@ -63,7 +63,7 @@ const stages: StageDetail[] = [
     borderColor: "border-orange-500/30",
     question: "How does a lead enter the system?",
     answer:
-      "Tiger Bot scans LinkedIn, regional platforms, and online communities 24/7 — looking for people who match your Ideal Customer Profile. It watches for keywords, pain points, and buying signals. When it finds a match, that person becomes a lead.",
+      "Tiger Claw scans LinkedIn, regional platforms, and online communities 24/7 — looking for people who match your Ideal Customer Profile. It watches for keywords, pain points, and buying signals. When it finds a match, that person becomes a lead.",
     whatBotDoes: [
       "Scans LinkedIn for ICP keywords and pain points",
       "Monitors regional platforms (LINE groups, Pantip, WhatsApp communities)",
@@ -81,7 +81,7 @@ const stages: StageDetail[] = [
       { label: "Sources Monitored", value: "12+", icon: Eye },
     ],
     realWorldExample:
-      "A hair stylist in Bangkok sets up Tiger Bot with keywords like 'need haircut', 'wedding hair', 'hair color change'. The bot finds 47 prospects on LINE and Pantip in the first week — people actively talking about needing hair services.",
+      "A hair stylist in Bangkok sets up Tiger Claw with keywords like 'need haircut', 'wedding hair', 'hair color change'. The bot finds 47 prospects on LINE and Pantip in the first week — people actively talking about needing hair services.",
     duration: "Always running",
     feedsNext: "Matched leads flow into First Contact",
   },
@@ -95,7 +95,7 @@ const stages: StageDetail[] = [
     borderColor: "border-amber-500/30",
     question: "What happens when a lead is found?",
     answer:
-      "Tiger Bot doesn't spam. It makes a warm, personalized first touch — a connection request, a thoughtful comment on their content, or a direct message that references something specific about them. The goal is to start a real conversation, not pitch.",
+      "Tiger Claw doesn't spam. It makes a warm, personalized first touch — a connection request, a thoughtful comment on their content, or a direct message that references something specific about them. The goal is to start a real conversation, not pitch.",
     whatBotDoes: [
       "Sends personalized LinkedIn connection requests",
       "Comments on prospect's recent posts with genuine value",
@@ -125,9 +125,9 @@ const stages: StageDetail[] = [
     color: "text-yellow-400",
     gradient: "from-yellow-500 to-orange-400",
     borderColor: "border-yellow-500/30",
-    question: "How does Tiger Bot build trust?",
+    question: "How does Tiger Claw build trust?",
     answer:
-      "This is where the psychology kicks in. Tiger Bot runs a 10-touch, 30-day nurture sequence using proven persuasion principles — reciprocity, social proof, scarcity, authority. Each touch delivers value first, building trust before ever making an ask.",
+      "This is where the psychology kicks in. Tiger Claw runs a 10-touch, 30-day nurture sequence using proven persuasion principles — reciprocity, social proof, scarcity, authority. Each touch delivers value first, building trust before ever making an ask.",
     whatBotDoes: [
       "Sends a free gift (ebook, guide, tool) on Day 1 — Reciprocity",
       "Shares client success stories — Social Proof",
@@ -160,7 +160,7 @@ const stages: StageDetail[] = [
     borderColor: "border-orange-400/30",
     question: "What triggers the conversion?",
     answer:
-      "When a lead's engagement score crosses the threshold, Tiger Bot makes the ask. It sends a calendar booking link, a purchase page, or a signup form — timed perfectly when the prospect is warmest. No cold pitching. The prospect is ready.",
+      "When a lead's engagement score crosses the threshold, Tiger Claw makes the ask. It sends a calendar booking link, a purchase page, or a signup form — timed perfectly when the prospect is warmest. No cold pitching. The prospect is ready.",
     whatBotDoes: [
       "Monitors lead score for conversion-ready threshold",
       "Sends calendar booking link at optimal timing",
@@ -178,7 +178,7 @@ const stages: StageDetail[] = [
       { label: "Time to Convert", value: "22 days", icon: Clock },
     ],
     realWorldExample:
-      "After 3 weeks of value-first nurturing, the prospect asks 'How much for a full color treatment?' Tiger Bot immediately sends a booking link with a limited-time offer: 'Book this week and get a free deep conditioning treatment.'",
+      "After 3 weeks of value-first nurturing, the prospect asks 'How much for a full color treatment?' Tiger Claw immediately sends a booking link with a limited-time offer: 'Book this week and get a free deep conditioning treatment.'",
     duration: "Triggered by lead score",
     feedsNext: "New customers enter Retention & Learning",
   },
@@ -192,7 +192,7 @@ const stages: StageDetail[] = [
     borderColor: "border-red-500/30",
     question: "What happens after they buy?",
     answer:
-      "This is what makes it a flywheel, not a funnel. Every customer gets an automated welcome sequence, satisfaction check-ins, and referral requests. But here's the key: Tiger Bot learns from every interaction. What messages got replies? What timing worked? That data feeds back into Discovery, making the next cycle smarter and faster.",
+      "This is what makes it a flywheel, not a funnel. Every customer gets an automated welcome sequence, satisfaction check-ins, and referral requests. But here's the key: Tiger Claw learns from every interaction. What messages got replies? What timing worked? That data feeds back into Discovery, making the next cycle smarter and faster.",
     whatBotDoes: [
       "Sends automated welcome and onboarding sequence",
       "Schedules satisfaction check-ins at 7, 30, and 90 days",
@@ -211,7 +211,7 @@ const stages: StageDetail[] = [
       { label: "Bot Improvement", value: "+12%/mo", icon: Brain },
     ],
     realWorldExample:
-      "A satisfied client gets a Day 7 check-in: 'How's the new color holding up?' They reply with a photo. Tiger Bot asks if they'd share it as a testimonial. They agree. That testimonial becomes social proof in the next nurture sequence. The wheel spins faster.",
+      "A satisfied client gets a Day 7 check-in: 'How's the new color holding up?' They reply with a photo. Tiger Claw asks if they'd share it as a testimonial. They agree. That testimonial becomes social proof in the next nurture sequence. The wheel spins faster.",
     duration: "Ongoing — never stops",
     feedsNext: "Learnings loop back to Discovery → the wheel accelerates",
   },
@@ -403,11 +403,11 @@ function StageDetailCard({ stage }: { stage: StageDetail }) {
 
       {/* Two Column: Bot Does / Customer Sees */}
       <div className="grid md:grid-cols-2 gap-6 mb-8">
-        {/* What Tiger Bot Does */}
+        {/* What Tiger Claw Does */}
         <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-5">
           <h4 className="text-xs font-semibold tracking-[0.2em] uppercase text-zinc-500 mb-4 flex items-center gap-2">
             <Zap className="w-3.5 h-3.5 text-orange-400" />
-            What Tiger Bot Does
+            What Tiger Claw Does
           </h4>
           <div className="space-y-2.5">
             {stage.whatBotDoes.map((action, i) => (
@@ -559,11 +559,11 @@ function FunnelVsFlywheel() {
         </div>
       </div>
 
-      {/* Flywheel — The Tiger Bot Way */}
+      {/* Flywheel — The Tiger Claw Way */}
       <div className="bg-zinc-900/40 border border-orange-500/20 rounded-2xl p-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/5 rounded-full -translate-y-1/2 translate-x-1/2" />
         <h4 className="text-xs font-semibold tracking-[0.2em] uppercase text-orange-400 mb-4">
-          The Tiger Bot Way — Flywheel
+          The Tiger Claw Way — Flywheel
         </h4>
         <div className="flex items-center justify-center py-4">
           <div className="relative w-32 h-32">
@@ -654,7 +654,7 @@ export default function FlywheelExplainer() {
             </h2>
             <p className="mt-6 text-lg text-zinc-400 max-w-2xl leading-relaxed">
               A flywheel is not a funnel. A funnel loses energy at every step. A
-              flywheel <em>gains</em> it. Every customer Tiger Bot converts makes
+              flywheel <em>gains</em> it. Every customer Tiger Claw converts makes
               the next conversion easier, faster, and cheaper. Here's exactly how
               each stage works.
             </p>
@@ -754,7 +754,7 @@ export default function FlywheelExplainer() {
               </h3>
               <p className="text-zinc-400 max-w-xl mx-auto leading-relaxed">
                 The 100th conversation is smarter than the 1st. Every reply,
-                every open, every conversion teaches Tiger Bot what works for{" "}
+                every open, every conversion teaches Tiger Claw what works for{" "}
                 <em>your</em> specific audience. That's not a tool — that's a
                 compounding advantage.
               </p>
