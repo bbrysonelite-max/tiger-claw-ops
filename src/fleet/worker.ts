@@ -306,7 +306,7 @@ Return ONLY the script message text. No labels, no JSON, no explanation. Just th
 
   try {
     const response = await anthropic.messages.create({
-      model: 'claude-opus-4-5-20251101',
+      model: 'claude-sonnet-4-6',
       max_tokens: 400,
       messages: [{ role: 'user', content: prompt }],
     });
@@ -321,7 +321,7 @@ Return ONLY the script message text. No labels, no JSON, no explanation. Just th
         language: prospect.language || 'en',
         opening: script.split('\n')[0] || script.slice(0, 100),
         fullScript: script,
-        aiModel: 'claude-opus-4-5-20251101',
+        aiModel: 'claude-sonnet-4-6',
       },
     });
 
