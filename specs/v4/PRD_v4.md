@@ -1,605 +1,554 @@
-# Tiger Claw Scout — Product Requirements Document v4.0
+# Tiger Bot Scout — Product Requirements Document
 
-**Status:** DRAFT — For Owner Review
+**Version:** 4.0.0
 **Date:** 2026-02-19
-**Author:** Claude Code (for Brent Bryson review and approval)
-**Preceding version:** PRD v2.0.0 (2026-02-10)
+**Branch:** feat/script-engine-language-support
+**Status:** In Development
 
 ---
 
-## OWNER REVIEW INSTRUCTIONS
+## 1. EXECUTIVE SUMMARY
 
-Read every section. Mark anything wrong, missing, or that doesn't match your vision.
-Nothing gets built until you approve this document.
-Add comments with `[BRENT: ...]` anywhere you want to push back or add something.
+### 1.1 Product Vision
 
----
+Tiger Bot Scout is an AI-powered prospecting machine for network marketing distributors. Each paying customer receives their own dedicated Telegram bot that proactively hunts prospects, conducts onboarding interviews to learn the customer's business and ICP, and delivers qualified leads with personalized multi-language approach scripts.
 
-## 1. PRODUCT VISION
+### 1.2 Target Users
 
-### 1.1 The One Sentence
-
-> Tiger Claw Scout is a personal AI sales team for network marketing professionals — it finds your prospects, writes your scripts, coaches your objections, and gets smarter every time someone wins.
-
-### 1.2 The Shift From v1 → v4
-
-| v1 (What Was Built) | v4 (What We're Building) |
-|---|---|
-| Custom Telegram-only bot | OpenClaw skill — runs on any channel |
-| Finds prospect names, sends list | Finds, scores, scripts, tracks, learns |
-| English only | Thai, Vietnamese, Bahasa, Spanish, English |
-| Single-threaded worker | Sub-agents: Scout + Scripter + Coach + Hive |
-| No memory | Persistent memory — learns from every interaction |
-| Manual admin provisioning | Docker fleet — 1 command deploys a customer |
-| Custom infrastructure | OpenClaw handles all channel plumbing |
-
-### 1.3 Foundation: OpenClaw
-
-Tiger Claw Scout is built **on top of OpenClaw** — an open-source, MIT-licensed personal AI assistant platform with 212,000+ GitHub stars.
-
-OpenClaw gives us for free:
-- 20+ messaging channels (LINE, WhatsApp, Telegram, Signal, Discord, Slack, iMessage, and more)
-- Native cron scheduling (7 AM daily reports — one line of config)
-- Persistent memory across all conversations and sessions
-- Browser automation for web scraping
-- Sub-agent orchestration
-- Model failover (Claude primary, GPT-4 backup)
-- Docker deployment — one container per customer
-
-Tiger Claw Scout is the **skill** that sits on top and adds:
-- Prospect hunting across social platforms
-- Multi-language script generation
-- Hive Learning (cross-tenant shared intelligence)
-- Pipeline tracking and analytics
-- Network marketing coaching
-
-### 1.4 What We Publish
-
-Tiger Claw Scout will be published to **ClawHub** — the npm of AI agent skills — where 5,000+ skills are already listed. This gives the product organic distribution and discovery.
-
----
-
-## 2. TARGET CUSTOMER
-
-### 2.1 Primary Market
-
-Network marketing distributors in Southeast Asia:
-- Nu Skin distributors (Thailand, Vietnam, Indonesia, Malaysia)
+- Network marketing distributors (Nu Skin, Herbalife, Amway, and other MLM companies)
 - Direct sales professionals
-- MLM team builders
+- Coaches, tutors, fitness trainers, freelancers seeking clients
+- Located primarily in Thailand/Southeast Asia and the United States
 
-### 2.2 Secondary Market
-
-- Network marketing distributors in Latin America (Spanish)
-- English-speaking MLM professionals globally
-
-### 2.3 Customer Profile
-
-- Already use Telegram, LINE, or WhatsApp daily — no new app to learn
-- Spend 2-4 hours/day manually finding and messaging prospects
-- Struggle with cold outreach — low response rates, don't know what to say
-- Want to build a team, not just sell product
-- Non-technical — must be setup-free after provisioning
-
----
-
-## 3. BUSINESS MODEL
+### 1.3 Business Model
 
 | Item | Detail |
-|---|---|
+|------|--------|
 | Price | $99/month per customer |
-| Checkout | Stan Store → Stripe |
-| Delivery | Provisioned OpenClaw instance (Docker) |
-| Channels | Customer connects their own LINE/WhatsApp/Telegram |
-| Scale target | 100 customers = $9,900 MRR |
-| ClawHub listing | Free organic distribution |
+| Trial | Invite-based free trial (configurable days) |
+| Checkout | Stan Store → Stripe billing |
+| Delivery | Dedicated Telegram bot per customer |
+
+### 1.4 Core Value Proposition
+
+> "Your Tiger Bot interviews you, learns your business, then hunts prospects across LinkedIn, Reddit, and social communities — delivering qualified leads with personalized scripts in any language."
 
 ---
 
-## 4. ARCHITECTURE
+## 2. WHAT'S NEW IN V4
 
-### 4.1 High-Level
+### 2.1 v3 → v4 Key Changes
 
-```
-CUSTOMER
-  └─ Their preferred channel (LINE, WhatsApp, Telegram, etc.)
-       └─ OpenClaw Gateway (their dedicated Docker container)
-            └─ Tiger Claw Scout skill
-                 ├─ Scout Agent    — finds prospects
-                 ├─ Scripter Agent — generates scripts
-                 ├─ Coach Agent    — handles objections
-                 └─ Hive Agent     — learns and improves
+| Area | v3 | v4 |
+|------|----|----|
+| Architecture | Per-process PM2 bots | Queue-based virtual bot pattern (BullMQ + Redis) |
+| Bot Provisioning | Manual via BotFather | Auto-provisioned via MTProto/gramjs |
+| Onboarding | Static /start command | Conversational interview engine (2-stage) |
+| Prospect Hunting | Manual seed data | Proactive agent brain (web search + Reddit + LinkedIn) |
+| Script Delivery | Scheduled daily report | On-demand + event-driven |
+| AI Engine | OpenAI GPT-4 | Google Gemini 2.0 Flash (primary) + OpenAI (scripts) |
+| Channels | Telegram only | Telegram + SMS (Twilio) + Web Chat widget |
+| **Script Engine** | **Basic templates** | **Multi-language script engine (Thai + English + multilingual)** |
+| Trial System | None | Invite token + configurable trial period |
 
-ADMIN (Brent)
-  └─ Fleet dashboard
-       └─ 1 command provisions a new customer container
-       └─ Monitor all containers health / daily report status
-```
+### 2.2 This Feature Branch: Script Engine with Language Support
 
-### 4.2 Per-Customer Stack
+The `feat/script-engine-language-support` branch adds a dedicated **Script Engine** that:
 
-Each customer gets one Docker container running:
-- OpenClaw Gateway (their control plane)
-- Tiger Claw Scout skill (pre-installed)
-- Their channel credentials (LINE/WhatsApp/Telegram session)
-- Their data (prospects, scripts, Hive patterns) — isolated per customer
-
-### 4.3 Sub-Agent Architecture
-
-Tiger Claw Scout is not one monolithic agent. It is four coordinated sub-agents:
-
-| Agent | Role | Runs When |
-|---|---|---|
-| **Scout** | Finds prospects across platforms | Daily cron + on-demand |
-| **Scripter** | Generates personalized scripts | Customer requests /script |
-| **Coach** | Handles objections, advises strategy | Customer asks for help |
-| **Hive** | Extracts winning patterns, improves future scripts | On converted feedback |
-
-### 4.4 Channels Supported
-
-At launch:
-- **Telegram** — primary delivery channel (all markets)
-- **LINE** — critical for Thai market
-- **WhatsApp** — Vietnam, Indonesia, Malaysia, Latin America
-
-Roadmap (v4.1):
-- Signal, Discord, Slack
-
-### 4.5 Languages
-
-| Code | Language | Market |
-|---|---|---|
-| `th` | Thai | Thailand (primary) |
-| `vi` | Vietnamese | Vietnam |
-| `id` | Bahasa Indonesia | Indonesia |
-| `ms` | Bahasa Melayu | Malaysia |
-| `es` | Spanish | Latin America |
-| `en` | English | International / fallback |
-
-Language is detected automatically per-prospect from source platform and post content. Scripts are generated in the detected language. Bot responses to customers are in the customer's `preferredLanguage`.
+1. Detects the prospect's language from their profile data and source signals
+2. Generates personalized approach scripts in the correct language (Thai, English, or mixed)
+3. Adapts tone, cultural context, and communication style per language
+4. Integrates with the Hive learning system to improve scripts over time
+5. Supports full script lifecycle: generate → deliver → collect feedback → improve
 
 ---
 
-## 5. FEATURES — FULL SPECIFICATION
+## 3. PROBLEM STATEMENT
 
-### 5.1 FEATURE: Onboarding Interview
+### 3.1 Customer Pain Points
 
-**What it does:** When a customer first connects their channel, the Scout interviews them to build their Ideal Customer Profile (ICP). All responses stored in persistent memory.
+| Problem | Impact |
+|---------|--------|
+| Manual prospect research | 2–4 hours/day wasted scrolling social media |
+| Cold outreach without context | Low response rates (< 5%) |
+| Generic copy-paste scripts | Feel spammy, damage relationships |
+| Language barriers | Thai distributors need Thai scripts for Thai prospects |
+| No tracking of what works | Can't learn or improve approach |
+| Time zones and daily discipline | Missing morning outreach windows |
 
-**Conversation flow (in customer's preferredLanguage):**
+### 3.2 Script Engine Specific Problem
 
-```
-Tiger Claw: สวัสดีครับ! ผมคือ Tiger Claw Scout ผู้ช่วยด้านการหาลูกทีมของคุณ
-            [Welcome message in their language]
-
-Phase 1 — About You:
-  • What's your name?
-  • What product/opportunity do you represent?
-  • How long have you been in network marketing?
-  • What's your monthly income goal?
-
-Phase 2 — Your Ideal Customer:
-  • Describe your best customer. Who are they?
-  • What problem are they trying to solve? (income, health, freedom, time)
-  • What are they doing right now that isn't working?
-  • Where do they spend time online? (Facebook groups, LINE OpenChat, Reddit)
-  • Any types of people to avoid?
-
-Phase 3 — Confirmation:
-  • Summarize ICP back to customer
-  • "Does this sound right?"
-  • Adjust based on feedback
-  • Begin first scout hunt immediately
-```
-
-**Acceptance criteria:**
-- [ ] Entire interview in customer's preferredLanguage
-- [ ] AI extracts structured ICP data from natural conversation (not rigid Q&A)
-- [ ] ICP stored in OpenClaw memory — survives restarts, accessible to all sub-agents
-- [ ] First hunt triggered within 60 seconds of interview completion
-- [ ] Customer can update ICP anytime with `/settings`
+Customers recruit from multiple demographics:
+- **Thai-speaking prospects** require culturally-aware Thai scripts
+- **English-speaking prospects** require professional English scripts
+- **Bilingual prospects** benefit from mixed-language approaches
+- Generic AI scripts in the wrong language are immediately ignored
 
 ---
 
-### 5.2 FEATURE: Scout (Prospect Discovery)
+## 4. FUNCTIONAL REQUIREMENTS
 
-**What it does:** Searches public platforms daily for people matching the customer's ICP. Scores each match 0-100. Only delivers 70+ scores.
+### 4.1 Onboarding — Conversational Interview Engine
 
-**Sources:**
+The bot onboards each customer through a 2-stage natural language interview. No forms, no buttons — just conversation.
 
-| Platform | Method | Markets |
-|---|---|---|
-| Reddit | Public API (`search.json`) | All |
-| LinkedIn | Google site:linkedin.com/in search | All |
-| Google | Serper.dev API (3-key rotation) | All |
-| LINE OpenChat | Public group scraping | Thailand, Vietnam |
-| Facebook Groups | Public group post scraping | All |
-| Instagram | Public hashtag search | All |
-| TikTok | Public hashtag/caption search | SEA markets |
+**State Machine:**
 
-**Scoring factors (0-100):**
-- Signal strength (explicit "I want more income" = high; vague interest = low)
-- ICP match (age, location, job, interests vs customer's ICP)
-- Platform trust (LinkedIn profile = higher trust than anonymous post)
-- Recency (post from today scores higher than post from 6 months ago)
-- Engagement (liked by many = validated signal)
+```
+IDLE → WELCOME → INTERVIEW_1 → INTERVIEW_2 → ACTIVE
+```
 
-**Daily schedule:**
-- Runs at **5:00 AM Bangkok time** (before 7 AM report delivery)
-- Deduplication: prospect not re-served if delivered in last 30 days
-- Language detection on each prospect before saving
-- Minimum 5 prospects per customer per day target
+| State | Description |
+|-------|-------------|
+| IDLE | Customer just provisioned, awaiting first message |
+| WELCOME | Bot sent greeting, waiting for "ready" confirmation |
+| INTERVIEW_1 | Collecting: name, business type, experience, mission, methods |
+| INTERVIEW_2 | Collecting: ICP description, pain points, channels, exclusions |
+| ACTIVE | Fully onboarded — bot hunts proactively |
+| ERROR_RECOVERY | Fallback state if data is incomplete |
 
-**Acceptance criteria:**
-- [ ] Cron runs daily at 5 AM Bangkok time
-- [ ] Minimum 5 new prospects scored 70+ per customer per day
-- [ ] Each prospect tagged with: source, sourceUrl, language, signals[], score, summary
-- [ ] Deduplication window: 30 days
-- [ ] Language auto-detected from post content and platform
+**Anti-Pattern Rules (enforced in code):**
+- NEVER ask where to find leads — bot already knows
+- NEVER re-ask questions already answered
+- NEVER list limitations — work around them
+- NEVER say "coming soon" — default to ACTION
+- Extract intent from paragraphs, don't force structured input
+
+**Interview 1 — About the Customer:**
+- Full name
+- Business type (role-detected automatically)
+- Business description
+- Years of experience
+- Mission/goals
+- Current prospecting methods
+
+**Interview 2 — Ideal Customer Profile (ICP):**
+- ICP description (who they're looking for)
+- Pain points of their ideal customer
+- Where the ICP hangs out online
+- Keywords the ICP uses
+- Buying triggers
+- Exclusions (who to avoid)
+
+### 4.2 Agent Brain — Proactive Hunting
+
+Immediately after Interview 2, the bot begins hunting. No user action required.
+
+**Role Detection:**
+Bot detects customer's role from interview data and maps to a pre-loaded Lead Source Intelligence Map:
+
+| Role | Sources | Subreddits | Groups |
+|------|---------|------------|--------|
+| Network Marketer | LinkedIn, Reddit, Facebook, YouTube | r/antiMLM, r/sidehustle | Side Hustle Nation |
+| Hair Stylist | LinkedIn, Facebook, Reddit, Yelp | r/hairstylist, r/beauty | Hair Stylists Unite |
+| Rideshare Driver | Reddit, Facebook, LinkedIn | r/uberdrivers, r/lyftdrivers | Rideshare Profits |
+| Real Estate | LinkedIn, Reddit, BiggerPockets | r/realestate, r/realtor | Real Estate Agents |
+| Fitness Coach | LinkedIn, Reddit, Meetup | r/personaltraining | Online Fitness Coaching |
+| Teacher | LinkedIn, Reddit, Facebook | r/teachers, r/education | Teachers Who Side Hustle |
+| Default | LinkedIn, Reddit, Facebook, Google | r/entrepreneur, r/sidehustle | Small Business Owners |
+
+**Hunt Process:**
+1. Reddit search across mapped subreddits
+2. LinkedIn search via Google (public profiles)
+3. Pain-point keyword search across all platforms
+4. Each result scored against customer's ICP (0–100)
+5. Only prospects scoring ≥ 40 saved to database
+6. Results formatted and delivered to Telegram
+
+**Serper Key Rotation:**
+Google search uses up to 3 Serper API keys with automatic rotation on quota exhaustion (403) or rate limit (429).
+
+### 4.3 Script Engine — Multi-Language Support (This Branch)
+
+#### 4.3.1 Language Detection
+
+The script engine detects prospect language using:
+1. Source platform signals (Thai Facebook groups → Thai)
+2. Prospect name and location data
+3. Keywords and phrases in their posts/comments
+4. Customer's configured language preference
+5. ICP location data from Interview 2
+
+**Supported Languages:**
+| Code | Language | Notes |
+|------|----------|-------|
+| `th` | Thai | Primary for SE Asia customers |
+| `en` | English | Primary for US customers |
+| `th-en` | Thai-English mixed | Bilingual prospects |
+| `auto` | Auto-detect | Default — detect from prospect data |
+
+#### 4.3.2 Script Components
+
+Each generated script contains:
+
+| Component | Description |
+|-----------|-------------|
+| **Opening** | Personalized hook referencing prospect's specific signals |
+| **Value Prop** | Benefit statement relevant to detected pain points |
+| **CTA** | Soft ask appropriate to relationship stage |
+| **Objection Responses** | Pre-written for "too expensive", "no time", "already tried MLM" |
+| **Follow-up** | Follow-up message if no response after 48 hours |
+
+#### 4.3.3 Script Generation Process
+
+```
+Prospect profile received
+        ↓
+Language detection (signals + location + customer preference)
+        ↓
+Check Hive patterns for successful templates in detected language
+        ↓
+AI generates script using: prospect profile + ICP context + Hive patterns
+        ↓
+Script formatted per channel (Telegram, SMS, Web Chat)
+        ↓
+Delivered with feedback buttons: [Sent] [Got Reply] [Converted] [Not Relevant]
+```
+
+#### 4.3.4 Thai Language Requirements
+
+- Scripts use polite Thai register (ครับ/ค่ะ appropriate to context)
+- Cultural context: relationship-first approach, not transactional
+- Avoid direct "join my business" — use curiosity-based openers
+- Support Thai Unicode characters throughout entire system
+
+#### 4.3.5 Script Feedback and Hive Learning
+
+After a script is marked "Sent":
+1. After 48 hours, bot asks: "Did this script work?"
+2. Customer taps: `[No Response]` `[Got Reply]` `[Converted]`
+3. Outcome stored in `scripts` table with language and prospect context
+4. On `Converted`: pattern extracted and added to `hive_patterns`
+5. Hive patterns weighted by language code — Thai successes improve Thai scripts
+
+### 4.4 Prospect Enrichment
+
+Before generating a script, the enrichment pipeline runs:
+
+1. **Scraper** — Fetches prospect's public profile/post URL
+2. **Chunker** — Breaks content into digestible segments
+3. **Summarizer** — AI summarizes key info: interests, pain points, context
+4. Enriched data stored in `prospects.summary` and `prospects.profile_data`
+
+### 4.5 Daily Report Delivery
+
+Even in v4's event-driven model, the daily 7 AM report continues:
+
+**Trigger:** Cron job at 7:00 AM customer's timezone (default: Asia/Bangkok)
+
+**Content:**
+```
+🐯 Tiger Bot Report — Feb 19, 2026
+
+Found 5 new prospects today:
+
+1. Somchai K. (Score: 85) 🔥
+   LinkedIn · Network Marketer · Bangkok
+   "Looking for new income stream that fits my schedule"
+   [Get Script] [Not Relevant]
+
+...
+
+📊 Pipeline: 23 total | 8 contacted | 2 converted this week
+```
+
+### 4.6 Multi-Channel Delivery
+
+| Channel | Status | Notes |
+|---------|--------|-------|
+| Telegram | Active | Primary channel, per-customer bot |
+| SMS (Twilio) | Active | Short-form scripts, 300 char limit |
+| Web Chat | Active | Embedded widget via `<script>` tag |
+| LINE | Planned | SE Asia priority, next release |
+| Email (Brevo) | Ready | Transactional only (welcome, reports) |
+
+### 4.7 Bot Commands
+
+| Command | Function |
+|---------|----------|
+| `/start` | Initialize bot, trigger interview flow |
+| `/today` | Get today's prospect report |
+| `/help` | List all commands |
+| `/feedback` | Submit feedback about the bot |
+| `hunt` | Trigger a new prospect hunt (natural language) |
+| `show prospects` | View saved prospects |
+| `research [URL]` | Analyze a specific URL or profile |
+| `research [name]` | Research a specific person |
+
+### 4.8 Provisioning Flow
+
+#### Auto-Provisioning (Stripe):
+
+```
+Customer purchases on Stan Store ($99/mo)
+        ↓
+Stripe fires checkout.session.completed webhook
+        ↓
+Gateway enqueues provision job (BullMQ)
+        ↓
+Provision worker auto-creates bot via MTProto/BotFather session
+        ↓
+Bot token encrypted (AES-256) + hash stored for webhook routing
+        ↓
+Tenant record created in database (status: active)
+        ↓
+Admin notified via Telegram
+        ↓
+Customer messages @theirbotusername → interview begins
+```
+
+#### Invite Flow:
+
+```
+Admin creates InviteToken (configurable trialDays)
+        ↓
+Customer clicks invite link → /invite/:token endpoint
+        ↓
+System validates token, enqueues provision job with trialDays
+        ↓
+Bot created, trialEndsAt set (null = permanent access)
+        ↓
+On trial expiry: status → suspended, customer notified
+```
+
+#### Provisioning Fallback:
+If auto-provisioning via MTProto fails, a `PENDING_` placeholder record is created and admin is alerted on Telegram with instructions for manual setup.
+
+### 4.9 Trial System
+
+| Field | Description |
+|-------|-------------|
+| `trialDays` | Number of free days (0 = permanent) |
+| `trialEndsAt` | Computed expiry timestamp |
+| Auto-suspend | Worker checks on every message, suspends on expiry |
+| Notification | Customer receives Telegram message to upgrade |
+
+### 4.10 Admin Operations
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/health` | GET | System health check |
+| `/admin/tenants` | GET | List all tenants |
+| `/admin/tenants` | POST | Manually provision a tenant |
+| `/admin/tenants/:id` | GET | Get tenant details |
+| `/admin/tenants/:id` | DELETE | Remove a tenant |
+| `/admin/bots` | GET | List all bots with queue metrics |
+| `/admin/bots/:id/restart` | POST | Re-queue bot for restart |
+| `/admin/invite` | POST | Generate invite token |
+| `/channels/status` | GET | Multi-channel health status |
+| `/webhooks/stripe` | POST | Stripe event handler |
+| `/webhook/:hash` | POST | Per-bot Telegram webhook |
+| `/sms/webhook` | POST | Twilio inbound SMS |
+| `/chat/web` | POST | Web chat message handler |
+| `/widget/:tenantId` | GET | Embeddable widget script |
 
 ---
 
-### 5.3 FEATURE: Daily Report (7 AM Push)
+## 5. NON-FUNCTIONAL REQUIREMENTS
 
-**What it does:** Every morning at 7 AM (customer's timezone), delivers the top 5 prospects found overnight. Report written in customer's preferredLanguage.
-
-**Report format (Thai example):**
-
-```
-🐯 Tiger Claw รายงานประจำวัน
-19 กุมภาพันธ์ 2569
-
-พบ 5 ผู้มุ่งหวังที่มีคุณสมบัติวันนี้:
-
-━━━━━━━━━━━━━━━━━━━━━
-
-1. สมชาย ก. (คะแนน: 87/100) 🔥
-📍 LINE OpenChat: "หารายได้เสริม 2569"
-💬 สัญญาณ: "อยากมีรายได้เพิ่ม ทำที่บ้านได้"
-📝 /script สมชาย
-
-━━━━━━━━━━━━━━━━━━━━━
-
-[4 more prospects...]
-
-📊 Pipeline: รวม 47 | ติดต่อแล้ว 12 | แปลงแล้ว 3
-📈 สัปดาห์นี้: 2 คนสนใจ
-
-💡 เคล็ดลับวันนี้: ผู้มุ่งหวังที่โพสต์เรื่องค่าใช้จ่ายมักตอบสนองได้ดีต่อ "อิสรภาพทางการเงิน"
-```
-
-**Acceptance criteria:**
-- [ ] Delivered at 7:00 AM customer's local timezone (not Bangkok time)
-- [ ] Written entirely in customer's preferredLanguage
-- [ ] Top 5 prospects by score from last 24 hours
-- [ ] Each prospect shows: name, source, signal quote, score, /script command
-- [ ] Pipeline summary: total, contacted, converted
-- [ ] One coaching tip (rotated, language-appropriate)
-- [ ] Tapping /script [name] immediately generates script for that prospect
-
----
-
-### 5.4 FEATURE: Script Generation
-
-**What it does:** Generates a personalized approach script for a specific prospect. Written in that prospect's language. Structured as: opening → value proposition → CTA → anticipated objections.
-
-**Trigger:** Customer types `/script [name]` or taps the script button in daily report.
-
-**Script format:**
-
-```
-📝 Script for สมชาย ก.
-Language: Thai 🇹🇭
-
-─── OPENING ─────────────────
-สวัสดีครับคุณสมชาย ผมเห็นคุณแชร์ในกลุ่ม LINE เรื่องอยากมีรายได้เพิ่ม
-ตรงกับประสบการณ์ของผมพอดีเลยครับ
-
-─── VALUE PROP ──────────────
-ผมทำงานจากบ้านเพิ่มรายได้ 30,000-80,000 บาท/เดือน
-โดยไม่ต้องลาออกจากงานประจำ ใช้เวลา 2-3 ชั่วโมง/วัน
-
-─── CTA ─────────────────────
-ถ้าสนใจอยากรู้ว่าทำอะไร ผมแชร์ข้อมูลเพิ่มเติมให้นะครับ
-ไม่มีข้อผูกมัดใดๆ ทั้งนั้น
-
-─── IF THEY ASK "WHAT IS IT?" ──
-[Objection response...]
-
-─── IF THEY SAY "NO TIME" ───
-[Objection response...]
-
-📋 [Copy Full Script]
-👎 No Response  👍 Got Reply  🎯 Converted
-```
-
-**AI inputs for script generation:**
-- Prospect: name, source, signals, language, score
-- Customer ICP: product, approach style, income goal
-- Hive patterns: top-performing scripts in this language for similar prospects
-- Context: customer's recent wins/losses (from memory)
-
-**Acceptance criteria:**
-- [ ] Script generated in prospect's detected language
-- [ ] Script is personalized — references specific signal from prospect's post
-- [ ] All four components: opening, value prop, CTA, objection responses
-- [ ] One-tap copy to clipboard
-- [ ] Feedback buttons: 👎 / 👍 / 🎯 — captured and stored
-- [ ] Generation time: under 5 seconds
-- [ ] `Script` record created in database with all components
-
----
-
-### 5.5 FEATURE: Feedback + Hive Learning
-
-**What it does:** Captures script outcomes. When a script converts a prospect, extracts the winning pattern and adds it to the Hive. All future scripts for similar prospects, in that language, get seeded from the Hive.
-
-**Feedback flow:**
-1. Customer taps 👎 / 👍 / 🎯 after sending a script
-2. Outcome recorded on `Script` record: `no_response`, `replied`, `converted`
-3. If `converted`:
-   - Hive Agent activates
-   - Analyzes what made the script work (opening hook, pain point addressed, CTA phrasing)
-   - Extracts reusable pattern
-   - Saves to `HivePattern` with language tag
-   - Updates `HivePattern.successRate` across all uses
-4. All customers benefit — anonymously — from each other's wins
-
-**Hive Pattern structure:**
-```json
-{
-  "category": "approach_script",
-  "language": "th",
-  "tags": ["income_seeker", "line_openchat", "side_hustle"],
-  "content": "Opening that references specific pain point from their post + soft income claim + no-pressure CTA",
-  "successRate": 0.34,
-  "uses": 47,
-  "successCount": 16
-}
-```
-
-**Acceptance criteria:**
-- [ ] Feedback buttons work within 5 seconds
-- [ ] `converted` feedback triggers Hive Agent
-- [ ] Pattern extracted and stored with language + context tags
-- [ ] Future scripts query Hive for matching patterns before generating
-- [ ] `successRate` recomputed on each feedback event
-- [ ] Cross-tenant: Debbie's win helps Nancy's bot (anonymous)
-
----
-
-### 5.6 FEATURE: Coach (Objection Handling)
-
-**What it does:** Customer pastes or types an objection they received. Coach responds with 3 options for how to reply — in the prospect's language.
-
-**Trigger:** Customer types `/objection [what they said]`
-
-**Example:**
-```
-Customer: /objection เขาบอกว่า "ไม่มีเวลา"
-
-Tiger Claw Coach:
-สำหรับ "ไม่มีเวลา" ลองใช้อันนี้ดู:
-
-Option 1 (Empathy first):
-"เข้าใจเลยครับ ทุกคนยุ่งหมด...
-[full response]"
-
-Option 2 (Reframe):
-"นั่นแหละเหตุผลที่คุยกันครับ...
-[full response]"
-
-Option 3 (Soft close):
-"โอเคครับ ขอถามนิดนึงได้ไหม...
-[full response]"
-
-ใช้ Option ไหนดี? หรือปรับเองได้เลย
-```
-
-**Acceptance criteria:**
-- [ ] Works in all 6 languages
-- [ ] 3 response options ranked by Hive success data
-- [ ] Stores outcome if customer reports which worked
-- [ ] Feeds back into Hive if successful
-
----
-
-### 5.7 FEATURE: Pipeline
-
-**What it does:** Customer can see all their prospects by status. Accessible anytime.
-
-**Trigger:** `/pipeline` command
-
-**Format:**
-```
-📊 Your Pipeline — 47 prospects
-
-🆕 NEW (12)         — ready to script
-📤 SCRIPTED (8)     — waiting for response
-💬 REPLIED (5)      — follow up needed
-🎯 CONVERTED (3)    — wins this month
-📁 ARCHIVED (19)    — not a fit
-
-Type /pipeline new    — see new prospects
-Type /pipeline won    — see your wins
-```
-
-**Acceptance criteria:**
-- [ ] Shows counts by status
-- [ ] Drilldown by status with full prospect list
-- [ ] In customer's preferredLanguage
-
----
-
-### 5.8 FEATURE: Settings
-
-**What it does:** Customer can update their preferences.
-
-**Trigger:** `/settings`
-
-**Configurable:**
-- preferredLanguage
-- Report time (default 7 AM, adjustable)
-- ICP refresh (restart interview)
-- Notification preferences
-
----
-
-### 5.9 FEATURE: Admin Fleet Dashboard
-
-**What it does:** Brent manages all customer containers from one interface.
-
-**Admin commands:**
-
-```
-/fleet status          — all customers, last report time, health
-/fleet provision       — spin up new customer container
-/fleet suspend [id]    — suspend customer (payment issue)
-/fleet logs [id]       — tail logs for specific customer
-/fleet report [id]     — manually trigger daily report
-```
-
-**Metrics per customer:**
-- Last report sent
-- Prospects found today
-- Scripts generated this week
-- Conversions this month
-- Container health (CPU, memory)
-
-**Acceptance criteria:**
-- [ ] Brent can provision a new customer with one command
-- [ ] All customers visible in one view
-- [ ] Can trigger manual report for any customer
-- [ ] Unhealthy containers flagged with alert
-
----
-
-## 6. OUT OF SCOPE (v4.0)
-
-These will be built in v4.1 and beyond. Not in this release.
-
-- Automated sending (bot sends scripts on customer's behalf) — legal/ToS review required first
-- CRM integrations (HubSpot, Salesforce)
-- Team hierarchy / downline tracking
-- A/B testing framework for scripts
-- Stripe auto-billing management UI
-- Mobile app
-- Analytics dashboard (web UI)
-- Facebook / Instagram authenticated scraping (session cookies)
-
----
-
-## 7. TECHNICAL REQUIREMENTS
-
-### 7.1 Performance
+### 5.1 Performance
 
 | Metric | Target |
-|---|---|
-| Script generation | < 5 seconds |
+|--------|--------|
+| Webhook to queue | < 100ms |
+| Queue job processing | < 5 seconds |
+| Script generation | < 10 seconds |
 | Bot response time | < 3 seconds |
 | Daily report delivery | Within 5 minutes of scheduled time |
-| Scout run completion | < 30 minutes for all customers |
 
-### 7.2 Reliability
+### 5.2 Reliability
 
 | Metric | Target |
-|---|---|
-| Uptime per customer container | 99.5% |
-| Daily report delivery rate | 99% |
-| Script generation success rate | 99% |
+|--------|--------|
+| API uptime | 99.5% |
+| Message delivery rate | 99% |
+| Queue job retry | 3 attempts with exponential backoff |
+| Worker concurrency | 10 simultaneous jobs |
 
-### 7.3 Security
+### 5.3 Security
 
-- Bot tokens: AES-256-GCM encrypted at rest
-- Per-customer Docker isolation — one customer cannot access another's data
-- No customer data in logs
-- Stripe webhook signature verification
-- Social media credentials stored in CredentialVault (encrypted)
+- Bot tokens encrypted at rest (AES-256)
+- Webhook routing via SHA-256 hash (token never exposed in URL)
+- Admin endpoints require `X-API-Key` header
+- Stripe webhook signature verified before processing
+- No sensitive data in logs
+- Per-tenant data isolation enforced at query level
+- Trial expiry checked on every inbound message
 
-### 7.4 Scalability
+### 5.4 Scalability
 
 | Scale | Architecture |
-|---|---|
-| 1-50 customers | Single server, Docker containers |
-| 50-200 customers | Two servers, load balanced |
-| 200-1000 customers | Kubernetes with container-per-customer |
+|-------|-------------|
+| 1–100 customers | Single server, BullMQ + Redis |
+| 100–500 customers | Multiple workers, same Redis |
+| 500+ customers | Worker pool + Redis Cluster |
+
+Virtual bot pattern means no per-customer processes — Redis queue scales horizontally.
+
+---
+
+## 6. USER STORIES
+
+### Customer Stories
+
+**US-001: Onboarding via Conversation**
+> As a new customer, I want to tell the bot about my business naturally, without filling out forms, so I can get started immediately.
+
+**Acceptance Criteria:**
+- [ ] Bot asks friendly open-ended questions
+- [ ] Bot extracts structured data from natural language
+- [ ] Bot never re-asks questions already answered
+- [ ] Onboarding completes in 3 minutes or less
+- [ ] Bot confirms ICP understanding before starting to hunt
+
+**US-002: Proactive Prospect Delivery**
+> As a subscriber, I want the bot to immediately start hunting after onboarding, without me having to configure anything.
+
+**Acceptance Criteria:**
+- [ ] Bot starts hunting within seconds of ACTIVE state
+- [ ] Bot tells me where it's looking (platforms, communities)
+- [ ] First prospects delivered within 5 minutes of activation
+- [ ] Prospects scored and sorted by relevance
+
+**US-003: Language-Appropriate Scripts**
+> As a Thai-speaking subscriber targeting Thai prospects, I want scripts in Thai that feel natural and culturally appropriate.
+
+**Acceptance Criteria:**
+- [ ] System detects prospect language from profile signals
+- [ ] Thai scripts use polite register (ครับ/ค่ะ)
+- [ ] Scripts reference prospect's specific pain points in Thai
+- [ ] English scripts available for English-speaking prospects
+- [ ] Mixed Thai-English scripts for bilingual prospects
+
+**US-004: Script Generation On Demand**
+> As a subscriber, I want to generate a personalized script for any prospect with one tap.
+
+**Acceptance Criteria:**
+- [ ] Script button appears next to each prospect in report
+- [ ] Script generated in < 10 seconds
+- [ ] Script references specific prospect data (not generic)
+- [ ] Script includes 2+ objection responses
+- [ ] Script can be copied or sent directly from Telegram
+
+**US-005: Feedback Loop**
+> As a subscriber, I want to track which scripts worked so the system improves for me over time.
+
+**Acceptance Criteria:**
+- [ ] Outcome buttons appear after marking script as Sent
+- [ ] 3 outcomes: No Response, Got Reply, Converted
+- [ ] Converted scripts feed back into the Hive
+- [ ] Future scripts in same language improve from past successes
+
+**US-006: Multi-Channel Access**
+> As a subscriber, I want to interact with my bot via SMS or a website widget when Telegram is inconvenient.
+
+**Acceptance Criteria:**
+- [ ] SMS responses are concise (< 300 chars)
+- [ ] Web chat widget embeds with one `<script>` tag
+- [ ] Same AI context used across all channels
+
+### Admin Stories
+
+**US-010: Invite-Based Trial**
+> As an admin, I want to give select people free trial access without requiring a Stripe subscription.
+
+**Acceptance Criteria:**
+- [ ] Admin creates invite token with configurable trial days
+- [ ] Customer claims invite via link, bot auto-provisioned
+- [ ] Trial expiry auto-suspends and notifies customer
+- [ ] Permanent access available (trialDays = 0)
+
+**US-011: Auto-Provisioning Visibility**
+> As an admin, I want to be notified on Telegram when a new bot is created or when provisioning fails.
+
+**Acceptance Criteria:**
+- [ ] Success notification includes email, name, bot username
+- [ ] Failure notification includes error and manual fallback instructions
+- [ ] Queue metrics visible via /admin/bots endpoint
+
+---
+
+## 7. OUT OF SCOPE (v4.0)
+
+- Full admin dashboard UI (API-only for v4; dashboard in v4.5)
+- LINE channel integration (planned for v4.1)
+- WhatsApp channel
+- Team/downline hierarchy tracking
+- CRM integrations (HubSpot, Salesforce)
+- Mobile app
+- Automated prospect outreach (bot sends messages on behalf of customer)
 
 ---
 
 ## 8. SUCCESS METRICS
 
-### 8.1 Business (90-day targets)
+### Business Metrics
+
+| Metric | Target (90 days) |
+|--------|-----------------|
+| Paying customers | 50 |
+| MRR | $4,950 |
+| Churn rate | < 10% |
+| Customer satisfaction | > 4.5/5 |
+
+### Product Metrics
 
 | Metric | Target |
-|---|---|
-| Paying customers | 100 |
-| MRR | $9,900 |
-| Churn rate | < 8% |
-| ClawHub installs | 500 |
-
-### 8.2 Product
-
-| Metric | Target |
-|---|---|
-| Daily report open rate | > 85% |
+|--------|--------|
+| Onboarding completion rate | > 85% |
+| Time to first prospect | < 10 minutes after ACTIVE |
+| Daily report engagement | > 70% |
 | Scripts generated per customer/week | > 20 |
-| Feedback submission rate | > 40% |
-| Reported conversions per customer/month | > 3 |
-| Hive patterns active | > 50 per language |
+| Feedback submission rate | > 35% |
+| Thai script usage (SE Asia customers) | > 60% |
+
+### Script Engine Metrics
+
+| Metric | Target |
+|--------|--------|
+| Language detection accuracy | > 90% |
+| Script generation success rate | > 99% |
+| Thai script quality rating | > 4/5 |
+| Hive pattern contribution rate | > 10% of converted scripts |
 
 ---
 
-## 9. BUILD ORDER
+## 9. RISKS & MITIGATIONS
 
-This is the sequence. Each phase is reviewed and approved before the next begins.
-
-**Phase 1 — Foundation (Schema + Script Engine)**
-- Prisma schema v4 migration (Script model, language fields)
-- Script generation service (Claude, all 6 languages)
-- `/script` command + feedback buttons
-- `HivePattern` seeding from converted feedback
-
-**Phase 2 — Daily Engine**
-- 7 AM daily report cron (customer's local timezone)
-- Scout improvements (LINE OpenChat, Facebook public groups)
-- Language auto-detection on prospects
-
-**Phase 3 — Coach + Pipeline**
-- `/objection` command
-- `/pipeline` command with drilldown
-- `/settings` command
-
-**Phase 4 — OpenClaw Integration**
-- OpenClaw Docker container per customer
-- Multi-channel delivery (LINE, WhatsApp)
-- Publish Tiger Claw Scout skill to ClawHub
-
-**Phase 5 — Fleet**
-- Admin fleet dashboard
-- Automated provisioning (Stripe webhook → Docker container)
-- Monitoring and alerting
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| MTProto session expires | High | Session refresh logic, admin fallback alert |
+| Serper quota exhaustion | Medium | 3-key rotation, Reddit as fallback |
+| Gemini API rate limit | Medium | Exponential backoff, OpenAI fallback |
+| Thai Unicode rendering | Medium | Test across Telegram versions and SMS |
+| Reddit API changes | Low | Fallback to Google search |
+| Bot token leak | High | AES-256 encryption, hash-based routing |
+| Trial abuse | Low | Single-use invite tokens, email deduplication |
 
 ---
 
-## 10. OPEN QUESTIONS FOR BRENT
+## 10. GLOSSARY
 
-Mark these with your answer before we move to the Blueprint.
-
-1. **Language priority:** Thai first, then which? Vietnamese or Spanish?
-
-2. **LINE scraping:** Do you have a LINE account we can use for OpenChat scraping, or should we start with Reddit/LinkedIn/Google only and add LINE in Phase 2?
-
-3. **The 100-bot customer:** What did you tell them the product does? Knowing this helps us set Phase 1 delivery expectations.
-
-4. **Script sending:** For v4.0, is the customer manually copying and sending the script? Or do we want to try auto-send from their account in v4.0?
-
-5. **Hive cross-tenant:** You're okay with anonymous patterns being shared across all customers? (Scripts are never shared — only extracted patterns.)
-
-6. **Admin channel:** Where do you want fleet alerts — Telegram, email, or both?
-
-7. **Pricing for 100-bot deal:** Same $99/month per bot, or volume discount?
+| Term | Definition |
+|------|------------|
+| Tenant | A paying customer with their own dedicated bot |
+| Virtual Bot | Bot instance created on-demand from cache, not a persistent process |
+| ICP | Ideal Customer Profile — the type of person a customer wants to recruit |
+| Hive | Shared database of successful script patterns across all tenants |
+| Agent Brain | The proactive hunting logic that runs when a bot enters ACTIVE state |
+| Enrichment | The pipeline that scrapes, chunks, and summarizes prospect data |
+| Fleet Worker | BullMQ worker that processes inbound Telegram updates |
+| botTokenHash | SHA-256 hash of bot token used for webhook URL routing |
+| trialEndsAt | Timestamp when free trial expires (null = permanent access) |
+| Script Engine | The v4 component that generates multi-language personalized scripts |
 
 ---
 
-*This document is a draft. No code will be written until Brent Bryson reviews and approves.*
-*Version: PRD v4.0 DRAFT — 2026-02-19*
+## 11. RELATED DOCUMENTS
+
+- `specs/v4/BLUEPRINT_v4.md` — Technical architecture and implementation guide
+- `src/shared/types.ts` — TypeScript type definitions (source of truth)
+- `src/fleet/conversation-engine.ts` — Interview state machine
+- `src/fleet/agent-brain.ts` — Proactive hunting logic
+- `src/fleet/web-search.ts` — Prospect search and scoring
+- `src/channels/channel-router.ts` — Multi-channel routing
