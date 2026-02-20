@@ -10,6 +10,7 @@ import { Redis } from 'ioredis';
 import TelegramBot from 'node-telegram-bot-api';
 import { PrismaClient } from '@prisma/client';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import Anthropic from '@anthropic-ai/sdk';
 import { decrypt } from '../shared/crypto.js';
 import {
   InboundJobData,
@@ -26,6 +27,15 @@ const gemini = process.env.GEMINI_API_KEY
 
 if (!gemini) {
   console.warn('[worker] WARNING: GEMINI_API_KEY not set - AI conversations disabled');
+}
+
+// --- Anthropic Client for Script Generation ---
+const anthropic = process.env.ANTHROPIC_API_KEY
+  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  : null;
+
+if (!anthropic) {
+  console.warn('[worker] WARNING: ANTHROPIC_API_KEY not set - script generation disabled');
 }
 
 // --- Configuration ---
@@ -99,14 +109,15 @@ async function handleStartCommand(
   const welcomeText = `
 🐯 *Welcome to Tiger Bot Scout, ${firstName}!*
 
-I'm your AI-powered recruiting assistant. I help network marketers find and connect with prospects.
+I find qualified prospects every morning and write personalized outreach scripts for you.
 
-*Here's what I can do:*
-• 📊 /today - Get your daily prospect report
-• 💬 /help - See all available commands
-• ⭐ /feedback - Share your thoughts with us
+*Commands:*
+• /today — See today's prospects
+• /script [name] — Get a script written for a specific prospect
+• /help — All commands
 
-Ready to find your next team member? Let's go! 🚀
+Your daily report arrives at 7 AM Bangkok time.
+Ready? Let's go. 🚀
   `.trim();
   
   await ctx.bot.sendMessage(chatId, welcomeText, { parse_mode: 'Markdown' });
@@ -121,17 +132,20 @@ async function handleHelpCommand(
   const helpText = `
 🐯 *Tiger Bot Scout Commands*
 
-/start - Welcome message and introduction
-/today - Get today's prospect report
-/help - Show this help message
-/feedback - Send feedback to improve the bot
+/today — Today's top prospects
+/script [name] — Get a personalized outreach script
+/report — Same as /today
+/help — Show this help message
+/feedback — Send feedback
+
+*Example:*
+After seeing Nancy in your report → type:
+\`/script Nancy\`
 
 *Tips:*
-• Your daily report arrives automatically at 7 AM
-• Reply to any prospect card to get a custom script
-• Use /feedback to help us improve!
-
-_Need more help? Contact support at help@tigerbotscout.com_
+• Daily report arrives automatically at 7 AM Bangkok
+• Scripts are written in your prospect's language
+• After using a script, let me know: 👎 /fb\\_no · 👍 /fb\\_replied · 🎯 /fb\\_converted
   `.trim();
   
   await ctx.bot.sendMessage(chatId, helpText, { parse_mode: 'Markdown' });
@@ -211,6 +225,197 @@ _Your feedback helps make Tiger Bot Scout better for everyone!_
   `.trim();
   
   await ctx.bot.sendMessage(chatId, feedbackText, { parse_mode: 'Markdown' });
+}
+
+async function handleScriptCommand(
+  ctx: VirtualBotContext,
+  message: TelegramMessage
+): Promise<void> {
+  const chatId = message.chat.id;
+  const text = message.text || '';
+
+  const prospectName = text.split(' ').slice(1).join(' ').trim();
+
+  if (!prospectName) {
+    await ctx.bot.sendMessage(
+      chatId,
+      "Please include a name. Example: `/script Nancy`",
+      { parse_mode: 'Markdown' }
+    );
+    return;
+  }
+
+  if (!anthropic) {
+    await ctx.bot.sendMessage(chatId, "Script generation is not configured. Contact support.");
+    return;
+  }
+
+  await ctx.bot.sendMessage(chatId, `✍️ Writing script for *${prospectName}*...`, { parse_mode: 'Markdown' });
+
+  // Find prospect by name (partial, case-insensitive)
+  const allProspects = await prisma.prospect.findMany({
+    where: { tenantId: ctx.tenantId },
+    orderBy: { score: 'desc' },
+  });
+
+  const prospect = allProspects.find(p =>
+    p.name.toLowerCase().includes(prospectName.toLowerCase())
+  );
+
+  if (!prospect) {
+    await ctx.bot.sendMessage(
+      chatId,
+      `❌ No prospect named "${prospectName}" found. Use /today to see your current prospects.`
+    );
+    return;
+  }
+
+  // Load tenant ICP data
+  const tenant = await prisma.tenant.findUnique({ where: { id: ctx.tenantId } });
+  const interview = (tenant?.interview_data as Record<string, any>) || {};
+  const i1 = interview.interview1 || {};
+  const i2 = interview.interview2 || {};
+
+  const icpProduct = i1.product || 'health and wellness';
+  const icpApproach = i1.approach_style || 'friendly, authentic';
+  const icpIncomeExample = i1.income_example || 'flexible income';
+  const signals = (Array.isArray(prospect.signals) ? prospect.signals : []) as string[];
+
+  const prompt = `You are a network marketing sales coach. Generate a personalized outreach script.
+
+RULES:
+1. Write in ${prospect.language || 'English'} ONLY
+2. Opening MUST reference something specific from what they posted or their situation
+3. NEVER mention the company or product name in the opening message
+4. Sound like a real person, not a template
+5. Keep the full message under 160 words
+6. Soft ask only — no pressure, no hype
+
+PROSPECT:
+Name: ${prospect.name}
+Source: ${prospect.source || 'online'}
+What they posted/said: ${signals.length > 0 ? signals.join(' | ') : prospect.summary || 'Looking for opportunities'}
+Summary: ${prospect.summary || ''}
+
+YOU (the person sending this):
+Product you represent: ${icpProduct}
+Approach style: ${icpApproach}
+Income example: ${icpIncomeExample}
+
+Return ONLY the script message text. No labels, no JSON, no explanation. Just the message to send.`;
+
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 400,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    const script = (response.content[0] as Anthropic.TextBlock).text.trim();
+
+    // Save to DB
+    const saved = await prisma.script.create({
+      data: {
+        tenantId: ctx.tenantId,
+        prospectId: prospect.id,
+        language: prospect.language || 'en',
+        opening: script.split('\n')[0] || script.slice(0, 100),
+        fullScript: script,
+        aiModel: 'claude-sonnet-4-6',
+      },
+    });
+
+    // Update prospect status
+    await prisma.prospect.update({
+      where: { id: prospect.id },
+      data: { status: 'scripted', scriptedAt: new Date() },
+    });
+
+    const scriptId = saved.id.slice(0, 8); // short ID for feedback commands
+    const reply = [
+      `📝 *Script for ${prospect.name}*`,
+      ``,
+      script,
+      ``,
+      `─────────────────────────────`,
+      `After sending this, let me know how it went:`,
+      `👎 /fb\\_${scriptId}\\_no`,
+      `👍 /fb\\_${scriptId}\\_replied`,
+      `🎯 /fb\\_${scriptId}\\_converted`,
+    ].join('\n');
+
+    await ctx.bot.sendMessage(chatId, reply, { parse_mode: 'Markdown' });
+
+  } catch (error) {
+    console.error(`[worker] Script generation failed for tenant ${ctx.tenantId}:`, error);
+    await ctx.bot.sendMessage(
+      chatId,
+      "😓 Couldn't generate the script right now. Please try again in a moment."
+    );
+  }
+}
+
+async function handleFeedbackOutcome(
+  ctx: VirtualBotContext,
+  message: TelegramMessage
+): Promise<void> {
+  const chatId = message.chat.id;
+  const text = message.text || '';
+
+  // Parse /fb_{shortId}_{outcome}
+  const match = text.match(/^\/fb_([a-z0-9]+)_(no|replied|converted)$/i);
+  if (!match) return;
+
+  const shortId = match[1];
+  const outcomeRaw = match[2].toLowerCase();
+  const outcomeMap: Record<string, string> = {
+    no: 'no_response',
+    replied: 'replied',
+    converted: 'converted',
+  };
+  const outcome = outcomeMap[outcomeRaw];
+
+  try {
+    // Find the script by short ID prefix
+    const scripts = await prisma.script.findMany({
+      where: { tenantId: ctx.tenantId },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    });
+
+    const script = scripts.find(s => s.id.startsWith(shortId));
+    if (!script) {
+      await ctx.bot.sendMessage(chatId, "Couldn't find that script. Try generating a fresh one.");
+      return;
+    }
+
+    await prisma.script.update({
+      where: { id: script.id },
+      data: { outcome, feedbackAt: new Date() },
+    });
+
+    const statusMap: Record<string, string> = {
+      no_response: 'contacted',
+      replied: 'replied',
+      converted: 'converted',
+    };
+
+    await prisma.prospect.update({
+      where: { id: script.prospectId },
+      data: { status: statusMap[outcome] },
+    });
+
+    const replies: Record<string, string> = {
+      no_response: "Got it. Sometimes it takes a follow-up. Try again in a few days.",
+      replied: "They replied! 🎉 Keep the conversation going. Use /objection if they push back.",
+      converted: "🎯 YES! That's a win. I've learned from this script — future ones will be even better.",
+    };
+
+    await ctx.bot.sendMessage(chatId, replies[outcome]);
+
+  } catch (error) {
+    console.error(`[worker] Feedback error for tenant ${ctx.tenantId}:`, error);
+  }
 }
 
 async function handleUnknownMessage(
@@ -312,6 +517,12 @@ async function handleTelegramUpdate(
   // Remove @botusername suffix if present
   const cleanCommand = command.split('@')[0];
   
+  // Feedback outcome commands: /fb_{shortId}_{outcome}
+  if (/^\/fb_[a-z0-9]+_(no|replied|converted)$/i.test(cleanCommand)) {
+    await handleFeedbackOutcome(ctx, message);
+    return;
+  }
+
   switch (cleanCommand) {
     case '/start':
       await handleStartCommand(ctx, message);
@@ -320,7 +531,11 @@ async function handleTelegramUpdate(
       await handleHelpCommand(ctx, message);
       break;
     case '/today':
+    case '/report':
       await handleTodayCommand(ctx, message);
+      break;
+    case '/script':
+      await handleScriptCommand(ctx, message);
       break;
     case '/feedback':
       await handleFeedbackCommand(ctx, message);
