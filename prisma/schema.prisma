@@ -1,5 +1,6 @@
-// Tiger Bot Scout v3.2.0 - Prisma Schema
-// Updated with Gemini Red Team recommendations
+// Tiger Claw Scout v4.0.0 - Prisma Schema
+// Ambitious rebuild: Script Engine + Full Language Support
+// Languages: th (Thai), vi (Vietnamese), id (Bahasa Indonesia), ms (Bahasa Melayu), es (Spanish), en (English)
 
 generator client {
   provider = "prisma-client-js"
@@ -12,6 +13,11 @@ datasource db {
   extensions = [vector]
 }
 
+// ==========================================
+// TENANT
+// One record per paying customer
+// ==========================================
+
 model Tenant {
   id              String   @id @default(uuid())
   stripeId        String?  @unique
@@ -20,180 +26,270 @@ model Tenant {
 
   // Bot Identity (Per-Customer Bot Architecture)
   botToken        String   @unique // AES-256 Encrypted
-  botTokenHash    String   @unique // Public SHA-256 hash for Webhook Routing
+  botTokenHash    String   @unique // SHA-256 hash for webhook routing
   botUsername     String
 
-  // NEW: Track which Admin Account created this bot (Gemini Red Team - 20 bot limit)
+  // Which admin BotFather account created this bot (20-bot limit tracking)
   createdByAdminSession  String?
 
-  // Conversation State (for onboarding interview flow)
-  state           String   @default("IDLE") // IDLE, WELCOME, INTERVIEW_1, INTERVIEW_2, KEY_PROMPT, ACTIVE, ERROR_RECOVERY
-  chat_id         String?  // Telegram chat ID for this tenant
-  interview_data  Json?    // Stores interview responses as JSON
+  // Language & Locale
+  // The language the customer wants their bot to speak and reports delivered in
+  preferredLanguage  String  @default("th") // th, vi, id, ms, es, en
+
+  // Conversation State (onboarding interview flow)
+  state           String   @default("IDLE") // IDLE, WELCOME, INTERVIEW_1, INTERVIEW_2, ACTIVE, ERROR_RECOVERY
+  chat_id         String?  // Telegram chat ID (set after customer sends /start)
+  interview_data  Json?    // Structured ICP data from onboarding
 
   // Invite / Trial Tracking
-  inviteTokenId   String?                            // Which invite was used to create this tenant
-  trialEndsAt     DateTime?                          // null = permanent; set for trial tenants
-  tier            String   @default("scout")         // scout, pro, enterprise
+  inviteTokenId   String?
+  trialEndsAt     DateTime?
+  tier            String   @default("scout") // scout, pro, enterprise
 
   status          String   @default("provisioning") // provisioning, active, suspended
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   prospects       Prospect[]
+  scripts         Script[]
   reports         DailyReport[]
   supportTickets  SupportTicket[]
 }
+
+// ==========================================
+// PROSPECT
+// One record per identified prospect
+// ==========================================
 
 model Prospect {
   id              String   @id @default(uuid())
   tenantId        String
   tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
-  // Basic Info
+
+  // Identity
   name            String
   email           String?
   phone           String?
-  source          String?  // facebook, linkedin, instagram, referral
-  sourceUrl       String?  // Profile URL
-  
-  // Enrichment Data (from Mini-RAG scraping)
-  summary         String?  // AI-generated summary
-  interests       String[] // Array of detected interests
-  painPoints      String[] // Potential pain points
-  
-  // Scoring & Status
-  score           Int      @default(0) // 0-100 AI-generated score
-  status          String   @default("new") // new, contacted, interested, converted, rejected
-  
+
+  // Source
+  source          String?  // reddit, linkedin, facebook, instagram, line, whatsapp, tiktok
+  sourceUrl       String?  // Direct link to the post or profile
+  signals         String[] // Raw signals detected: posts, comments, keywords that triggered the find
+
+  // Language to use for outreach to this prospect
+  // Detected from source platform and content
+  language        String   @default("th") // th, vi, id, ms, es, en
+
+  // AI Enrichment
+  summary         String?  // AI-generated summary of who this person is and why they're a fit
+  interests       String[] // Detected interests
+  painPoints      String[] // Detected pain points
+
+  // Scoring
+  score           Int      @default(0) // 0-100. Only 70+ delivered in daily reports.
+
+  // Pipeline Status
+  status          String   @default("new")
+  // new        → found, not yet delivered
+  // delivered  → appeared in a daily report
+  // scripted   → script generated
+  // contacted  → customer sent the script
+  // replied    → prospect responded
+  // converted  → prospect joined / purchased
+  // archived   → not a fit, removed from pipeline
+
   // Timestamps
   createdAt       DateTime @default(now())
-  contactedAt     DateTime?
-  convertedAt     DateTime?
-  
+  deliveredAt     DateTime? // When included in a daily report
+  scriptedAt      DateTime? // When script was generated
+  contactedAt     DateTime? // When customer reached out
+  repliedAt       DateTime? // When prospect replied
+  convertedAt     DateTime? // When prospect converted
+
+  scripts         Script[]
+
   @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, score(sort: Desc)])
   @@index([status])
-  @@index([score])
 }
+
+// ==========================================
+// SCRIPT
+// The core product: personalized outreach scripts
+// Generated by AI, tracked through outcome, fed into Hive
+// ==========================================
+
+model Script {
+  id              String   @id @default(uuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  prospectId      String
+  prospect        Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+
+  // Language this script is written in
+  language        String   // th, vi, id, ms, es, en
+
+  // Script Components
+  opening         String   // The opening message — what the customer actually sends first
+  valueProp       String?  // Value proposition paragraph
+  cta             String?  // Call to action
+  objections      Json?    // Array of {objection: string, response: string}
+  fullScript      String   // Complete formatted script ready to copy/send
+
+  // AI Metadata
+  aiModel         String?  // e.g. claude-opus-4-5-20251101
+  promptVersion   String   @default("v1") // for A/B testing prompt iterations
+  tokensUsed      Int?
+
+  // Which Hive pattern seeded this script (if any)
+  hivePatternId   String?
+  hivePattern     HivePattern? @relation(fields: [hivePatternId], references: [id])
+
+  // Outcome Tracking (set via feedback buttons 👎 / 👍 / 🎯)
+  outcome         String?  // no_response, replied, converted
+  feedbackAt      DateTime?
+  rating          Int?     // 1-5 stars
+
+  createdAt       DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([prospectId])
+  @@index([outcome])
+  @@index([language])
+}
+
+// ==========================================
+// HIVE PATTERN
+// Shared learning across all tenants
+// Successful scripts feed patterns in here
+// Future scripts are seeded from here
+// ==========================================
+
+model HivePattern {
+  id              String   @id @default(uuid())
+
+  // Pattern Content
+  content         String   // The script template or objection handler
+  category        String?  // approach_script, objection_handler, follow_up, cta
+
+  // Language this pattern works in
+  language        String   @default("th") // th, vi, id, ms, es, en
+
+  // Context tags for matching (market, product type, prospect signal type)
+  tags            String[]
+
+  // Vector Embedding for Semantic Search
+  embedding       Unsupported("vector(1536)")?
+
+  // Success Tracking
+  uses            Int      @default(0)
+  successCount    Int      @default(0)
+  successRate     Float    @default(0) // recomputed on each feedback
+
+  // Scripts that used this pattern and their outcomes feed back here
+  scripts         Script[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([category])
+  @@index([language])
+  @@index([language, category])
+}
+
+// ==========================================
+// DAILY REPORT
+// Log of every morning report sent
+// ==========================================
 
 model DailyReport {
   id              String   @id @default(uuid())
   tenantId        String
   tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+
   date            DateTime @default(now())
   status          String   @default("pending") // pending, sent, failed
+
+  // What was in the report
   prospectCount   Int      @default(0)
-  
-  // Report Content
-  messageId       String?  // Telegram message ID if sent
-  content         String?  // The actual report text
-  
+  prospectIds     String[] // IDs of prospects included
+
+  // Delivery
+  messageId       String?  // Telegram message ID after send
+  content         String?  // Full report text (for logging/debug)
+
   createdAt       DateTime @default(now())
   sentAt          DateTime?
-  
+  errorLog        String?
+
   @@index([tenantId])
-  @@index([date])
+  @@index([tenantId, date(sort: Desc)])
 }
 
-model HivePattern {
-  id              String   @id @default(uuid())
-  
-  // Pattern Content
-  content         String   // The script template or objection handler
-  category        String?  // approach_script, objection_handler, follow_up
-  
-  // Vector Embedding for Semantic Search (OpenAI text-embedding-3-small)
-  embedding       Unsupported("vector(1536)")?
-  
-  // Success Tracking
-  successCount    Int      @default(0)
-  uses            Int      @default(0)
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  @@index([category])
-}
+// ==========================================
+// CREDENTIAL VAULT
+// Encrypted storage for social media session cookies
+// Used for authenticated prospect sourcing
+// ==========================================
 
-// Credential Vault for secure secret storage
 model CredentialVault {
   id              String   @id @default(uuid())
   tenantId        String
-  
-  credentialType  String   // telegram_session, facebook_cookie, linkedin_cookie, etc.
+
+  credentialType  String   // facebook_cookie, line_session, instagram_cookie, linkedin_cookie
   encryptedValue  Bytes    // AES-256-GCM encrypted
   iv              Bytes    // Initialization vector
-  
+
   createdAt       DateTime @default(now())
   lastAccessed    DateTime?
   expiresAt       DateTime?
-  
+
   @@unique([tenantId, credentialType])
   @@index([tenantId])
 }
 
 // ==========================================
-// F-05: FAILSAFE FEEDBACK LOOP
-// Added: 2026-02-11
+// SUPPORT TICKET
+// Customer-reported issues via bot
 // ==========================================
 
 model SupportTicket {
   id              String    @id @default(uuid())
   tenantId        String
   tenant          Tenant    @relation(fields: [tenantId], references: [id])
-  issue           String    // User's stated problem
-  conversationLog String    // JSON array of last 10 messages
-  status          String    @default("open") // 'open', 'in_progress', 'resolved'
-  priority        String    @default("normal") // 'low', 'normal', 'high', 'urgent'
+
+  issue           String
+  conversationLog String    // JSON: last 10 messages for context
+  status          String    @default("open") // open, in_progress, resolved
+  priority        String    @default("normal") // low, normal, high, urgent
+
   createdAt       DateTime  @default(now())
   resolvedAt      DateTime?
-  resolvedBy      String?   // Admin who resolved
+  resolvedBy      String?
 }
 
 // ==========================================
-// F-06: OPENCLAW UPDATE TRACKING
-// Added: 2026-02-11
-// ==========================================
-
-model SystemUpdate {
-  id              String    @id @default(uuid())
-  component       String    // 'openclaw', 'gateway', 'worker'
-  fromVersion     String
-  toVersion       String
-  status          String    @default("available") // 'available', 'installing', 'completed', 'failed'
-  triggeredBy     String?   // Admin who triggered update
-  createdAt       DateTime  @default(now())
-  completedAt     DateTime?
-  errorLog        String?   // If failed, capture error
-}
-
-// ==========================================
-// INVITE / GIFTING SYSTEM
-// Added: 2026-02-18
+// INVITE TOKEN
+// For gifted / comped / trial customers
 // ==========================================
 
 model InviteToken {
   id              String    @id @default(uuid())
-  token           String    @unique               // URL-safe random hex (32 chars) - the claim URL key
-  label           String?                         // Human label: "For Phil Hillibrand"
-  fromName        String    @default("Brent Bryson") // Shown on claim page: "X has set you up with Tiger Bot Scout"
-  createdBy       String    @default("admin")     // Admin who generated this invite
+  token           String    @unique
+  label           String?
+  fromName        String    @default("Brent Bryson")
+  createdBy       String    @default("admin")
 
-  // Pre-fill recipient info (optional)
-  recipientEmail  String?                         // Pre-fills the claim form
-  recipientName   String?                         // Pre-fills the claim form
+  recipientEmail  String?
+  recipientName   String?
 
-  // Claim tracking
-  claimedBy       String?                         // Email used to claim
+  claimedBy       String?
   claimedAt       DateTime?
-  tenantId        String?                         // Tenant created by this invite
+  tenantId        String?
 
-  // Expiry & trial
-  expiresAt       DateTime?                       // null = never expires
-  trialDays       Int       @default(0)           // 0 = permanent gift; N = trial period
-
-  // Soft revocation
+  expiresAt       DateTime?
+  trialDays       Int       @default(0)
   revokedAt       DateTime?
 
   createdAt       DateTime  @default(now())
