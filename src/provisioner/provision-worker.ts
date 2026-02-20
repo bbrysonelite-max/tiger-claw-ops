@@ -17,6 +17,7 @@ import { provisionNewBot } from './userbot.js';
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'tiger-bot-scout-encryption-key!!';
 const ADMIN_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const BREVO_API_KEY = process.env.BREVO_API_KEY;
 
 // --- Database Client ---
 const prisma = new PrismaClient();
@@ -55,6 +56,64 @@ function encryptToken(token: string): string {
  */
 function hashToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+/**
+ * Send welcome email to new customer via Brevo
+ */
+async function sendWelcomeEmail(email: string, name: string, botUsername: string): Promise<void> {
+  if (!BREVO_API_KEY) {
+    console.warn('[provision-worker] No BREVO_API_KEY — skipping welcome email');
+    return;
+  }
+
+  const displayName = name || 'there';
+  const html = `
+<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#1a1a1a">
+  <h2 style="margin:0 0 8px">Your Tiger Bot is ready 🐯</h2>
+  <p style="margin:0 0 24px;color:#555">Hi ${displayName}, your personal prospect-hunting bot has been created.</p>
+
+  <div style="background:#f5f5f5;border-radius:8px;padding:20px 24px;margin:0 0 24px">
+    <p style="margin:0 0 4px;font-size:13px;color:#888;text-transform:uppercase;letter-spacing:.5px">Your bot username</p>
+    <p style="margin:0;font-size:22px;font-weight:700;letter-spacing:.5px">@${botUsername}</p>
+  </div>
+
+  <p style="margin:0 0 8px"><strong>To get started:</strong></p>
+  <ol style="margin:0 0 24px;padding-left:20px;line-height:1.8">
+    <li>Open Telegram</li>
+    <li>Search <strong>@${botUsername}</strong></li>
+    <li>Tap <strong>Start</strong> or type <code>/start</code></li>
+    <li>Your bot will introduce itself and walk you through setup</li>
+  </ol>
+
+  <p style="margin:0 0 24px">Your bot will find prospects for you every day and deliver a morning report with personalized outreach scripts — ready to send.</p>
+
+  <p style="margin:0;color:#888;font-size:13px">Questions? Reply to this email or message <a href="https://t.me/tigerbotscout">@tigerbotscout</a> on Telegram.</p>
+</div>`;
+
+  await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'accept': 'application/json',
+      'api-key': BREVO_API_KEY,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      sender: { email: 'noreply@botcraftwrks.ai', name: 'Tiger Bot Scout' },
+      to: [{ email, name: name || undefined }],
+      subject: `Your Tiger Bot is ready — @${botUsername}`,
+      htmlContent: html,
+    }),
+  }).then(async (res) => {
+    if (!res.ok) {
+      const err = await res.json();
+      console.error('[provision-worker] Welcome email failed:', JSON.stringify(err));
+    } else {
+      console.log(`[provision-worker] Welcome email sent to ${email}`);
+    }
+  }).catch((err) => {
+    console.error('[provision-worker] Welcome email error:', err.message);
+  });
 }
 
 /**
@@ -120,6 +179,9 @@ async function processProvisionJob(job: Job<ProvisionJobData>): Promise<any> {
         })
       }).catch(console.error);
     }
+
+    // Welcome email to customer
+    await sendWelcomeEmail(email, name || 'New Customer', result.username);
 
     // Mark invite token as claimed
     if (inviteTokenId) {
