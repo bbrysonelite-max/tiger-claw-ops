@@ -13,6 +13,6 @@
     "downlevelIteration": true,
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "api/**/*.ts", "tests/**/*.ts", "types/**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*.ts", "api/**/*.ts", "types/**/*.ts"],
+  "exclude": ["node_modules", "dist", "tests"]
 }
