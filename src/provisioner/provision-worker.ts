@@ -162,6 +162,32 @@ async function processProvisionJob(job: Job<ProvisionJobData>): Promise<any> {
 
     console.log(`[provision-worker] Bot provisioned and tenant created: ${tenant.id} (@${result.username})`);
 
+    // Register Telegram webhook for this bot (Step 5)
+    // Fires immediately after provisioning — falls back to poller if it fails
+    const webhookBase = process.env.WEBHOOK_BASE_URL ?? 'https://api.botcraftwrks.ai/webhooks';
+    try {
+      const webhookRes = await fetch(
+        `https://api.telegram.org/bot${result.token}/setWebhook`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: `${webhookBase}/${result.hash}`,
+            allowed_updates: ['message', 'callback_query'],
+            drop_pending_updates: false,
+          }),
+        }
+      );
+      const webhookData = await webhookRes.json() as { ok: boolean; description?: string };
+      if (webhookData.ok) {
+        console.log(`[provision-worker] Webhook registered for @${result.username}`);
+      } else {
+        console.warn(`[provision-worker] Webhook registration failed for @${result.username}: ${webhookData.description}`);
+      }
+    } catch (webhookErr) {
+      console.warn(`[provision-worker] Webhook registration error for @${result.username}:`, webhookErr);
+    }
+
     if (ADMIN_BOT_TOKEN && process.env.TELEGRAM_REPORT_CHAT_ID) {
       const message = `✅ *New Customer Bot Created!*\n\n` +
         `Email: ${email}\n` +

@@ -22,7 +22,10 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "final-login": "npx tsx final_login.ts",
-    "provision-all": "npx tsx provision-all-bots.ts"
+    "provision-all": "npx tsx provision-all-bots.ts",
+    "register-webhooks": "npx tsx src/fleet/register-webhooks.ts",
+    "register-webhooks:apply": "npx tsx src/fleet/register-webhooks.ts --apply",
+    "register-webhooks:cutover": "npx tsx src/fleet/register-webhooks.ts --apply --stop-poller"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
