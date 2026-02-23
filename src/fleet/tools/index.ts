@@ -42,19 +42,31 @@ const FLAVOR_TOOL_OVERRIDES: Record<string, string[]> = {
 };
 
 /**
- * Return the Anthropic tool definitions for a given flavor slug.
- * Falls back to all tools if the flavor has no override.
+ * Return the Anthropic tool definitions for a given flavor.
+ * If enabledTools is provided (from DB Flavor record), use that list.
+ * Falls back to slug-based overrides, then all tools.
  */
-export function getToolsForFlavor(flavorSlug: string): Anthropic.Tool[] {
-  const override = FLAVOR_TOOL_OVERRIDES[flavorSlug];
-
-  if (!override || override.length === 0) {
-    return ALL_TOOLS.map((t) => t.definition);
+export function getToolsForFlavor(
+  flavorSlug: string,
+  enabledTools?: string[]
+): Anthropic.Tool[] {
+  // DB-driven: flavor record specifies exactly which tools are active
+  if (enabledTools && enabledTools.length > 0) {
+    return ALL_TOOLS.filter((t) => enabledTools.includes(t.definition.name)).map(
+      (t) => t.definition
+    );
   }
 
-  return ALL_TOOLS.filter((t) => override.includes(t.definition.name)).map(
-    (t) => t.definition
-  );
+  // Static override fallback
+  const override = FLAVOR_TOOL_OVERRIDES[flavorSlug];
+  if (override && override.length > 0) {
+    return ALL_TOOLS.filter((t) => override.includes(t.definition.name)).map(
+      (t) => t.definition
+    );
+  }
+
+  // Default: all tools
+  return ALL_TOOLS.map((t) => t.definition);
 }
 
 /**

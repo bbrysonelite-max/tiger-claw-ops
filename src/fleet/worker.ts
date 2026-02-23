@@ -448,7 +448,23 @@ async function handleUnknownMessage(
   }
 
   const flavorSlug: string = tenant?.flavorSlug ?? 'network-marketer';
-  const tools = getToolsForFlavor(flavorSlug);
+
+  // Load flavor from DB for dynamic system prompt + tool set
+  let flavorSystemPrompt: string | null = null;
+  let flavorEnabledTools: string[] | undefined;
+  try {
+    const flavor = await (prisma as any).flavor.findUnique({
+      where: { slug: flavorSlug },
+    });
+    if (flavor?.isActive) {
+      flavorSystemPrompt = flavor.systemPrompt || null;
+      flavorEnabledTools = flavor.enabledTools?.length ? flavor.enabledTools : undefined;
+    }
+  } catch {
+    // Flavor table may not exist yet — fall through to defaults
+  }
+
+  const tools = getToolsForFlavor(flavorSlug, flavorEnabledTools);
 
   const toolCtx: ToolContext = {
     tenantId: ctx.tenantId,
@@ -459,7 +475,12 @@ async function handleUnknownMessage(
     anthropic,
   };
 
-  const systemPrompt = `You are Tiger Claw Scout — a purpose-built AI prospecting engine and recruiting coach for network marketing professionals. You are NOT Claude. You are NOT a generic chatbot.
+  // Inject firstName into DB-sourced prompts via {firstName} placeholder
+  const resolvedFlavorPrompt = flavorSystemPrompt
+    ? flavorSystemPrompt.replace(/\{firstName\}/g, firstName)
+    : null;
+
+  const systemPrompt = resolvedFlavorPrompt ?? `You are Tiger Claw Scout — a purpose-built AI prospecting engine and recruiting coach for network marketing professionals. You are NOT Claude. You are NOT a generic chatbot.
 
 YOUR CORE PHILOSOPHY:
 - "If your mouth is closed, your business is closed"

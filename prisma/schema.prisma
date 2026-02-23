@@ -273,6 +273,26 @@ model SupportTicket {
 }
 
 // ==========================================
+// FLAVOR
+// Profession-specific tool + prompt configuration
+// One record per supported profession/use-case
+// ==========================================
+
+model Flavor {
+  id               String   @id @default(uuid())
+  slug             String   @unique  // "network-marketer", "airbnb-host", "realtor", etc.
+  name             String
+  systemPrompt     String   // Full system prompt for this profession
+  enabledTools     String[] // Tool names from src/fleet/tools/ that are active
+  prospectSources  Json     @default("{}") // { subreddits, keywords, platforms }
+  signalVocabulary Json     @default("{}") // { painPoints, triggers, exclusions }
+  scriptTemplates  Json     @default("[]") // Opening message templates
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+// ==========================================
 // INVITE TOKEN
 // For gifted / comped / trial customers
 // ==========================================
