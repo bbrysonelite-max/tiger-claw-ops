@@ -1,7 +1,8 @@
 /**
- * Tiger Bot Scout - Fleet Worker
- * BullMQ worker that processes inbound Telegram updates
- * Implements virtual bot pattern - instantiates bots on-demand per tenant
+ * Tiger Claw Scout - Fleet Worker (ADR-001)
+ * BullMQ worker that processes inbound Telegram updates.
+ * Implements virtual bot pattern - instantiates bots on-demand per tenant.
+ * Uses Anthropic Claude for all AI conversations and script generation.
  */
 
 import 'dotenv/config';
@@ -9,7 +10,6 @@ import { Worker, Job } from 'bullmq';
 import { Redis } from 'ioredis';
 import TelegramBot from 'node-telegram-bot-api';
 import { PrismaClient } from '@prisma/client';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import Anthropic from '@anthropic-ai/sdk';
 import { decrypt } from '../shared/crypto.js';
 import {
@@ -20,22 +20,13 @@ import {
   QUEUE_NAMES,
 } from '../shared/types.js';
 
-// --- Gemini Client for AI Conversations (much cheaper than OpenAI) ---
-const gemini = process.env.GEMINI_API_KEY
-  ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-  : null;
-
-if (!gemini) {
-  console.warn('[worker] WARNING: GEMINI_API_KEY not set - AI conversations disabled');
-}
-
-// --- Anthropic Client for Script Generation ---
+// --- Anthropic Client — all AI (conversations + script generation) ---
 const anthropic = process.env.ANTHROPIC_API_KEY
   ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   : null;
 
 if (!anthropic) {
-  console.warn('[worker] WARNING: ANTHROPIC_API_KEY not set - script generation disabled');
+  console.warn('[worker] WARNING: ANTHROPIC_API_KEY not set - AI disabled');
 }
 
 // --- Configuration ---
@@ -107,7 +98,7 @@ async function handleStartCommand(
   const firstName = message.from?.first_name || 'there';
   
   const welcomeText = `
-🐯 *Welcome to Tiger Bot Scout, ${firstName}!*
+🐯 *Welcome to Tiger Claw Scout, ${firstName}!*
 
 I find qualified prospects every morning and write personalized outreach scripts for you.
 
@@ -130,7 +121,7 @@ async function handleHelpCommand(
   const chatId = message.chat.id;
   
   const helpText = `
-🐯 *Tiger Bot Scout Commands*
+🐯 *Tiger Claw Scout Commands*
 
 /today — Today's top prospects
 /script [name] — Get a personalized outreach script
@@ -221,7 +212,7 @@ What would you like to tell us?
 • What could be improved?
 • Any feature requests?
 
-_Your feedback helps make Tiger Bot Scout better for everyone!_
+_Your feedback helps make Tiger Claw Scout better for everyone!_
   `.trim();
   
   await ctx.bot.sendMessage(chatId, feedbackText, { parse_mode: 'Markdown' });
@@ -445,58 +436,56 @@ async function handleUnknownMessage(
     return;
   }
 
-  // Use Gemini for intelligent conversation (much cheaper than OpenAI)
-  if (gemini) {
+  // Use Anthropic Claude for intelligent conversation
+  if (anthropic) {
     try {
-      const model = gemini.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      const response = await anthropic.messages.create({
+        model: 'claude-opus-4-5-20251101',
+        max_tokens: 512,
+        system: `You are Tiger Claw Scout — a purpose-built AI prospecting engine and recruiting coach for network marketing professionals. You are NOT Claude. You are NOT a generic chatbot.
 
-      const systemPrompt = `You are Tiger Bot Scout, an AI recruiting coach and prospect-finder for network marketers in the wellness/anti-aging space.
-
-YOUR CORE PHILOSOPHY (live by this):
+YOUR CORE PHILOSOPHY:
 - "If your mouth is closed, your business is closed"
-- This business is not a lottery—it's a manufacturing process. You manufacture success by following the system.
+- This business is a manufacturing process. Manufacture success by following the system.
 - Be a FINISHER, not just a starter. Focus on 1% improvement daily.
 
 THE "THREE THREES" FORMULA (teach this when relevant):
-1. Talk to 3 NEW people today - constantly feed your pipeline
-2. Do 3 three-way calls today - leverage your upline's credibility
-3. Sponsor 3 people this month - consistency builds massive organizations
+1. Talk to 3 NEW people today
+2. Do 3 three-way calls today
+3. Sponsor 3 people this month
 
 KEY COACHING PRINCIPLES:
-- DRIVE YOUR LINES DEEP: Real wealth comes from depth (levels 4, 5, 6), not just your front line
-- Find the "LOCKER": That person who says "Get out of my way, I'm going to do this" - they're usually found deep, not on level 1
-- RECRUIT UP: Look for successful people with contacts and credibility, not people who "need" the opportunity
-- PLAN BACKWARDS: What do you want at 90? 50? 40? Align daily actions with your ultimate destination
+- DRIVE YOUR LINES DEEP: Real wealth comes from depth (levels 4, 5, 6)
+- Find the "LOCKER": The person who says "Get out of my way, I'm going to do this"
+- RECRUIT UP: Look for successful people with contacts and credibility
 - BE THE PRODUCT: You can't represent wellness if you don't live it
 
-Bot capabilities:
-- /today shows today's hot prospects
-- /help shows all commands
-- Daily prospect reports arrive at 7 AM
+Commands available:
+- /today — today's top prospects
+- /script [name] — personalized approach script
+- /objection [text] — 3 ranked responses to an objection
+- /pipeline — prospect pipeline by status
+- /help — all commands
 
-Personality: Direct, motivating, action-oriented. Like a coach who believes in them. Use emojis sparingly (1-2 max).
-Keep responses concise (2-4 sentences) but impactful. Always push toward ACTION.
-When they share wins, celebrate briefly then redirect to "What's your next Three Threes?"
-When they share struggles, acknowledge briefly then give ONE specific action step.
+Personality: Direct, competitive, coach's voice. No fluff. No cheerleading. Never say you are Claude.
+Keep responses 2-4 sentences. Always push toward ACTION.
+The user's first name is: ${firstName}`,
+        messages: [{ role: 'user', content: text }],
+      });
 
-The user's first name is: ${firstName}
-
-User message: ${text}`;
-
-      const result = await model.generateContent(systemPrompt);
-      const aiResponse = result.response.text();
+      const aiResponse = response.content[0].type === 'text' ? response.content[0].text : null;
 
       if (aiResponse) {
         await ctx.bot.sendMessage(chatId, aiResponse, { parse_mode: 'Markdown' });
         return;
       }
     } catch (error) {
-      console.error(`[worker] Gemini error for tenant ${ctx.tenantId}:`, error);
+      console.error(`[worker] Anthropic error for tenant ${ctx.tenantId}:`, error);
       // Fall through to default response
     }
   }
 
-  // Fallback if OpenAI is not configured or fails
+  // Fallback if Anthropic is not configured or fails
   await ctx.bot.sendMessage(
     chatId,
     `Hey ${firstName}! 🐯 I'm here to help you find great prospects. Try /today to see who I've found for you, or /help to see all my commands.`,
@@ -685,7 +674,7 @@ const shutdown = async () => {
 process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
 
-console.log(`[worker] Tiger Bot Fleet Worker started`);
+console.log(`[worker] Tiger Claw Fleet Worker started (ADR-001)`);
 console.log(`[worker] Redis: ${REDIS_URL}`);
 console.log(`[worker] Concurrency: ${WORKER_CONCURRENCY}`);
 console.log(`[worker] Listening on queue: ${QUEUE_NAMES.INBOUND}`);
