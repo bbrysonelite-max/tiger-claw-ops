@@ -127,6 +127,7 @@ async function handleHelpCommand(
 /today — Today's top prospects
 /script [name] — Get a personalized outreach script
 /report — Same as /today
+/capabilities — What this bot can do + active flavor
 /help — Show this help message
 /feedback — Send feedback
 
@@ -138,6 +139,7 @@ After seeing Nancy in your report → type:
 • Daily report arrives automatically at 7 AM Bangkok
 • Scripts are written in your prospect's language
 • After using a script, let me know: 👎 /fb\\_no · 👍 /fb\\_replied · 🎯 /fb\\_converted
+• Use /capabilities flavor list to see all industry profiles
   `.trim();
   
   await ctx.bot.sendMessage(chatId, helpText, { parse_mode: 'Markdown' });
@@ -344,6 +346,135 @@ Return ONLY the script message text. No labels, no JSON, no explanation. Just th
       chatId,
       "😓 Couldn't generate the script right now. Please try again in a moment."
     );
+  }
+}
+
+async function handleCapabilitiesCommand(
+  ctx: VirtualBotContext,
+  message: TelegramMessage,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tenant: any
+): Promise<void> {
+  const chatId = message.chat.id;
+  const text = message.text || '';
+  const parts = text.trim().split(/\s+/);
+  const sub = parts[1]?.toLowerCase();
+  const arg = parts[2]?.toLowerCase();
+  const arg2 = parts[3]?.toLowerCase();
+
+  // /capabilities flavor set <slug>
+  if (sub === 'flavor' && arg === 'set' && arg2) {
+    try {
+      const flavor = await (prisma as any).flavor.findUnique({ where: { slug: arg2 } });
+      if (!flavor || !flavor.isActive) {
+        await ctx.bot.sendMessage(chatId, `❌ Unknown flavor: \`${arg2}\`. Use /capabilities flavor list to see options.`, { parse_mode: 'Markdown' });
+        return;
+      }
+      await prisma.tenant.update({ where: { id: ctx.tenantId }, data: { flavorSlug: arg2 } });
+      await ctx.bot.sendMessage(chatId, `✅ Flavor switched to *${flavor.name}*.\n\nYour bot is now operating in ${flavor.name} mode.`, { parse_mode: 'Markdown' });
+    } catch (err) {
+      console.error(`[worker] flavor set error:`, err);
+      await ctx.bot.sendMessage(chatId, '😓 Could not switch flavor right now. Try again.');
+    }
+    return;
+  }
+
+  // /capabilities flavor list
+  if (sub === 'flavor' && arg === 'list') {
+    try {
+      const flavors = await (prisma as any).flavor.findMany({ where: { isActive: true }, orderBy: { slug: 'asc' } });
+      const currentSlug = tenant?.flavorSlug ?? 'network-marketer';
+      let reply = `🍊 *Available Flavors*\n\n`;
+      for (const f of flavors) {
+        const active = f.slug === currentSlug ? ' ← active' : '';
+        reply += `• \`${f.slug}\` — ${f.name}${active}\n`;
+      }
+      reply += `\n_Use /capabilities flavor set <slug> to switch._`;
+      await ctx.bot.sendMessage(chatId, reply, { parse_mode: 'Markdown' });
+    } catch (err) {
+      console.error(`[worker] flavor list error:`, err);
+      await ctx.bot.sendMessage(chatId, '😓 Could not fetch flavors. Try again.');
+    }
+    return;
+  }
+
+  // /capabilities flavor (show current)
+  if (sub === 'flavor') {
+    const flavorSlug = tenant?.flavorSlug ?? 'network-marketer';
+    try {
+      const flavor = await (prisma as any).flavor.findUnique({ where: { slug: flavorSlug } });
+      if (!flavor) {
+        await ctx.bot.sendMessage(chatId, `Active flavor: \`${flavorSlug}\` (no DB record found).`, { parse_mode: 'Markdown' });
+        return;
+      }
+      const sv = (flavor.signalVocabulary as Record<string, any>) || {};
+      const ps = (flavor.prospectSources as Record<string, any>) || {};
+      const channels = ps.primaryChannels?.join(', ') || 'not set';
+      const compliance = sv.compliance?.length ? sv.compliance.map((r: string) => `• ${r}`).join('\n') : 'None';
+      const reply = [
+        `🍊 *Active Flavor: ${flavor.name}*`,
+        `Slug: \`${flavor.slug}\``,
+        `Aggression: ${sv.aggression || 'medium'}`,
+        `Channels: ${channels}`,
+        `Tools: ${(flavor.enabledTools as string[]).join(', ')}`,
+        ``,
+        `*Compliance Rules:*`,
+        compliance,
+        ``,
+        `_/capabilities flavor list — See all available flavors_`,
+      ].join('\n');
+      await ctx.bot.sendMessage(chatId, reply, { parse_mode: 'Markdown' });
+    } catch (err) {
+      console.error(`[worker] flavor show error:`, err);
+      await ctx.bot.sendMessage(chatId, '😓 Could not fetch flavor info. Try again.');
+    }
+    return;
+  }
+
+  // /capabilities (default — show installed tools)
+  const flavorSlug = tenant?.flavorSlug ?? 'network-marketer';
+  try {
+    const flavor = await (prisma as any).flavor.findUnique({ where: { slug: flavorSlug } });
+    const flavorName = flavor?.name ?? flavorSlug;
+    const sv = (flavor?.signalVocabulary as Record<string, any>) || {};
+    const ps = (flavor?.prospectSources as Record<string, any>) || {};
+    const channels = ps.primaryChannels?.join(', ') || 'linkedin, email';
+    const aggression = sv.aggression ?? 'medium';
+
+    const toolDescriptions: Record<string, string> = {
+      get_todays_prospects: 'Fetch today\'s top-scored prospects',
+      generate_script:      'Write personalized outreach scripts',
+      search_web:           'Search the web for prospect research',
+      update_prospect_status: 'Update a prospect\'s pipeline status',
+      get_calendar_link:    'Get your Calendly booking link',
+      send_followup_message: 'Send a follow-up suggestion',
+    };
+
+    const enabledTools: string[] = flavor?.enabledTools ?? Object.keys(toolDescriptions);
+    let toolList = '';
+    for (const t of enabledTools) {
+      const desc = toolDescriptions[t] ?? t;
+      toolList += `• *${t}* — ${desc}\n`;
+    }
+
+    const reply = [
+      `🧰 *Tiger Claw Capabilities*`,
+      ``,
+      `Flavor: *${flavorName}* (\`${flavorSlug}\`)`,
+      `Aggression: ${aggression} | Channels: ${channels}`,
+      ``,
+      `*Active Tools (${enabledTools.length}):*`,
+      toolList.trim(),
+      ``,
+      `/capabilities flavor — View full flavor profile`,
+      `/capabilities flavor list — All available flavors`,
+      `/capabilities flavor set <slug> — Switch flavor`,
+    ].join('\n');
+
+    await ctx.bot.sendMessage(chatId, reply, { parse_mode: 'Markdown' });
+  } catch (err) {
+    console.error(`[worker] capabilities error:`, err);
+    await ctx.bot.sendMessage(chatId, '😓 Could not fetch capabilities. Try again.');
   }
 }
 
@@ -610,6 +741,9 @@ async function handleTelegramUpdate(
       break;
     case '/feedback':
       await handleFeedbackCommand(ctx, message);
+      break;
+    case '/capabilities':
+      await handleCapabilitiesCommand(ctx, message, tenant);
       break;
     default:
       await handleUnknownMessage(ctx, message, tenant);
