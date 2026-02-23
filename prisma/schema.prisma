@@ -41,6 +41,9 @@ model Tenant {
   chat_id         String?  // Telegram chat ID (set after customer sends /start)
   interview_data  Json?    // Structured ICP data from onboarding
 
+  // Flavor — controls system prompt, tools, and prospect sources
+  flavorSlug      String   @default("network-marketer") // "network-marketer", "airbnb-host", "lawyer", etc.
+
   // Invite / Trial Tracking
   inviteTokenId   String?
   trialEndsAt     DateTime?

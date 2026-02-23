@@ -1,0 +1,60 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main, staging]
+
+jobs:
+  deploy-production:
+    name: Deploy to Production
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to production server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: root
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          script: |
+            set -e
+            cd /home/ubuntu/tiger-bot-api
+            git fetch origin main
+            git reset --hard origin/main
+            npm ci --omit=dev
+            npm run build
+            npm run db:generate
+            pm2 reload ecosystem.config.js --env production
+            pm2 save
+            sleep 3
+            curl -sf http://localhost:4000/health && echo "Health check passed"
+
+  deploy-staging:
+    name: Deploy to Staging
+    if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to staging server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: root
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            set -e
+            cd /home/ubuntu/tiger-bot-api
+            git fetch origin staging
+            git reset --hard origin/staging
+            npm ci --omit=dev
+            npm run build
+            npm run db:generate
+            pm2 reload ecosystem.config.js --env development
+            pm2 save
+            sleep 3
+            curl -sf http://localhost:4000/health && echo "Health check passed"

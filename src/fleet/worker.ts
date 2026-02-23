@@ -19,6 +19,7 @@ import {
   TelegramMessage,
   QUEUE_NAMES,
 } from '../shared/types.js';
+import { getToolsForFlavor, executeToolCall, type ToolContext } from './tools/index.js';
 
 // --- Anthropic Client — all AI (conversations + script generation) ---
 const anthropic = process.env.ANTHROPIC_API_KEY
@@ -417,7 +418,9 @@ async function handleFeedbackOutcome(
 
 async function handleUnknownMessage(
   ctx: VirtualBotContext,
-  message: TelegramMessage
+  message: TelegramMessage,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tenant: any
 ): Promise<void> {
   if (!message.chat) {
     console.log('[worker] Skipping message without chat object');
@@ -427,7 +430,6 @@ async function handleUnknownMessage(
   const text = message.text || '';
   const firstName = message.from?.first_name || 'there';
 
-  // If it's a short message or looks like a typo, suggest help
   if (text.length <= 3) {
     await ctx.bot.sendMessage(
       chatId,
@@ -436,13 +438,28 @@ async function handleUnknownMessage(
     return;
   }
 
-  // Use Anthropic Claude for intelligent conversation
-  if (anthropic) {
-    try {
-      const response = await anthropic.messages.create({
-        model: 'claude-opus-4-5-20251101',
-        max_tokens: 512,
-        system: `You are Tiger Claw Scout — a purpose-built AI prospecting engine and recruiting coach for network marketing professionals. You are NOT Claude. You are NOT a generic chatbot.
+  if (!anthropic) {
+    await ctx.bot.sendMessage(
+      chatId,
+      `Hey ${firstName}! 🐯 Try /today to see your prospects or /help for commands.`,
+      { parse_mode: 'Markdown' }
+    );
+    return;
+  }
+
+  const flavorSlug: string = tenant?.flavorSlug ?? 'network-marketer';
+  const tools = getToolsForFlavor(flavorSlug);
+
+  const toolCtx: ToolContext = {
+    tenantId: ctx.tenantId,
+    tenant,
+    prisma,
+    bot: ctx.bot,
+    chatId,
+    anthropic,
+  };
+
+  const systemPrompt = `You are Tiger Claw Scout — a purpose-built AI prospecting engine and recruiting coach for network marketing professionals. You are NOT Claude. You are NOT a generic chatbot.
 
 YOUR CORE PHILOSOPHY:
 - "If your mouth is closed, your business is closed"
@@ -460,44 +477,82 @@ KEY COACHING PRINCIPLES:
 - RECRUIT UP: Look for successful people with contacts and credibility
 - BE THE PRODUCT: You can't represent wellness if you don't live it
 
-Commands available:
-- /today — today's top prospects
-- /script [name] — personalized approach script
-- /objection [text] — 3 ranked responses to an objection
-- /pipeline — prospect pipeline by status
-- /help — all commands
+You have tools available. Use them proactively:
+- get_todays_prospects when asked about prospects or daily report
+- generate_script when asked for a script or what to say to someone
+- search_web to look up a person or company
+- update_prospect_status when the user reports a contact or conversion
+- get_calendar_link when sharing a booking link
+- send_followup_message to schedule a follow-up reminder
 
 Personality: Direct, competitive, coach's voice. No fluff. No cheerleading. Never say you are Claude.
-Keep responses 2-4 sentences. Always push toward ACTION.
-The user's first name is: ${firstName}`,
-        messages: [{ role: 'user', content: text }],
+After using a tool, present results cleanly. Always push toward ACTION.
+The user's first name is: ${firstName}`;
+
+  const conversationMessages: Anthropic.MessageParam[] = [
+    { role: 'user', content: text },
+  ];
+
+  try {
+    // Tool-use conversation loop
+    for (let turn = 0; turn < 5; turn++) {
+      const response = await anthropic.messages.create({
+        model: 'claude-opus-4-5-20251101',
+        max_tokens: 1024,
+        system: systemPrompt,
+        tools,
+        messages: conversationMessages,
       });
 
-      const aiResponse = response.content[0].type === 'text' ? response.content[0].text : null;
+      // Append assistant turn to conversation history
+      conversationMessages.push({ role: 'assistant', content: response.content });
 
-      if (aiResponse) {
-        await ctx.bot.sendMessage(chatId, aiResponse, { parse_mode: 'Markdown' });
-        return;
+      if (response.stop_reason !== 'tool_use') {
+        // Final text response — send to user
+        const textBlock = response.content.find((b) => b.type === 'text');
+        if (textBlock && textBlock.type === 'text' && textBlock.text) {
+          await ctx.bot.sendMessage(chatId, textBlock.text, { parse_mode: 'Markdown' });
+        }
+        break;
       }
-    } catch (error) {
-      console.error(`[worker] Anthropic error for tenant ${ctx.tenantId}:`, error);
-      // Fall through to default response
-    }
-  }
 
-  // Fallback if Anthropic is not configured or fails
-  await ctx.bot.sendMessage(
-    chatId,
-    `Hey ${firstName}! 🐯 I'm here to help you find great prospects. Try /today to see who I've found for you, or /help to see all my commands.`,
-    { parse_mode: 'Markdown' }
-  );
+      // Execute all tool_use blocks in this response
+      const toolResults: Anthropic.ToolResultBlockParam[] = [];
+      for (const block of response.content) {
+        if (block.type === 'tool_use') {
+          const result = await executeToolCall(
+            block.name,
+            block.input as Record<string, unknown>,
+            toolCtx
+          );
+          toolResults.push({
+            type: 'tool_result',
+            tool_use_id: block.id,
+            content: result,
+          });
+        }
+      }
+
+      // Feed tool results back into the conversation
+      conversationMessages.push({ role: 'user', content: toolResults });
+    }
+  } catch (error) {
+    console.error(`[worker] Anthropic error for tenant ${ctx.tenantId}:`, error);
+    await ctx.bot.sendMessage(
+      chatId,
+      `Hey ${firstName}! 🐯 I'm here to help. Try /today to see your prospects or /help for commands.`,
+      { parse_mode: 'Markdown' }
+    );
+  }
 }
 
 // --- Main Message Handler ---
 
 async function handleTelegramUpdate(
   ctx: VirtualBotContext,
-  update: TelegramUpdate
+  update: TelegramUpdate,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tenant: any
 ): Promise<void> {
   const message = update.message;
   
@@ -536,7 +591,7 @@ async function handleTelegramUpdate(
       await handleFeedbackCommand(ctx, message);
       break;
     default:
-      await handleUnknownMessage(ctx, message);
+      await handleUnknownMessage(ctx, message, tenant);
   }
 }
 
@@ -621,7 +676,7 @@ async function processInboundJob(job: Job<InboundJobData>): Promise<void> {
 
   // Handle the update
   try {
-    await handleTelegramUpdate(ctx, update as TelegramUpdate);
+    await handleTelegramUpdate(ctx, update as TelegramUpdate, tenant);
     console.log(`[worker] Successfully processed job ${job.id}`);
   } catch (error) {
     console.error(`[worker] Error handling update for tenant ${tenant.id}:`, error);
