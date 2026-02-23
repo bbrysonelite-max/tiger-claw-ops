@@ -27,7 +27,7 @@ jobs:
             npm ci
             npm run build
             npm run db:generate
-            pm2 reload ecosystem.config.js --env production
+            pm2 reload ecosystem.config.cjs --env production
             pm2 save
             sleep 3
             curl -sf http://localhost:4000/health && echo "Health check passed"
@@ -54,7 +54,7 @@ jobs:
             npm ci
             npm run build
             npm run db:generate
-            pm2 reload ecosystem.config.js --env development
+            pm2 reload ecosystem.config.cjs --env development
             pm2 save
             sleep 3
             curl -sf http://localhost:4000/health && echo "Health check passed"
