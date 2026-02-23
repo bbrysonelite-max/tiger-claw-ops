@@ -24,7 +24,7 @@ jobs:
             cd /home/ubuntu/tiger-bot-api
             git fetch origin main
             git reset --hard origin/main
-            npm ci --omit=dev
+            npm ci
             npm run build
             npm run db:generate
             pm2 reload ecosystem.config.js --env production
@@ -51,7 +51,7 @@ jobs:
             cd /home/ubuntu/tiger-bot-api
             git fetch origin staging
             git reset --hard origin/staging
-            npm ci --omit=dev
+            npm ci
             npm run build
             npm run db:generate
             pm2 reload ecosystem.config.js --env development
