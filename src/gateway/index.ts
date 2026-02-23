@@ -14,6 +14,7 @@ import { InboundJobData, ProvisionJobData, QUEUE_NAMES } from '../shared/types.j
 const PORT = process.env.GATEWAY_PORT || 3000;
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+const STANSTORE_WEBHOOK_SECRET = process.env.STANSTORE_WEBHOOK_SECRET;
 
 // --- Redis Connection ---
 const redisConnection = new Redis(REDIS_URL, {
@@ -79,6 +80,60 @@ app.get('/health', (req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     redis: redisConnection.status,
   });
+});
+
+// --- Stan Store Webhook Endpoint ---
+// Receives purchase events from Stan Store via Zapier
+// Must be defined BEFORE /webhooks/:token_hash to avoid wildcard match
+// Zapier config: send POST to https://api.botcraftwrks.ai/webhooks/stanstore
+//   with header X-Webhook-Secret: <STANSTORE_WEBHOOK_SECRET>
+//   and body: { "email": "...", "name": "..." }
+app.post('/webhooks/stanstore', async (req: Request, res: Response) => {
+  // Optional secret verification
+  if (STANSTORE_WEBHOOK_SECRET) {
+    const provided = req.headers['x-webhook-secret'] || req.query.secret;
+    if (provided !== STANSTORE_WEBHOOK_SECRET) {
+      console.warn('[gateway] Stan Store webhook: invalid secret');
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  }
+
+  const body = req.body;
+
+  // Accept multiple field name conventions from Zapier/Stan Store
+  const email = body.email || body.customer_email || body.buyer_email || body.Email || '';
+  const firstName = body.first_name || body.firstName || body.First_Name || '';
+  const lastName = body.last_name || body.lastName || body.Last_Name || '';
+  const fullName = body.name || body.customer_name || body.buyer_name || body.Name ||
+    (firstName && lastName ? `${firstName} ${lastName}`.trim() : firstName || lastName || 'New Customer');
+  const orderId = body.order_id || body.orderId || body.id || `stanstore-${Date.now()}`;
+
+  if (!email) {
+    console.warn('[gateway] Stan Store webhook: missing email in payload', JSON.stringify(body));
+    return res.status(400).json({ error: 'email is required' });
+  }
+
+  try {
+    const jobData: ProvisionJobData = {
+      stripeId: `stanstore-${orderId}`,
+      email,
+      name: fullName,
+    };
+
+    const jobId = `provision-stanstore-${orderId}`;
+
+    await provisionQueue.add('provision_bot', jobData, {
+      jobId,
+      priority: 2,
+    });
+
+    console.log(`[gateway] Stan Store purchase queued for provisioning: ${email} (job: ${jobId})`);
+
+    return res.status(200).json({ received: true, email, jobId });
+  } catch (error) {
+    console.error('[gateway] Stan Store webhook queue error:', error);
+    return res.status(500).json({ error: 'Failed to queue provision job' });
+  }
 });
 
 // --- Telegram Webhook Endpoint ---
@@ -252,6 +307,98 @@ app.post('/admin/provision/batch', async (req: Request, res: Response) => {
     total: customers.length,
     results 
   });
+});
+
+// --- Admin: Telegram Session Pool Management ---
+// Manage the pool of Telegram user accounts used for BotFather bot creation.
+// Each account can create ~18 bots before the pool rotates to the next.
+// Add new accounts here whenever BotFather capacity is running low.
+
+import { PrismaClient as GatewayPrisma } from '@prisma/client';
+const gatewayPrisma = new GatewayPrisma();
+
+// List all sessions with their current status
+app.get('/admin/sessions', async (req: Request, res: Response) => {
+  try {
+    const sessions = await (gatewayPrisma as any).telegramSession.findMany({
+      select: {
+        id: true,
+        phoneNumber: true,
+        botsCreated: true,
+        isActive: true,
+        isRateLimited: true,
+        rateLimitExpiresAt: true,
+        lastUsedAt: true,
+        createdAt: true,
+      },
+      orderBy: { botsCreated: 'asc' },
+    });
+
+    const totalCapacity = sessions
+      .filter((s: any) => s.isActive && !s.isRateLimited)
+      .reduce((sum: number, s: any) => sum + Math.max(0, 18 - s.botsCreated), 0);
+
+    return res.status(200).json({
+      sessions,
+      totalSessions: sessions.length,
+      activeSessions: sessions.filter((s: any) => s.isActive && !s.isRateLimited).length,
+      remainingBotCapacity: totalCapacity,
+    });
+  } catch (error) {
+    console.error('[gateway] Error listing sessions:', error);
+    return res.status(500).json({ error: 'Failed to list sessions' });
+  }
+});
+
+// Add a new Telegram session to the pool
+// Body: { phoneNumber: "+13852415997", sessionString: "1BQAA..." }
+app.post('/admin/sessions', async (req: Request, res: Response) => {
+  const { phoneNumber, sessionString, apiId, apiHash } = req.body;
+
+  if (!phoneNumber || !sessionString) {
+    return res.status(400).json({ error: 'phoneNumber and sessionString are required' });
+  }
+
+  try {
+    const session = await (gatewayPrisma as any).telegramSession.upsert({
+      where: { phoneNumber },
+      create: {
+        phoneNumber,
+        sessionString,
+        apiId: apiId || 2040,
+        apiHash: apiHash || 'b18441a1ff607e10a989891a5462e627',
+        botsCreated: 0,
+        isActive: true,
+        isRateLimited: false,
+      },
+      update: {
+        sessionString,
+        isActive: true,
+        isRateLimited: false,
+        rateLimitExpiresAt: null,
+      },
+    });
+
+    console.log(`[gateway] Session added/updated for ${phoneNumber}`);
+    return res.status(200).json({ success: true, id: session.id, phoneNumber: session.phoneNumber });
+  } catch (error) {
+    console.error('[gateway] Error adding session:', error);
+    return res.status(500).json({ error: 'Failed to add session' });
+  }
+});
+
+// Deactivate a session
+app.delete('/admin/sessions/:id', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    await (gatewayPrisma as any).telegramSession.update({
+      where: { id },
+      data: { isActive: false },
+    });
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ error: 'Failed to deactivate session' });
+  }
 });
 
 // --- 404 Handler ---

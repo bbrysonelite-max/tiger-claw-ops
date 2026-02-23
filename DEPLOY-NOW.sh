@@ -7,9 +7,11 @@ TELEGRAM_TOKEN="__PASTE_YOUR_TOKEN_HERE__"
 # DO NOT EDIT BELOW THIS LINE
 # ============================================
 
-SERVER="208.113.131.83"
+SERVER="209.97.168.251"  # DigitalOcean Singapore (production)
+# OLD: 208.113.131.83 = DreamHost, DEAD, do not use
 KEY="$HOME/Desktop/botcraft key pair.pem"
 REMOTE_PATH="/home/ubuntu/tiger-bot-api"
+SSH_USER="root"
 
 echo "🐯 Tiger Bot Scout - One-Click Deploy"
 echo "====================================="
@@ -39,7 +41,7 @@ fi
 echo ""
 echo "📡 Connecting to production server..."
 
-ssh -i "$KEY" -o StrictHostKeyChecking=no ubuntu@$SERVER << ENDSSH
+ssh -i "$KEY" -o StrictHostKeyChecking=no $SSH_USER@$SERVER << ENDSSH
 
 set -e
 echo "✅ Connected to server"

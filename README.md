@@ -550,13 +550,14 @@ describe('GET /ai-crm/leads', () => {
 
 ### Production Server
 
-The API runs on DreamCompute at `208.113.131.83`.
+The API runs on DigitalOcean Singapore at `209.97.168.251` (user: `root`).
+Note: `208.113.131.83` (DreamHost) is dead and abandoned — do not use.
 
 ### Deployment Steps
 
 ```bash
 # SSH into server
-ssh -i "botcraft key pair.pem" ubuntu@208.113.131.83
+ssh -i "botcraft key pair.pem" root@209.97.168.251
 
 # Navigate to project
 cd /home/ubuntu/tiger-bot-api

@@ -12,6 +12,7 @@ import CryptoJS from 'crypto-js';
 import crypto from 'crypto';
 import { QUEUE_NAMES, ProvisionJobData } from '../shared/types.js';
 import { provisionNewBot } from './userbot.js';
+import { SessionPool } from './session-pool.js';
 
 // --- Configuration ---
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
@@ -21,6 +22,11 @@ const BREVO_API_KEY = process.env.BREVO_API_KEY;
 
 // --- Database Client ---
 const prisma = new PrismaClient();
+
+// --- Telegram Session Pool ---
+// Rotates through multiple Telegram accounts to avoid BotFather's 20-bot-per-account limit.
+// Add accounts via POST /admin/sessions on the gateway.
+const sessionPool = new SessionPool(prisma);
 
 // --- Redis Connection ---
 const redisConnection = new Redis(REDIS_URL, {
@@ -138,7 +144,7 @@ async function processProvisionJob(job: Job<ProvisionJobData>): Promise<any> {
   let tenant;
   try {
     console.log(`[provision-worker] Starting auto-provision via BotFather for: ${email}`);
-    const result = await provisionNewBot(name || 'New Customer', email);
+    const result = await provisionNewBot(name || 'New Customer', email, sessionPool);
 
     const encryptedToken = encryptToken(result.token);
 

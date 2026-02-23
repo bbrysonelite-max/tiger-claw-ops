@@ -270,6 +270,42 @@ model SupportTicket {
 }
 
 // ==========================================
+// TELEGRAM SESSION POOL
+// Multiple Telegram user accounts for BotFather bot creation.
+// BotFather limits each account to ~20 bots. The pool rotates
+// through accounts automatically. Add new accounts via admin API.
+// Each account needs its own phone number to register with Telegram.
+// ==========================================
+
+model TelegramSession {
+  id                  String    @id @default(uuid())
+
+  // The phone number used to register this Telegram account
+  phoneNumber         String    @unique
+
+  // MTProto session string (from gramJS StringSession.save())
+  sessionString       String
+
+  // Telegram app credentials — use skeleton key (Telegram Desktop official)
+  apiId               Int       @default(2040)
+  apiHash             String    @default("b18441a1ff607e10a989891a5462e627")
+
+  // Usage tracking
+  botsCreated         Int       @default(0)  // Increment after each successful /newbot
+
+  // State
+  isActive            Boolean   @default(true)
+  isRateLimited       Boolean   @default(false)
+  rateLimitExpiresAt  DateTime? // When rate limit clears (from BotFather "try again in N seconds")
+
+  // Audit
+  createdAt           DateTime  @default(now())
+  lastUsedAt          DateTime?
+
+  @@index([isActive, isRateLimited, botsCreated])
+}
+
+// ==========================================
 // INVITE TOKEN
 // For gifted / comped / trial customers
 // ==========================================

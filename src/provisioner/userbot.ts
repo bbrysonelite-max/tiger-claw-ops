@@ -1,17 +1,23 @@
 /**
  * Tiger Bot Scout - BotFather Provisioner
  * Automated bot creation using gramjs MTProto client
+ *
+ * Uses SessionPool for multi-account rotation — each Telegram account can
+ * create ~18 bots before the pool automatically switches to the next account.
+ * Add accounts via POST /admin/sessions or the add-session CLI script.
  */
 
 import 'dotenv/config';
 import { TelegramClient, Api } from 'telegram';
 import { StringSession } from 'telegram/sessions/index.js';
 import { hashToken } from '../shared/crypto.js';
+import { SessionPool, POOL_API_ID, POOL_API_HASH } from './session-pool.js';
 
 // --- Configuration ---
-const API_ID = parseInt(process.env.TELEGRAM_API_ID || '0', 10);
-const API_HASH = process.env.TELEGRAM_API_HASH || '';
-const SESSION_STRING = process.env.TELEGRAM_SESSION_STRING || '';
+// Legacy single-session fallback (still works if no pool sessions in DB)
+const LEGACY_API_ID = parseInt(process.env.TELEGRAM_API_ID || String(POOL_API_ID), 10);
+const LEGACY_API_HASH = process.env.TELEGRAM_API_HASH || POOL_API_HASH;
+const LEGACY_SESSION_STRING = process.env.TELEGRAM_SESSION_STRING || '';
 const GATEWAY_URL = process.env.GATEWAY_URL || 'https://api.botcraftwrks.ai';
 
 // BotFather username
@@ -52,21 +58,22 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Create a new Telegram client with the stored session
+ * Create a new Telegram client from a session string and credentials
  */
-function createClient(): TelegramClient {
-  if (!API_ID || !API_HASH) {
-    throw new Error('TELEGRAM_API_ID and TELEGRAM_API_HASH must be set');
-  }
-  
-  if (!SESSION_STRING) {
-    throw new Error('TELEGRAM_SESSION_STRING must be set. Run generate-session script first.');
-  }
-  
-  const session = new StringSession(SESSION_STRING);
-  return new TelegramClient(session, API_ID, API_HASH, {
+function createClient(sessionString: string, apiId: number, apiHash: string): TelegramClient {
+  return new TelegramClient(new StringSession(sessionString), apiId, apiHash, {
     connectionRetries: 5,
   });
+}
+
+/**
+ * Create a client using legacy single-session env vars (fallback)
+ */
+function createLegacyClient(): TelegramClient {
+  if (!LEGACY_SESSION_STRING) {
+    throw new Error('No sessions available. Add a session via POST /admin/sessions or set TELEGRAM_SESSION_STRING.');
+  }
+  return createClient(LEGACY_SESSION_STRING, LEGACY_API_ID, LEGACY_API_HASH);
 }
 
 /**
@@ -228,18 +235,44 @@ async function runBotFatherFlow(
 
 export async function provisionNewBot(
   customerName: string,
-  email: string
+  email: string,
+  pool?: SessionPool
 ): Promise<ProvisionResult> {
   console.log(`[provisioner] Starting bot provision for: ${email}`);
 
   // Enforce 90-second minimum between BotFather calls to avoid 24-hour lockout
   await enforceBotFatherRateLimit();
 
-  const client = createClient();
+  // Try pool sessions first, fall back to legacy env var
+  if (pool) {
+    const session = await pool.acquireSession();
+    if (session) {
+      console.log(`[provisioner] Using pool session for ${session.phoneNumber} (${session.botsCreated} bots created)`);
+      const client = createClient(session.sessionString, session.apiId, session.apiHash);
+      try {
+        await client.connect();
+        const result = await runBotFatherFlow(client, customerName, email);
+        await pool.recordBotCreated(session.id);
+        return result;
+      } catch (err: any) {
+        // Detect BotFather rate limit and mark session
+        if (err.message?.toLowerCase().includes('sorry') || err.message?.includes('too many')) {
+          console.warn(`[provisioner] Pool session ${session.phoneNumber} hit rate limit`);
+          await pool.markRateLimited(session.id, err.message);
+        }
+        throw err;
+      } finally {
+        await client.disconnect();
+      }
+    }
+    console.warn('[provisioner] No pool sessions available, falling back to legacy session');
+  }
 
+  // Legacy single-session fallback
+  const client = createLegacyClient();
   try {
     await client.connect();
-    console.log('[provisioner] Connected to Telegram');
+    console.log('[provisioner] Connected to Telegram (legacy session)');
     return await runBotFatherFlow(client, customerName, email);
   } finally {
     await client.disconnect();
