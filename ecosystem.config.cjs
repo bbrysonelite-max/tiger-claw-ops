@@ -8,7 +8,7 @@ module.exports = {
     // Gateway - Single instance (stateless HTTP server)
     {
       name: 'tiger-gateway',
-      script: 'dist/gateway/index.js',
+      script: 'dist/src/gateway/index.js',
       instances: 1,
       exec_mode: 'fork',
       watch: false,
@@ -39,7 +39,7 @@ module.exports = {
     // Fleet Workers - Clustered for parallel message processing
     {
       name: 'tiger-worker',
-      script: 'dist/fleet/worker.js',
+      script: 'dist/src/fleet/worker.js',
       instances: 4, // Adjust based on CPU cores
       exec_mode: 'cluster',
       watch: false,
@@ -90,7 +90,7 @@ module.exports = {
     // Provision Worker (BullMQ — creates new bots via BotFather)
     {
       name: 'provision-worker',
-      script: 'dist/provisioner/provision-worker.js',
+      script: 'dist/src/provisioner/provision-worker.js',
       instances: 1,
       exec_mode: 'fork',
       watch: false,
