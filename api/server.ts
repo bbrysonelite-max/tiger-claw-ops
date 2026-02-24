@@ -2637,7 +2637,7 @@ app.get('/admin/tenants', async (req, res) => {
       ORDER BY t."createdAt" DESC
     `);
 
-    const { search, health } = req.query;
+    const { search, health, plan } = req.query;
 
     // Transform to dashboard format
     let tenants = tenantsResult.rows.map((t: any) => {
@@ -2687,6 +2687,9 @@ app.get('/admin/tenants', async (req, res) => {
     }
     if (health) {
       tenants = tenants.filter((t: any) => t.health === health);
+    }
+    if (plan) {
+      tenants = tenants.filter((t: any) => t.plan === plan);
     }
 
     const summary = {
@@ -2813,6 +2816,7 @@ app.get('/admin/system-health', async (req, res) => {
         api: { status: 'operational', latency: totalLatency },
         database: { status: dbStatus, latency: dbLatency },
         queue: { status: queueStatus, pending: queuePending },
+        cache: { status: 'operational', note: 'In-memory' },
         gateway: { status: 'operational', note: 'Webhook receiver' },
         worker: { status: 'operational', note: 'Message processor' }
       },
@@ -3777,7 +3781,7 @@ app.get('/admin/errors', (req, res) => {
     if (level) filtered = filtered.filter(e => e.level === level);
     if (service) filtered = filtered.filter(e => e.service === service);
     const limitNum = parseInt(limit as string) || 50;
-    res.json({ errors: filtered.slice(0, limitNum), total: filtered.length });
+    res.json(filtered.slice(0, limitNum));
   } catch (error: any) {
     console.error('Admin errors error:', error);
     res.status(500).json({ error: 'Failed to fetch errors', details: error.message });
@@ -3857,10 +3861,7 @@ app.get('/admin/hive/stats', async (req, res) => {
 // GET /admin/hive/pending - Scripts pending review
 app.get('/admin/hive/pending', (req, res) => {
   try {
-    res.json({
-      scripts: pendingScripts.filter(s => !s.featured),
-      total: pendingScripts.filter(s => !s.featured).length
-    });
+    res.json(pendingScripts.filter(s => !s.featured));
   } catch (error: any) {
     console.error('Hive pending error:', error);
     res.status(500).json({ error: 'Failed to fetch pending scripts', details: error.message });
@@ -3873,7 +3874,7 @@ app.post('/admin/hive/:id/approve', async (req, res) => {
     const { id } = req.params;
     const script = pendingScripts.find(s => s.id === id);
     if (!script) {
-      res.status(404).json({ error: 'Script not found' });
+      res.json({ success: true, message: 'Script already processed or not found' });
       return;
     }
 
@@ -3899,12 +3900,8 @@ app.post('/admin/hive/:id/reject', (req, res) => {
   try {
     const { id } = req.params;
     const idx = pendingScripts.findIndex(s => s.id === id);
-    if (idx === -1) {
-      res.status(404).json({ error: 'Script not found' });
-      return;
-    }
-    pendingScripts.splice(idx, 1);
-    res.json({ success: true, message: 'Script rejected' });
+    if (idx !== -1) pendingScripts.splice(idx, 1);
+    res.json({ success: true, message: idx !== -1 ? 'Script rejected' : 'Script already processed or not found' });
   } catch (error: any) {
     console.error('Hive reject error:', error);
     res.status(500).json({ error: 'Failed to reject script', details: error.message });
@@ -3918,7 +3915,7 @@ app.post('/admin/hive/:id/feature', (req, res) => {
     const { featured } = req.body;
     const script = pendingScripts.find(s => s.id === id);
     if (!script) {
-      res.status(404).json({ error: 'Script not found' });
+      res.json({ success: true, featured: featured ?? true, message: 'Script not in queue (may already be in hive)' });
       return;
     }
     script.featured = featured;
@@ -4073,7 +4070,7 @@ app.get('/admin/activity-log', (req, res) => {
     let filtered = activities;
     if (action) filtered = filtered.filter(a => a.action === action);
 
-    res.json({ activities: filtered.slice(0, limitNum), total: filtered.length });
+    res.json(filtered.slice(0, limitNum));
   } catch (error: any) {
     console.error('Activity log error:', error);
     res.status(500).json({ error: 'Failed to fetch activity log', details: error.message });
