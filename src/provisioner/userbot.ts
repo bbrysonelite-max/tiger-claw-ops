@@ -20,9 +20,10 @@ const BOTFATHER_USERNAME = 'BotFather';
 // Regex to extract bot token from BotFather response
 const TOKEN_REGEX = /\d+:[A-Za-z0-9_-]+/;
 
-// Rate limiting: minimum 90 seconds between BotFather bot creation calls
-// Telegram will lock the account for 24 hours if you create bots too fast
-const BOTFATHER_MIN_INTERVAL_MS = 90_000;
+// Rate limiting: minimum 5 MINUTES between BotFather bot creation calls
+// CRITICAL: Brent explicitly specified 5 minutes. 90 seconds caused a 24-hour account ban.
+// Do NOT reduce this value without explicit approval from Brent.
+const BOTFATHER_MIN_INTERVAL_MS = 5 * 60 * 1000; // 300,000ms = 5 minutes
 let lastProvisionTime = 0;
 
 async function enforceBotFatherRateLimit(): Promise<void> {
@@ -232,7 +233,7 @@ export async function provisionNewBot(
 ): Promise<ProvisionResult> {
   console.log(`[provisioner] Starting bot provision for: ${email}`);
 
-  // Enforce 90-second minimum between BotFather calls to avoid 24-hour lockout
+  // Enforce 5-minute minimum between BotFather calls — Brent-specified, do not reduce
   await enforceBotFatherRateLimit();
 
   const client = createClient();
