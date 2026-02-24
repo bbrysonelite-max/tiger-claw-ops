@@ -8,7 +8,7 @@
 
 ## Purpose
 
-This document defines where Tiger Bot looks for leads. This knowledge is **pre-loaded into every bot at deployment**. The customer is never asked "where should I look?" The bot already knows. The customer's only job during onboarding is to say what kind of person they want. The bot figures out where to find them.
+This document defines where Tiger Claw looks for leads. This knowledge is **pre-loaded into every bot at deployment**. The customer is never asked "where should I look?" The bot already knows. The customer's only job during onboarding is to say what kind of person they want. The bot figures out where to find them.
 
 This map is the starting point. The Hive Learning system updates it continuously as bots discover what works. When one bot finds that fitness coaches respond best to Reddit DMs on Tuesday mornings, every bot learns that.
 
@@ -30,7 +30,7 @@ Per project requirements, the following rules apply to all lead source activity:
 
 These sources apply to **every gig economy role**. They are always active regardless of the customer's specific business.
 
-| Source | What Tiger Bot Does There | Data Extracted |
+| Source | What Tiger Claw Does There | Data Extracted |
 |--------|--------------------------|----------------|
 | **LinkedIn** | Search by job title, industry, keywords. Monitor posts with relevant hashtags. Identify people in transition (job changes, "open to opportunities"). | Name, title, company, location, contact info, recent activity |
 | **Reddit** | Monitor subreddits relevant to the customer's industry. Identify users expressing frustration, asking for advice, or discussing side income. | Username, post history, sentiment, expressed pain points |
@@ -186,7 +186,7 @@ The customer writes content, copywriting, or creates digital content for clients
 
 This map is the **seed data**. The Hive Learning system improves it continuously through three mechanisms:
 
-**Discovery Logging.** Every time a Tiger Bot finds a lead, it logs: where it found them, what keywords matched, what time of day, and whether the lead responded to outreach. This data feeds back into the source map.
+**Discovery Logging.** Every time a Tiger Claw finds a lead, it logs: where it found them, what keywords matched, what time of day, and whether the lead responded to outreach. This data feeds back into the source map.
 
 **Effectiveness Scoring.** Each source gets a score based on conversion rate. If Reddit r/uberdrivers produces leads that convert at 8% but Facebook groups only convert at 2%, the bot prioritizes Reddit. These scores are shared across all bots serving the same role.
 

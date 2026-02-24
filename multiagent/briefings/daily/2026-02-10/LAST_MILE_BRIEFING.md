@@ -1,4 +1,4 @@
-# 🚀 LAST MILE BRIEFING - Tiger Bot Scout v3.1.0
+# 🚀 LAST MILE BRIEFING - Tiger Claw Scout v3.1.0
 > **Date:** 2026-02-10 12:45 MST
 > **Session:** Final Sprint - Production Launch
 > **Urgency:** 🔴 HIGH - 7 Paying Customers Waiting
@@ -37,13 +37,13 @@
 
 3. **[B-003] Configure Telegram Bot Tokens**
    - Chat with @BotFather to create 7 customer bots:
-     - @TigerBot_Nancy_bot
-     - @TigerBot_Chana_bot
-     - @TigerBot_Phaitoon_bot
-     - @TigerBot_Tarida_bot
-     - @TigerBot_Lily_bot
-     - @TigerBot_Theera_bot
-     - @TigerBot_John_bot
+     - @TigerClaw_Nancy_bot
+     - @TigerClaw_Chana_bot
+     - @TigerClaw_Phaitoon_bot
+     - @TigerClaw_Tarida_bot
+     - @TigerClaw_Lily_bot
+     - @TigerClaw_Theera_bot
+     - @TigerClaw_John_bot
    - Store tokens securely in database
 
 4. **[B-004] Start Fleet Worker**

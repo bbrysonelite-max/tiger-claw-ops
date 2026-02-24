@@ -2,7 +2,7 @@
 # =============================================================================
 # TIGER BOT SCOUT — ONE-CLICK DEPLOY
 # =============================================================================
-# This script deploys Tiger Bot Scout to production and provisions all customers
+# This script deploys Tiger Claw Scout to production and provisions all customers
 # 
 # Usage: ./deploy.sh [local|production]
 #   local      - Run locally for testing
@@ -131,7 +131,7 @@ else
 echo -e "${GREEN}║  🌐 API:        http://localhost:4001                            ║${NC}"
 echo -e "${GREEN}║  📊 Dashboard:  http://localhost:3000/dashboard                  ║${NC}"
 fi
-echo -e "${GREEN}║  🤖 Telegram:   @TigerBotScout_bot                               ║${NC}"
+echo -e "${GREEN}║  🤖 Telegram:   @TigerClawScout_bot                               ║${NC}"
 echo -e "${GREEN}║                                                                  ║${NC}"
 echo -e "${GREEN}║  👥 7 customers provisioned and ready!                           ║${NC}"
 echo -e "${GREEN}╚══════════════════════════════════════════════════════════════════╝${NC}"

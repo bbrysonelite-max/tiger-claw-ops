@@ -1,6 +1,6 @@
 # Lead Source Intelligence: Regional Map
 
-**Status:** APPROVED — Hardwire into every Tiger Bot at deployment  
+**Status:** APPROVED — Hardwire into every Tiger Claw at deployment  
 **Date:** 2026-02-14  
 **Author:** Manus AI  
 **For:** Claude Code, Birdie, Agent Zero  

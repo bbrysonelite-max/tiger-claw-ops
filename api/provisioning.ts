@@ -68,8 +68,8 @@ export function createProvisioningRouter(db: Pool) {
             res.json({
                 success: true,
                 tenant,
-                message: `Welcome! Your Tiger Bot Scout is ready.`,
-                telegram_bot: '@TigerBotScout_bot',
+                message: `Welcome! Your Tiger Claw Scout is ready.`,
+                telegram_bot: '@TigerClawScout_bot',
                 dashboard: 'https://botcraftwrks.ai/dashboard'
             });
         } catch (err) {
@@ -156,7 +156,7 @@ async function provisionCustomer(db: Pool, request: ProvisionRequest) {
     // Create default Telegram channel for the tenant
     await db.query(`
         INSERT INTO channels (tenant_id, type, name, status, created_at)
-        VALUES ($1, 'telegram', 'Tiger Bot Scout', 'active', NOW())
+        VALUES ($1, 'telegram', 'Tiger Claw Scout', 'active', NOW())
     `, [tenantId]);
 
     // Send welcome message if we have their Telegram chat ID
@@ -189,7 +189,7 @@ async function sendWelcomeMessage(chatId: string, tenant: any) {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     if (!botToken) return;
 
-    const message = `🐯 *Welcome to Tiger Bot Scout!*
+    const message = `🐯 *Welcome to Tiger Claw Scout!*
 
 Your AI recruiting partner is now active.
 
@@ -220,7 +220,7 @@ async function sendGoodbyeMessage(chatId: string) {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     if (!botToken) return;
 
-    const message = `🐯 Your Tiger Bot Scout subscription has ended.
+    const message = `🐯 Your Tiger Claw Scout subscription has ended.
 
 Thanks for being a customer! Your data will be retained for 30 days if you want to resubscribe.
 

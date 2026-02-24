@@ -1,7 +1,7 @@
 {
   "id": "2026-02-08-dashboard-prospects-phase1",
   "title": "Implement Prospects table, filters, and detail modal",
-  "description": "Create the Prospects table page for Tiger Bot Scout dashboard with scoring, basic filters, and a detail modal wired to API endpoints described in the PRD.",
+  "description": "Create the Prospects table page for Tiger Claw Scout dashboard with scoring, basic filters, and a detail modal wired to API endpoints described in the PRD.",
   "priority": "high",
   "labels": ["frontend", "dashboard", "prospects", "react"],
   "contextFiles": [

@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Scout Utility Tests
+ * Tiger Claw Scout Utility Tests
  * Unit tests for utility functions
  */
 

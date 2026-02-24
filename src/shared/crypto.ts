@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Scout - AES-256 Encryption Module
+ * Tiger Claw Scout - AES-256 Encryption Module
  * Handles secure encryption/decryption of bot tokens
  */
 

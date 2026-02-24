@@ -1,7 +1,7 @@
 # Anti-Pattern: The Rigid Interview
 
 **Date:** February 14, 2026  
-**Source:** Live Telegram conversation between Brent and Tiger Bot  
+**Source:** Live Telegram conversation between Brent and Tiger Claw  
 **Screenshot:** `charts/anti_pattern_rigid_interview.png`
 
 ---
@@ -34,7 +34,7 @@ The bot responded by asking for:
 
 ---
 
-## The Rule for Tiger Bot Brain
+## The Rule for Tiger Claw Brain
 
 The interview state machine MUST:
 

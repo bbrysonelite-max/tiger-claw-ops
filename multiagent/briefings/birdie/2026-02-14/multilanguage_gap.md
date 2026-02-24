@@ -9,7 +9,7 @@
 
 ## The Issue
 
-Tiger Bot has **incredible regional intelligence** documented in `13_LEAD_SOURCE_REGIONAL_INTELLIGENCE.md` but **NONE of this is visible** in customer-facing materials:
+Tiger Claw has **incredible regional intelligence** documented in `13_LEAD_SOURCE_REGIONAL_INTELLIGENCE.md` but **NONE of this is visible** in customer-facing materials:
 
 - ❌ thegoods.ai doesn't mention it
 - ❌ Welcome emails don't mention it
@@ -17,7 +17,7 @@ Tiger Bot has **incredible regional intelligence** documented in `13_LEAD_SOURCE
 
 ---
 
-## What Tiger Bot Actually Knows (Hidden from Customers!)
+## What Tiger Claw Actually Knows (Hidden from Customers!)
 
 ### 🇹🇭 Thailand (7 of 10 customers!)
 - LINE OpenChat groups
@@ -58,7 +58,7 @@ Tiger Bot has **incredible regional intelligence** documented in `13_LEAD_SOURCE
 ## This is a MAJOR Selling Point!
 
 **The pitch should be:**
-> "Tiger Bot doesn't just speak your language — it knows WHERE to find prospects in YOUR market. In Thailand, it hunts on LINE and Pantip. In Latin America, it's on MercadoLibre and WhatsApp groups. It's not a US-only tool — it's built for the global gig economy."
+> "Tiger Claw doesn't just speak your language — it knows WHERE to find prospects in YOUR market. In Thailand, it hunts on LINE and Pantip. In Latin America, it's on MercadoLibre and WhatsApp groups. It's not a US-only tool — it's built for the global gig economy."
 
 ---
 
@@ -70,7 +70,7 @@ Tiger Bot has **incredible regional intelligence** documented in `13_LEAD_SOURCE
    - Layer 1: Universal sources (LinkedIn, Reddit, etc.)
    - Layer 2: Role-specific sources (based on customer's job)
    - Layer 3: Regional sources (based on customer's location)
-4. **Add testimonial/use case:** "As a hair stylist in Bangkok, Tiger Bot finds my prospects on LINE and Pantip — not Yelp."
+4. **Add testimonial/use case:** "As a hair stylist in Bangkok, Tiger Claw finds my prospects on LINE and Pantip — not Yelp."
 
 ---
 

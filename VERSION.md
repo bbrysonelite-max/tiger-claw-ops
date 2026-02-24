@@ -1,4 +1,4 @@
-# Tiger Bot Scout — Version Control
+# Tiger Claw Scout — Version Control
 
 ## Current Version: v1.0.0-beta
 

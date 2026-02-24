@@ -1,16 +1,16 @@
 /**
- * Tiger Bot Scout — Prospect Scheduler
+ * Tiger Claw Scout — Prospect Scheduler
  *
  * Runs a prospect hunt for every active tenant daily at 5 AM Bangkok time
  * (before the 7 AM daily report, so customers always have fresh leads).
  *
- * Uses Reddit public API (no key needed) + Gemini for extraction.
+ * Uses Reddit public API (no key needed) + Anthropic Claude for extraction.
  * Falls back to network_marketer ICP when interview data is absent.
  */
 
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Anthropic from '@anthropic-ai/sdk';
 import { decrypt } from '../shared/crypto.js';
 import { huntProspects } from './web-search.js';
 import cron from 'node-cron';
@@ -31,16 +31,19 @@ const NETWORK_MARKETER_CONFIG = {
 
 const prisma = new PrismaClient();
 
-const gemini = process.env.GEMINI_API_KEY
-  ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+const anthropic = process.env.ANTHROPIC_API_KEY
+  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   : null;
 
-// Gemini wrapper that huntProspects() expects
+// Anthropic Claude wrapper that huntProspects() expects
 async function generateAI(prompt: string): Promise<string> {
-  if (!gemini) throw new Error('Gemini not configured');
-  const model = gemini.getGenerativeModel({ model: 'gemini-2.0-flash' });
-  const result = await model.generateContent(prompt);
-  return result.response.text();
+  if (!anthropic) throw new Error('ANTHROPIC_API_KEY not configured');
+  const message = await anthropic.messages.create({
+    model: 'claude-3-5-haiku-20241022',
+    max_tokens: 1024,
+    messages: [{ role: 'user', content: prompt }],
+  });
+  return message.content[0].type === 'text' ? message.content[0].text : '';
 }
 
 async function sendTelegramMessage(token: string, chatId: string, text: string): Promise<void> {

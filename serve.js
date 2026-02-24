@@ -47,7 +47,7 @@ const server = createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`🐯 Tiger Bot Scout Dashboard: http://localhost:${PORT}`);
+  console.log(`🐯 Tiger Claw Scout Dashboard: http://localhost:${PORT}`);
   console.log(`   Dashboard: http://localhost:${PORT}/dashboard.html`);
   console.log('   Press Ctrl+C to stop');
 });

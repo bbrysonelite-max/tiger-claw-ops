@@ -1,4 +1,4 @@
-# Tiger Bot Scout — Extreme Detail Provisioning Guide
+# Tiger Claw Scout — Extreme Detail Provisioning Guide
 
 ---
 
@@ -6,7 +6,7 @@
 
 ### Current State
 Stan Store URL: https://stan.store/bbrysonelite
-Product: Tiger Bot Scout ($99/mo)
+Product: Tiger Claw Scout ($99/mo)
 
 ### What Needs to Be Fixed
 
@@ -16,19 +16,19 @@ Product: Tiger Bot Scout ($99/mo)
 | Main Product Image | 1080x1080px | Shows in product grid |
 | Banner/Hero | 1200x630px | Top of product page |
 | Feature Screenshots | 1080x1920px (3-5 images) | Carousel showing the bot in action |
-| Logo/Avatar | 400x400px | Tiger Bot Scout icon |
+| Logo/Avatar | 400x400px | Tiger Claw Scout icon |
 
 **Image Content Ideas:**
-1. **Hero Image**: Phone mockup showing Telegram with Tiger Bot message
+1. **Hero Image**: Phone mockup showing Telegram with Tiger Claw message
 2. **Screenshot 1**: Daily report example (5 prospects listed)
 3. **Screenshot 2**: Script generation in action
 4. **Screenshot 3**: Dashboard overview
-5. **Screenshot 4**: Before/After - "Manual prospecting" vs "Tiger Bot finds them for you"
+5. **Screenshot 4**: Before/After - "Manual prospecting" vs "Tiger Claw finds them for you"
 
 **Copy Updates for Stan Store:**
 
 ```
-TITLE: Tiger Bot Scout — Your AI Recruiting Partner
+TITLE: Tiger Claw Scout — Your AI Recruiting Partner
 
 SUBTITLE: 5 Fresh Prospects Every Morning. Personalized Scripts. Zero Cold Calling.
 
@@ -41,7 +41,7 @@ DESCRIPTION:
 • Pipeline tracking dashboard
 
 🎯 How It Works:
-1. Subscribe → Get your personal Tiger Bot
+1. Subscribe → Get your personal Tiger Claw
 2. Tell us your ideal customer
 3. Wake up to qualified prospects in your Telegram
 4. Copy the script, send the message, close the deal
@@ -58,7 +58,7 @@ PRICE: $99/month
 
 **Task for Birdie:**
 "Create 5 product images for Stan Store:
-1. Hero image: iPhone mockup with Tiger Bot Telegram chat showing daily report
+1. Hero image: iPhone mockup with Tiger Claw Telegram chat showing daily report
 2. Feature 1: Screenshot of dashboard with 'Today's Prospects: 5'
 3. Feature 2: Script generation example
 4. Feature 3: Before/after comparison graphic
@@ -206,15 +206,15 @@ STEP BY STEP:
 │    INSERT INTO channels (                                               │
 │      tenant_id,  -- a1b2c3d4-e5f6-7890-abcd-ef1234567890               │
 │      type,       -- telegram                                            │
-│      name,       -- Tiger Bot Scout                                     │
+│      name,       -- Tiger Claw Scout                                     │
 │      status      -- active                                              │
 │    )                                                                    │
 │    ```                                                                  │
 │                                                                         │
 │ 5. SEND welcome email (if Brevo configured):                            │
 │    To: nancy@gmail.com                                                  │
-│    Subject: 🐯 Welcome to Tiger Bot Scout!                              │
-│    Body: Your bot is ready. Click here to start: t.me/TigerBotScout_bot │
+│    Subject: 🐯 Welcome to Tiger Claw Scout!                              │
+│    Body: Your bot is ready. Click here to start: t.me/TigerClawScout_bot │
 └─────────────────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
@@ -314,23 +314,23 @@ They show up on dashboard the same way, but with `plan: "scout_free"` so you kno
 │                                                                         │
 │ FROM: pebo@botcraftwrks.ai                                              │
 │ TO: nancy@gmail.com                                                     │
-│ SUBJECT: 🐯 Welcome to Tiger Bot Scout!                                 │
+│ SUBJECT: 🐯 Welcome to Tiger Claw Scout!                                 │
 │                                                                         │
 │ ─────────────────────────────────────────────                           │
 │                                                                         │
 │ Hi Nancy!                                                               │
 │                                                                         │
-│ Your Tiger Bot Scout is ready! 🎉                                       │
+│ Your Tiger Claw Scout is ready! 🎉                                       │
 │                                                                         │
 │ Click here to activate your bot:                                        │
-│ 👉 https://t.me/TigerBotScout_bot                                       │
+│ 👉 https://t.me/TigerClawScout_bot                                       │
 │                                                                         │
 │ Once you open Telegram and tap START, I'll begin finding                │
 │ qualified prospects for you every day.                                  │
 │                                                                         │
 │ Questions? Reply to this email or message @gentlejoker on Telegram.     │
 │                                                                         │
-│ — Pebo & the Tiger Bot Team                                             │
+│ — Pebo & the Tiger Claw Team                                             │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -344,8 +344,8 @@ They show up on dashboard the same way, but with `plan: "scout_free"` so you kno
 │ │         TELEGRAM APP                        │                         │
 │ │                                             │                         │
 │ │  ┌───────────────────────────────────────┐  │                         │
-│ │  │  🐯 Tiger Bot Scout                   │  │                         │
-│ │  │  @TigerBotScout_bot                   │  │                         │
+│ │  │  🐯 Tiger Claw Scout                   │  │                         │
+│ │  │  @TigerClawScout_bot                   │  │                         │
 │ │  │                                       │  │                         │
 │ │  │  bot • AI Recruiting Partner          │  │                         │
 │ │  │                                       │  │                         │
@@ -387,10 +387,10 @@ They show up on dashboard the same way, but with `plan: "scout_free"` so you kno
 │ 3. Bot sends welcome message:                                           │
 │                                                                         │
 │ ┌─────────────────────────────────────────────┐                         │
-│ │  🐯 Tiger Bot Scout                         │                         │
+│ │  🐯 Tiger Claw Scout                         │                         │
 │ │  ─────────────────────────────────────────  │                         │
 │ │                                             │                         │
-│ │  🐯 *Welcome to Tiger Bot Scout!*           │                         │
+│ │  🐯 *Welcome to Tiger Claw Scout!*           │                         │
 │ │                                             │                         │
 │ │  Your AI recruiting partner is now active.  │                         │
 │ │                                             │                         │
@@ -428,10 +428,10 @@ They show up on dashboard the same way, but with `plan: "scout_free"` so you kno
 │ CUSTOMER SEES:                                                          │
 │                                                                         │
 │ ┌─────────────────────────────────────────────┐                         │
-│ │  🐯 Tiger Bot Scout                         │                         │
+│ │  🐯 Tiger Claw Scout                         │                         │
 │ │  ─────────────────────────────────────────  │                         │
 │ │                                             │                         │
-│ │  🐯 *Tiger Bot Daily Report*                │                         │
+│ │  🐯 *Tiger Claw Daily Report*                │                         │
 │ │  February 5, 2026                           │                         │
 │ │                                             │                         │
 │ │  Found *5 qualified prospects* today:       │                         │
@@ -488,7 +488,7 @@ They show up on dashboard the same way, but with `plan: "scout_free"` so you kno
 │ BOT RESPONDS:                                                           │
 │                                                                         │
 │ ┌─────────────────────────────────────────────┐                         │
-│ │  🐯 Tiger Bot Scout                         │                         │
+│ │  🐯 Tiger Claw Scout                         │                         │
 │ │  ─────────────────────────────────────────  │                         │
 │ │                                             │                         │
 │ │  📝 *Approach Script for Somchai K.*        │                         │
@@ -555,7 +555,7 @@ They show up on dashboard the same way, but with `plan: "scout_free"` so you kno
 │ │                                             │                         │
 │ │  Amazing! 🎉 Another conversion!            │                         │
 │ │  This script has been added to the Hive     │                         │
-│ │  so other Tiger Bot users can learn from    │                         │
+│ │  so other Tiger Claw users can learn from    │                         │
 │ │  your success.                              │                         │
 │ │                                             │                         │
 │ │  Keep closing! 🐯                           │                         │
@@ -575,7 +575,7 @@ They show up on dashboard the same way, but with `plan: "scout_free"` so you kno
 │ BOT RESPONDS (AI-generated):                                            │
 │                                                                         │
 │ ┌─────────────────────────────────────────────┐                         │
-│ │  🐯 Tiger Bot Scout                         │                         │
+│ │  🐯 Tiger Claw Scout                         │                         │
 │ │  ─────────────────────────────────────────  │                         │
 │ │                                             │                         │
 │ │  Great objection to handle! Here's how:     │                         │

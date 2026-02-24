@@ -1,11 +1,11 @@
-# Tiger Bot Scout - Skills Architecture
+# Tiger Claw Scout - Skills Architecture
 > **For:** Gemini, Claude Code, Birdie, MANAS, Agent Zero
 > **Date:** 2026-02-10
 > **Version:** 3.1.0
 
 ## 1. SKILL REQUIREMENTS FOR RECRUITING BOTS
 
-These skills enable Tiger Bot Scout to find, enrich, and engage MLM prospects.
+These skills enable Tiger Claw Scout to find, enrich, and engage MLM prospects.
 
 ### Skill Categories
 

@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Scout - Conversation Engine v2
+ * Tiger Claw Scout - Conversation Engine v2
  * ANTI-PATTERN AWARE: Extracts intent from natural language, never re-asks, takes action
  *
  * Rules from Manus docs:
@@ -135,7 +135,7 @@ const ROLE_KEYWORDS: Record<string, string[]> = {
 function getWelcomeMessage(firstName: string): string {
   return `Hey ${firstName}!
 
-I'm your Tiger Bot - your AI prospecting machine.
+I'm your Tiger Claw - your AI prospecting machine.
 
 I find customers, nurture them, and help you close deals. But first, I need to learn about you.
 
@@ -322,7 +322,7 @@ I'm already hunting. Here's where I'm looking:
 
 I'll have your first prospect list ready soon. If you know of specific groups or communities I should also watch, send me the link anytime.
 
-Your Tiger Bot is LIVE.`;
+Your Tiger Claw is LIVE.`;
 }
 
 // --- Generate confirmation message for ICP ---

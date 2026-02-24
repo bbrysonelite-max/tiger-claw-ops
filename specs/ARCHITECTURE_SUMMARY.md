@@ -1,6 +1,6 @@
-# Tiger Bot Scout - Architecture Summary for Review
+# Tiger Claw Scout - Architecture Summary for Review
 
-## What Is Tiger Bot Scout?
+## What Is Tiger Claw Scout?
 A SaaS product for network marketing (Nu Skin) distributors that:
 - Delivers daily AI-scored prospects via Telegram at 7 AM
 - Generates personalized approach scripts using AI
@@ -14,7 +14,7 @@ A SaaS product for network marketing (Nu Skin) distributors that:
 
 ### Option A: Multi-Tenant Shared Bot (Current Code)
 **How it works:**
-- ONE Telegram bot: @TigerBotScout_bot
+- ONE Telegram bot: @TigerClawScout_bot
 - ALL customers message the same bot
 - System identifies customer by their Telegram chat_id
 - Single bot token in .env file
@@ -37,8 +37,8 @@ A SaaS product for network marketing (Nu Skin) distributors that:
 ### Option B: Per-Customer Dedicated Bots (New Specs)
 **How it works:**
 - EACH customer gets their own bot:
-  - Nancy → @TigerBot_Nancy_bot
-  - Chana → @TigerBot_Chana_bot
+  - Nancy → @TigerClaw_Nancy_bot
+  - Chana → @TigerClaw_Chana_bot
   - etc.
 - Separate bot token per customer
 - Separate process per customer (PM2 managed)
@@ -133,7 +133,7 @@ A SaaS product for network marketing (Nu Skin) distributors that:
    - Per-customer dedicated bots (isolated, complex)
 
 2. **Does "per-customer bot" provide meaningful value?**
-   - Do customers care if their bot is @TigerBot_Nancy_bot vs @TigerBotScout_bot?
+   - Do customers care if their bot is @TigerClaw_Nancy_bot vs @TigerClawScout_bot?
    - Is the operational complexity worth it?
 
 3. **Scalability consideration:**

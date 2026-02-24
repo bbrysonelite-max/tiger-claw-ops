@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Scout - LINE Channel
+ * Tiger Claw Scout - LINE Channel
  * For Thailand market where LINE is dominant
  *
  * LINE Messaging API docs: https://developers.line.biz/en/docs/messaging-api/
@@ -211,7 +211,7 @@ export function createLineWebhookHandler(
 
         await replyMessage(event.replyToken, [{
           type: 'text',
-          text: 'สวัสดี! 🐯 ยินดีต้อนรับสู่ Tiger Bot\n\nHey! Welcome to Tiger Bot. I help you find customers and grow your business.\n\nType "start" to begin!'
+          text: 'สวัสดี! 🐯 ยินดีต้อนรับสู่ Tiger Claw\n\nHey! Welcome to Tiger Claw. I help you find customers and grow your business.\n\nType "start" to begin!'
         }]);
       }
     }
@@ -224,7 +224,7 @@ export function createLineWebhookHandler(
  * Setup instructions for LINE
  */
 export const LINE_SETUP_INSTRUCTIONS = `
-# LINE Channel Setup for Tiger Bot
+# LINE Channel Setup for Tiger Claw
 
 ## Prerequisites
 1. LINE Business Account

@@ -3,7 +3,7 @@
 **Date:** February 14, 2026  
 **For:** Brent Bryson  
 **Purpose:** Step-by-step implementation guide for the fallback + primary key system  
-**Prerequisite:** The Tiger Bot brain spec (tiger_bot_brain_spec.md)
+**Prerequisite:** The Tiger Claw brain spec (tiger_bot_brain_spec.md)
 
 ---
 
@@ -15,7 +15,7 @@ On a live Zoom call, the bot's API key died. The bot went silent. Nine customers
 
 ## 2. Architecture Overview
 
-Every Tiger Bot maintains two LLM connections simultaneously. They are not interchangeable — each has a specific role, a specific cost profile, and specific rules for when it activates.
+Every Tiger Claw maintains two LLM connections simultaneously. They are not interchangeable — each has a specific role, a specific cost profile, and specific rules for when it activates.
 
 | Property | Fallback Key (Yours) | Primary Key (Customer's) |
 |----------|---------------------|-------------------------|

@@ -1,4 +1,4 @@
-# Tiger Bot Scout
+# Tiger Claw Scout
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
 [![Coverage](https://img.shields.io/badge/coverage-85%25-green)]()
@@ -15,7 +15,7 @@ AI Recruiting Partner for Network Marketing - delivered via Telegram.
 
 ## Overview
 
-Tiger Bot Scout is an intelligent prospect discovery and relationship management platform designed for network marketing professionals. It monitors social platforms for high-potential prospects, delivers daily reports via Telegram, and generates personalized approach scripts powered by AI.
+Tiger Claw Scout is an intelligent prospect discovery and relationship management platform designed for network marketing professionals. It monitors social platforms for high-potential prospects, delivers daily reports via Telegram, and generates personalized approach scripts powered by AI.
 
 ### Key Capabilities
 

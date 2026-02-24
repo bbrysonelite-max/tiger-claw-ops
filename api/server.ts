@@ -338,7 +338,7 @@ async function sendDailyReport() {
     // Build report
     const date = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
     const report = `
-🐯 *Tiger Bot Daily Report*
+🐯 *Tiger Claw Daily Report*
 📅 ${date}
 
 *System Status*
@@ -1556,18 +1556,18 @@ app.post('/line/webhook', createLineWebhookHandler(async (userId, text, replyFn)
   const command = text.toLowerCase().trim();
 
   if (command === 'start' || command === '/start') {
-    await replyFn(`สวัสดี ${firstName}! 🐯\n\nWelcome to Tiger Bot Scout!\n\nI'm your AI-powered recruiting assistant. I help network marketers find and connect with prospects.\n\nCommands:\n• today - Get today's prospects\n• help - See all commands\n\nType "today" to see your hot prospects!`);
+    await replyFn(`สวัสดี ${firstName}! 🐯\n\nWelcome to Tiger Claw Scout!\n\nI'm your AI-powered recruiting assistant. I help network marketers find and connect with prospects.\n\nCommands:\n• today - Get today's prospects\n• help - See all commands\n\nType "today" to see your hot prospects!`);
     return;
   }
 
   if (command === 'today' || command === '/today') {
     // TODO: Fetch prospects from database for this LINE user
-    await replyFn(`📊 Today's Hot Prospects\n\nYour prospect list is being prepared. Check back soon!\n\nTip: The more you use Tiger Bot, the smarter it gets at finding the right people for you.`);
+    await replyFn(`📊 Today's Hot Prospects\n\nYour prospect list is being prepared. Check back soon!\n\nTip: The more you use Tiger Claw, the smarter it gets at finding the right people for you.`);
     return;
   }
 
   if (command === 'help' || command === '/help') {
-    await replyFn(`🐯 Tiger Bot Commands\n\n• start - Welcome message\n• today - Get today's prospects\n• help - Show this help\n\nOr just chat with me! I'm here to help you grow your business.`);
+    await replyFn(`🐯 Tiger Claw Commands\n\n• start - Welcome message\n• today - Get today's prospects\n• help - Show this help\n\nOr just chat with me! I'm here to help you grow your business.`);
     return;
   }
 
@@ -3911,7 +3911,7 @@ app.get('/admin/activity-log', (req, res) => {
 
 // Start server
 app.listen(port, async () => {
-  console.log(`🚀 Tiger Bot API running on port ${port}`);
+  console.log(`🚀 Tiger Claw API running on port ${port}`);
   console.log(`📍 Health: http://localhost:${port}/health`);
   console.log(`📍 Leads: http://localhost:${port}/ai-crm/leads`);
   console.log(`📍 Integrations: http://localhost:${port}/integrations/health`);
@@ -3921,7 +3921,7 @@ app.listen(port, async () => {
     await db.query(`
       INSERT INTO ops_bulletins (agent_id, agent_name, bulletin_type, priority, title, content, expires_at)
       VALUES ('tiger-api', 'Tiger API', 'update', 'normal', 'Server Started',
-        'Tiger Bot API started on port ${port}. All systems initializing.',
+        'Tiger Claw API started on port ${port}. All systems initializing.',
         NOW() + INTERVAL '24 hours')
     `);
     console.log('📋 Posted startup bulletin to Ops Center');
@@ -4404,7 +4404,7 @@ app.post('/admin/provision', async (req, res) => {
         action: 'updated',
         tenant: updateResult.rows[0],
         message: `Tenant ${email} updated successfully`,
-        telegram_bot: '@TigerBotScout_bot',
+        telegram_bot: '@TigerClawScout_bot',
         dashboard: 'https://botcraftwrks.ai/dashboard'
       });
       return;
@@ -4434,7 +4434,7 @@ app.post('/admin/provision', async (req, res) => {
     // Create default Telegram channel
     await db.query(`
       INSERT INTO channels (tenant_id, type, name, status, created_at)
-      VALUES ($1, 'telegram', 'Tiger Bot Scout', 'active', NOW())
+      VALUES ($1, 'telegram', 'Tiger Claw Scout', 'active', NOW())
     `, [tenant.id]);
 
     console.log(`✅ Provisioned new tenant: ${email} (${tenant.id})`);
@@ -4443,8 +4443,8 @@ app.post('/admin/provision', async (req, res) => {
       success: true,
       action: 'created',
       tenant,
-      message: `Welcome! Your Tiger Bot Scout is ready.`,
-      telegram_bot: '@TigerBotScout_bot',
+      message: `Welcome! Your Tiger Claw Scout is ready.`,
+      telegram_bot: '@TigerClawScout_bot',
       dashboard: 'https://botcraftwrks.ai/dashboard'
     });
   } catch (err) {
@@ -4705,7 +4705,7 @@ app.post('/claim/:token', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Your Tiger Bot is being set up. You should receive a Telegram message within 60 seconds.',
+      message: 'Your Tiger Claw is being set up. You should receive a Telegram message within 60 seconds.',
       email,
       trialDays: invite.trialDays,
     });

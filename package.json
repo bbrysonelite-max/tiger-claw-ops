@@ -1,7 +1,7 @@
 {
   "name": "tiger-bot-scout",
   "version": "3.1.0",
-  "description": "Tiger Bot Scout - AI Recruiting Partner for Network Marketing (Virtual Fleet Architecture)",
+  "description": "Tiger Claw Scout - AI Recruiting Partner for Network Marketing (Virtual Fleet Architecture)",
   "type": "module",
   "main": "dist/gateway/index.js",
   "scripts": {

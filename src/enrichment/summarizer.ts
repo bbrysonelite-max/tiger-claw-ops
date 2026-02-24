@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Scout - Prospect Summarizer
+ * Tiger Claw Scout - Prospect Summarizer
  * AI-powered summarization using OpenAI API
  */
 

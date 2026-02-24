@@ -35,13 +35,13 @@ All 10 customer bots connected. All 5 integrations active (+ LINE).
 
 ## CUSTOMER EMAIL DRAFT
 
-**Subject:** Your Tiger Bot Just Got Smarter
+**Subject:** Your Tiger Claw Just Got Smarter
 
 ---
 
 Hey [First Name],
 
-Your Tiger Bot Scout just got a major upgrade.
+Your Tiger Claw Scout just got a major upgrade.
 
 **What's New:**
 
@@ -62,12 +62,12 @@ Calendly is now integrated. Soon you'll be able to send booking links directly t
 Your `/today` command now pulls from real data. The more you use your bot, the smarter it gets at finding the right prospects for you.
 
 **Try It Now:**
-Open your Tiger Bot and send any message. You'll notice the difference immediately.
+Open your Tiger Claw and send any message. You'll notice the difference immediately.
 
 Questions? Just reply to this email.
 
 Keep crushing it,
-The Tiger Bot Scout Team
+The Tiger Claw Scout Team
 
 ---
 
@@ -75,7 +75,7 @@ The Tiger Bot Scout Team
 
 ### URGENT Priority 0: Update Your Status Reporting
 
-**Problem Fixed:** Your `/status` endpoint was reporting "system down" because it only checked if OpenClaw was running locally. The Tiger Bot cloud API has been UP for 21+ days, but you weren't checking it.
+**Problem Fixed:** Your `/status` endpoint was reporting "system down" because it only checked if OpenClaw was running locally. The Tiger Claw cloud API has been UP for 21+ days, but you weren't checking it.
 
 **The fix is pushed to GitHub.** Run these commands on the Mac Pro (192.168.0.136):
 
@@ -91,9 +91,9 @@ npx tsx api/birdie-control.ts
 ```
 
 **What Changed:**
-- `/status` endpoint now checks Tiger Bot cloud API at `api.botcraftwrks.ai`
-- Reports both Tiger Bot (cloud) and OpenClaw (local) status separately
-- System is considered "online" based on Tiger Bot cloud API status
+- `/status` endpoint now checks Tiger Claw cloud API at `api.botcraftwrks.ai`
+- Reports both Tiger Claw (cloud) and OpenClaw (local) status separately
+- System is considered "online" based on Tiger Claw cloud API status
 - No more false "system down" alerts when OpenClaw isn't running locally
 
 **After updating, test with:**

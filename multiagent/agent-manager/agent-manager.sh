@@ -211,7 +211,7 @@ logs() {
 
 usage() {
     echo ""
-    echo "🐯 Tiger Bot Scout - Multi-Agent Manager"
+    echo "🐯 Tiger Claw Scout - Multi-Agent Manager"
     echo ""
     echo "Usage: $0 <command> [args]"
     echo ""

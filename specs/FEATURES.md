@@ -1,4 +1,4 @@
-# Tiger Bot Scout — Feature Specifications
+# Tiger Claw Scout — Feature Specifications
 
 **Version:** 2.0.0
 **Date:** 2026-02-10
@@ -85,7 +85,7 @@ Every morning at 7 AM local time, customers receive a Telegram message with thei
 
 ### Report Format
 
-Tiger Bot Daily Report
+Tiger Claw Daily Report
 [Date]
 
 Found 5 qualified prospects today:

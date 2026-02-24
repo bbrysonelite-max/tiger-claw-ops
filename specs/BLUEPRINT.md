@@ -1,4 +1,4 @@
-# Tiger Bot Scout — Technical Blueprint
+# Tiger Claw Scout — Technical Blueprint
 
 **Version:** 2.0.0  
 **Date:** 2026-02-10  
@@ -113,7 +113,7 @@ Fields:
 - id: UUID PRIMARY KEY
 - tenant_id: UUID REFERENCES tenants(id) ON DELETE CASCADE
 - telegram_token: TEXT NOT NULL (ENCRYPTED)
-- telegram_username: VARCHAR(255) (@TigerBot_NancyL_bot)
+- telegram_username: VARCHAR(255) (@TigerClaw_NancyL_bot)
 - telegram_chat_id: BIGINT (customers chat_id after /start)
 - status: VARCHAR(50) DEFAULT stopped (stopped, running, error)
 - pid: INTEGER (Process ID when running)
@@ -213,7 +213,7 @@ Fields:
 ### 4.1 Per-Customer Bot Model (CRITICAL)
 
 Each customer gets:
-- Their own Telegram bot (@TigerBot_CustomerName_bot)
+- Their own Telegram bot (@TigerClaw_CustomerName_bot)
 - Their own bot token (from BotFather)
 - Their own Node.js process
 - Isolated failure domain
@@ -221,9 +221,9 @@ Each customer gets:
 Example:
 | Customer | Bot Username | Token | Process |
 |----------|--------------|-------|--------|
-| Nancy Lim | @TigerBot_NancyL_bot | 7001234567:AAH... | bot-nancy |
-| Chana L. | @TigerBot_ChanaL_bot | 7009876543:BBY... | bot-chana |
-| Phaitoon S. | @TigerBot_PhaitoonS_bot | 7005551234:CCW... | bot-phaitoon |
+| Nancy Lim | @TigerClaw_NancyL_bot | 7001234567:AAH... | bot-nancy |
+| Chana L. | @TigerClaw_ChanaL_bot | 7009876543:BBY... | bot-chana |
+| Phaitoon S. | @TigerClaw_PhaitoonS_bot | 7005551234:CCW... | bot-phaitoon |
 
 ### 4.2 Bot Lifecycle States
 
@@ -323,8 +323,8 @@ CLI command:
 
 1. Message @BotFather on Telegram
 2. Send /newbot
-3. Name: Tiger Bot - CustomerName
-4. Username: TigerBot_CustomerName_bot
+3. Name: Tiger Claw - CustomerName
+4. Username: TigerClaw_CustomerName_bot
 5. Copy token
 6. Add to system via API/CLI
 
@@ -347,7 +347,7 @@ For each active tenant, generates and sends report.
 
 ### 7.3 Report Message Format
 
-Tiger Bot Daily Report
+Tiger Claw Daily Report
 Date
 
 Found N qualified prospects today:

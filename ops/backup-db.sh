@@ -1,5 +1,5 @@
 #!/bin/bash
-# Tiger Bot Scout — Nightly Database Backup
+# Tiger Claw Scout — Nightly Database Backup
 # Runs via cron: 0 2 * * * /home/ubuntu/tiger-bot-api/ops/backup-db.sh >> /home/ubuntu/tiger-bot-api/logs/backup.log 2>&1
 
 set -euo pipefail

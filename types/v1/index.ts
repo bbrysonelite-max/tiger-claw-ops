@@ -1,4 +1,4 @@
-// Tiger Bot Scout v1.0.0 — Type Definitions
+// Tiger Claw Scout v1.0.0 — Type Definitions
 // Enterprise-grade types for the Command Center
 
 // ==================== PROJECT ====================

@@ -14,7 +14,7 @@ NC='\033[0m'
 
 API_BASE="${API_BASE:-http://localhost:4001}"
 
-echo -e "${BLUE}🐯 Tiger Bot Scout — Batch Customer Provisioning${NC}"
+echo -e "${BLUE}🐯 Tiger Claw Scout — Batch Customer Provisioning${NC}"
 echo "================================================="
 echo ""
 

@@ -3,7 +3,7 @@
 ## Status: 🔴 CRITICAL - Customer Delivery Overdue
 
 ## Context
-- **Project**: Tiger Bot Scout v3.1.0 (Virtual Fleet)
+- **Project**: Tiger Claw Scout v3.1.0 (Virtual Fleet)
 - **Customers Waiting**: 9 total (7 Thailand, 1 Spain, 1 USA)
 - **Deadline**: Already missed - immediate delivery required
 

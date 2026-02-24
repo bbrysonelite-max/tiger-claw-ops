@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Scout - Web Chat Channel
+ * Tiger Claw Scout - Web Chat Channel
  * Embeddable widget for websites
  */
 
@@ -78,7 +78,7 @@ export function cleanupSessions(maxAgeMinutes: number = 60): number {
  */
 export function generateWidgetScript(tenantId: string, apiUrl: string): string {
   return `
-<!-- Tiger Bot Chat Widget -->
+<!-- Tiger Claw Chat Widget -->
 <script>
 (function() {
   var t = '${tenantId}';
@@ -103,7 +103,7 @@ export function generateWidgetScript(tenantId: string, apiUrl: string): string {
       #tiger-bot-input button { background: #f97316; color: white; border: none; padding: 14px 20px; cursor: pointer; }
     </style>
     <div id="tiger-bot-chat">
-      <div id="tiger-bot-header">🐯 Tiger Bot</div>
+      <div id="tiger-bot-header">🐯 Tiger Claw</div>
       <div id="tiger-bot-messages"></div>
       <div id="tiger-bot-input">
         <input type="text" placeholder="Type a message..." />
@@ -155,7 +155,7 @@ export function generateWidgetScript(tenantId: string, apiUrl: string): string {
   input.onkeypress = function(e) { if (e.key === 'Enter') send(); };
 
   // Welcome message
-  setTimeout(function() { addMsg('bot', 'Hey! I\\'m Tiger Bot. How can I help you today?'); }, 500);
+  setTimeout(function() { addMsg('bot', 'Hey! I\\'m Tiger Claw. How can I help you today?'); }, 500);
 })();
 </script>
 `;

@@ -1,9 +1,9 @@
 /**
- * Tiger Bot Scout — TypeScript Type Definitions
+ * Tiger Claw Scout — TypeScript Type Definitions
  * Version: 2.0.0
  * Date: 2026-02-10
  * 
- * Complete type definitions for the Tiger Bot Scout system.
+ * Complete type definitions for the Tiger Claw Scout system.
  * Per-customer bot architecture with isolated processes.
  */
 
@@ -117,7 +117,7 @@ export interface Bot {
   
   // Telegram configuration
   telegramToken: string;               // Bot token (encrypted)
-  telegramUsername: string;            // @TigerBot_NancyL_bot
+  telegramUsername: string;            // @TigerClaw_NancyL_bot
   telegramChatId: number | null;       // Customers chat_id after /start
   
   // Runtime state

@@ -19,7 +19,7 @@
 2.  **Action:** Worker loads `TELEGRAM_SESSION_STRING` (MTProto Session) from env.
 3.  **Interaction:** 
     - Worker sends `/newbot` to `@BotFather`.
-    - Worker sends Name: `Tiger Bot - {CustomerName}`.
+    - Worker sends Name: `Tiger Claw - {CustomerName}`.
     - Worker sends User: `Tiger_{RandomID}_bot`.
     - Worker parses the returned Token using Regex.
 4.  **Storage:** Encrypts Token, generates Hash, saves to DB.
@@ -64,7 +64,7 @@
     - Timestamp
 4.  **Notification:** System sends alert via:
     - **Email:** support@botcraftwrks.ai (via Brevo)
-    - **Telegram:** Alert to admin bot (@TigerBotHQ_bot)
+    - **Telegram:** Alert to admin bot (@TigerClawHQ_bot)
     - **Dashboard:** Creates support ticket in admin panel
 5.  **Logging:** All escalations stored in `SupportTicket` table for tracking.
 

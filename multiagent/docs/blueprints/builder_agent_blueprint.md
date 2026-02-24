@@ -117,7 +117,7 @@ Example minimal success status:
   - Reads statuses from `/usr/projects/tiger_bot_multiagent/status/`.
   - Uses schemas to validate and reason about work state.
 
-- **OpenClaw / Tiger Bot**
+- **OpenClaw / Tiger Claw**
   - One OpenClaw agent is configured as the Builder Agent.
   - It knows:
     - The task directory path.

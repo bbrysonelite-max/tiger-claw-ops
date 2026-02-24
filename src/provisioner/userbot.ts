@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Scout - BotFather Provisioner
+ * Tiger Claw Scout - BotFather Provisioner
  * Automated bot creation using gramjs MTProto client
  */
 
@@ -174,7 +174,7 @@ async function runBotFatherFlow(
   await sendToBotFather(client, '/newbot', 3000);
 
   // Send bot display name
-  const botName = `Tiger Bot - ${customerName}`.substring(0, 64);
+  const botName = `Tiger Claw - ${customerName}`.substring(0, 64);
   console.log(`[provisioner] Setting bot name: ${botName}`);
   await sendToBotFather(client, botName, 3000);
 

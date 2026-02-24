@@ -11,7 +11,7 @@
 
 *[Open with the screenshot — the Telegram conversation where the bot asked for a URL]*
 
-Here is a real conversation from this week. A paying customer told Tiger Bot to go find leads. The bot said, "Send me a URL to analyze."
+Here is a real conversation from this week. A paying customer told Tiger Claw to go find leads. The bot said, "Send me a URL to analyze."
 
 That is a search engine. That is not an agent.
 
@@ -27,7 +27,7 @@ If the bot asks "where should I find leads?" — the customer might as well do i
 
 ## Section 2: The Solution — Hardwired Intelligence (3 minutes)
 
-So we built a Lead Source Intelligence Map. Every Tiger Bot ships with this map pre-loaded. It is not a suggestion. It is not optional. It is hardwired into the bot's brain at deployment.
+So we built a Lead Source Intelligence Map. Every Tiger Claw ships with this map pre-loaded. It is not a suggestion. It is not optional. It is hardwired into the bot's brain at deployment.
 
 The map has two layers.
 
@@ -46,7 +46,7 @@ The map has two layers.
 | Craigslist | Still the largest classified platform. Gigs section is active. |
 | Meetup.com | Local communities. Organizers and active members are high-value leads. |
 
-Every Tiger Bot monitors all ten of these from day one. The customer does not configure this. They do not even know it is happening. They just receive prospect lists.
+Every Tiger Claw monitors all ten of these from day one. The customer does not configure this. They do not even know it is happening. They just receive prospect lists.
 
 ---
 
@@ -56,9 +56,9 @@ Every Tiger Bot monitors all ten of these from day one. The customer does not co
 
 We have mapped ten gig economy roles so far. Let me walk through three of them to show the depth.
 
-**Network Marketers.** Their leads are in Reddit communities like r/antiMLM — that is people who quit a network marketing company. They are frustrated, but they are experienced. They know the model. They just had a bad experience. Tiger Bot finds them, and the nurture campaign says, "What if there was a better way to do what you already know how to do?" The bot also monitors Facebook groups like "Side Hustle Nation," LinkedIn profiles with "Independent Distributor" in the title, and small YouTube channels reviewing MLM companies.
+**Network Marketers.** Their leads are in Reddit communities like r/antiMLM — that is people who quit a network marketing company. They are frustrated, but they are experienced. They know the model. They just had a bad experience. Tiger Claw finds them, and the nurture campaign says, "What if there was a better way to do what you already know how to do?" The bot also monitors Facebook groups like "Side Hustle Nation," LinkedIn profiles with "Independent Distributor" in the title, and small YouTube channels reviewing MLM companies.
 
-**Rideshare Drivers.** Their leads are on Reddit r/uberdrivers, r/lyftdrivers, and r/couriersofreddit. These are drivers complaining about pay cuts, deactivations, and algorithm changes. They are looking for alternatives. Tiger Bot finds the ones expressing frustration and offers them a path. The bot also monitors Facebook driver groups, Craigslist gigs sections, and forums like UberPeople.net.
+**Rideshare Drivers.** Their leads are on Reddit r/uberdrivers, r/lyftdrivers, and r/couriersofreddit. These are drivers complaining about pay cuts, deactivations, and algorithm changes. They are looking for alternatives. Tiger Claw finds the ones expressing frustration and offers them a path. The bot also monitors Facebook driver groups, Craigslist gigs sections, and forums like UberPeople.net.
 
 **Real Estate Agents.** Their leads are on LinkedIn — new agents with less than two years of experience who need help building their pipeline. The bot also checks Zillow and Realtor.com for agent profiles with few listings, Reddit r/realtor for agents asking for advice, and BiggerPockets forums for real estate professionals discussing deals.
 
@@ -86,7 +86,7 @@ Compare that to what happened this week: "Send me a URL to analyze." Night and d
 
 Now here is where it gets powerful. The Lead Source Intelligence Map is the starting point. It is not the ending point.
 
-Every time a Tiger Bot finds a lead, it logs four things: where it found them, what keywords matched, what time of day, and whether the lead responded to outreach. That data feeds back into the map.
+Every time a Tiger Claw finds a lead, it logs four things: where it found them, what keywords matched, what time of day, and whether the lead responded to outreach. That data feeds back into the map.
 
 *[Draw or show the feedback loop]*
 
@@ -114,7 +114,7 @@ This is the Hive Learning system. Three mechanisms:
 
 **New Source Detection.** When a bot discovers a new forum, group, or community that produces leads, it reports the discovery. If three or more bots confirm the source works, it gets added to the hardwired map for all future deployments.
 
-The map gets smarter every day. The first Tiger Bot deployed for hair stylists has a good map. The hundredth Tiger Bot deployed for hair stylists has a great map. Because it inherited everything the first ninety-nine learned.
+The map gets smarter every day. The first Tiger Claw deployed for hair stylists has a good map. The hundredth Tiger Claw deployed for hair stylists has a great map. Because it inherited everything the first ninety-nine learned.
 
 ---
 
@@ -142,7 +142,7 @@ Before this map, the answer was no. The bot asked the customer for a URL. The bo
 
 After this map, the answer is yes. The bot loads its sources at deployment. It starts scanning immediately. It delivers prospect lists within 24 hours. And every lead it finds makes the map smarter for every bot that comes after it.
 
-The customer's only job is to tell us who they are and who they want to reach. Tiger Bot handles the rest.
+The customer's only job is to tell us who they are and who they want to reach. Tiger Claw handles the rest.
 
 *[End]*
 
@@ -168,7 +168,7 @@ The anti-patterns in documents 09 and 11 are the test cases. If the bot asks "wh
 
 ### For Customers
 
-Skip sections 5 and 6 entirely. The customer does not need to know about Hive Learning or constraints. Focus on sections 2, 3, and 4: "Your Tiger Bot already knows where your leads are. You told us who you want to reach. We handle the rest. You will receive your first prospect list within 24 hours."
+Skip sections 5 and 6 entirely. The customer does not need to know about Hive Learning or constraints. Focus on sections 2, 3, and 4: "Your Tiger Claw already knows where your leads are. You told us who you want to reach. We handle the rest. You will receive your first prospect list within 24 hours."
 
 ### For Technical Partners
 

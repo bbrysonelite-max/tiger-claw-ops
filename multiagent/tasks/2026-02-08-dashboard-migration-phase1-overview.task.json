@@ -24,7 +24,7 @@
     {
       "id": "step-2",
       "kind": "create_files",
-      "instruction": "Create a types/dashboard.ts file that defines TypeScript interfaces for the Overview data structure (e.g. DashboardOverview, with fields for todaysProspects, scriptPerformance, conversionFunnel, hivePulse). Aim to match the Tiger Bot dashboard PRD and keep the types generic enough to map onto whatever backend implementation exists or will exist.",
+      "instruction": "Create a types/dashboard.ts file that defines TypeScript interfaces for the Overview data structure (e.g. DashboardOverview, with fields for todaysProspects, scriptPerformance, conversionFunnel, hivePulse). Aim to match the Tiger Claw dashboard PRD and keep the types generic enough to map onto whatever backend implementation exists or will exist.",
       "targetFiles": [
         "types/dashboard.ts"
       ]

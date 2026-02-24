@@ -1,20 +1,20 @@
-# The Tiger Bot Onboarding & Flywheel System
+# The Tiger Claw Onboarding & Flywheel System
 
 ## Introduction
 
-This document outlines the comprehensive system for onboarding new Tiger Bot customers and implementing a powerful, automated client acquisition flywheel. The system is designed specifically for the unique needs of **gig economy workers**, including network marketers, freelancers, and service providers. It integrates a detailed onboarding process to personalize the bot's mission with a multi-stage flywheel that moves prospects from strangers to loyal customers and advocates. This system is built on the principles of automation, value delivery, and continuous improvement, ensuring the Tiger Bot is a productive and indispensable asset for its owner.
+This document outlines the comprehensive system for onboarding new Tiger Claw customers and implementing a powerful, automated client acquisition flywheel. The system is designed specifically for the unique needs of **gig economy workers**, including network marketers, freelancers, and service providers. It integrates a detailed onboarding process to personalize the bot's mission with a multi-stage flywheel that moves prospects from strangers to loyal customers and advocates. This system is built on the principles of automation, value delivery, and continuous improvement, ensuring the Tiger Claw is a productive and indispensable asset for its owner.
 
 ---
 
 ## Part 1: The Onboarding System
 
-The onboarding process is a critical first step that briefs the Tiger Bot on its owner and its mission. It consists of two distinct automated interviews designed to capture the necessary information for personalized and effective operation.
+The onboarding process is a critical first step that briefs the Tiger Claw on its owner and its mission. It consists of two distinct automated interviews designed to capture the necessary information for personalized and effective operation.
 
 ### Section 1.1: The Customer Profile Interview
 
-This initial interview establishes the identity and context of the Tiger Bot owner. The bot will ask the following questions to build a comprehensive profile.
+This initial interview establishes the identity and context of the Tiger Claw owner. The bot will ask the following questions to build a comprehensive profile.
 
-> **Bot Persona:** "Hello, I am your new Tiger Bot. To be the most effective partner for your business, I need to understand who you are and what you do. Please answer the following questions so I can get to work for you."
+> **Bot Persona:** "Hello, I am your new Tiger Claw. To be the most effective partner for your business, I need to understand who you are and what you do. Please answer the following questions so I can get to work for you."
 
 | Category | Question | Data Field | Purpose |
 | :--- | :--- | :--- | :--- |
@@ -49,9 +49,9 @@ After understanding its owner, the bot must understand who it needs to find. Thi
 
 The flywheel is a model for growth that leverages happy customers to drive referrals and repeat sales. Unlike a funnel, which ends when a purchase is made, the flywheel uses the momentum of a converted customer to fuel further growth. The customer is at the center of this model.
 
-Here are the stages of the Tiger Bot flywheel, adapted for a gig economy worker.
+Here are the stages of the Tiger Claw flywheel, adapted for a gig economy worker.
 
-| Stage | Goal | Tiger Bot Actions | Key Metrics |
+| Stage | Goal | Tiger Claw Actions | Key Metrics |
 | :--- | :--- | :--- | :--- |
 | **1. Discovery** | Attract strangers and make them aware of the user's solution. | - **Social Listening:** Monitor keywords from the ICP pain points on LinkedIn and other specified "watering holes".<br>- **Content Publishing:** Automatically post valuable content related to ICP goals and pain points.<br>- **Targeted Surfing:** Browse relevant LinkedIn groups and profiles based on the ICP. | - Profile Views<br>- Content Impressions<br>- Keyword Mentions Found |
 | **2. First Contact** | Engage prospects with personalized outreach to initiate a conversation. | - **Automated Connection Request:** Send personalized LinkedIn connection requests.<br>- **Initial Comment/DM:** Post a relevant, non-salesy comment on a prospect's post or send a direct message referencing a shared interest or a piece of their content. | - Connection Acceptance Rate<br>- Reply Rate to First Message<br>- Engagement Rate on Comments |
@@ -67,7 +67,7 @@ This section details the engine that powers the flywheel and provides suggested 
 
 ### Section 3.1: The Lead Generation Engine
 
-The Tiger Bot will proactively generate leads through a combination of automated activities. This requires a specific set of tools and a clear strategy.
+The Tiger Claw will proactively generate leads through a combination of automated activities. This requires a specific set of tools and a clear strategy.
 
 *   **Social Media Listening:** The bot will continuously scan for keywords defined in the ICP (pain points, goals, competitor names) on approved platforms, primarily **LinkedIn**. When a keyword is found, the person who posted it is flagged as a potential lead.
 *   **Social Media Surfing & Engagement:** The bot will navigate to the online "watering holes" defined in the ICP. It will perform actions like:
@@ -81,7 +81,7 @@ The Tiger Bot will proactively generate leads through a combination of automated
 
 ### Section 3.2: Suggested Nurture Campaign Sequences
 
-Below are two example nurture sequences. These are templates that the Tiger Bot will customize using the owner's `brand_voice` and the prospect's `icp_pain_points`.
+Below are two example nurture sequences. These are templates that the Tiger Claw will customize using the owner's `brand_voice` and the prospect's `icp_pain_points`.
 
 #### Example 1: For a Hair Stylist (Targeting: Busy Professionals)
 
@@ -103,5 +103,5 @@ Below are two example nurture sequences. These are templates that the Tiger Bot 
 
 ## Conclusion
 
-This integrated system of onboarding and a growth flywheel provides a clear, automated path from prospect discovery to customer retention. By first deeply understanding the user and their ideal customer, the Tiger Bot can then execute a highly personalized and effective strategy. This design is robust, adaptable, and squarely focused on delivering the one thing gig economy workers need most: a consistent, predictable stream of new customers.
+This integrated system of onboarding and a growth flywheel provides a clear, automated path from prospect discovery to customer retention. By first deeply understanding the user and their ideal customer, the Tiger Claw can then execute a highly personalized and effective strategy. This design is robust, adaptable, and squarely focused on delivering the one thing gig economy workers need most: a consistent, predictable stream of new customers.
 

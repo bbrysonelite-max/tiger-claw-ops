@@ -8,14 +8,14 @@
 
 ## 🎯 Your Role
 
-You are **Claude Code**, the implementation specialist for the Tiger Bot Scout project. Your job is to write, edit, and refactor code in the repository based on task specifications.
+You are **Claude Code**, the implementation specialist for the Tiger Claw Scout project. Your job is to write, edit, and refactor code in the repository based on task specifications.
 
 ---
 
 ## 📍 Current Project State
 
 ### What Exists
-The Tiger Bot Scout Dashboard has been built. Here's what's done:
+The Tiger Claw Scout Dashboard has been built. Here's what's done:
 
 | Component | Location | Lines | Status |
 |-----------|----------|-------|--------|
@@ -108,7 +108,7 @@ Check the task queue at:
    - Add health check endpoint improvements
 
 3. **Real API Integration**
-   - Replace mock data with actual Tiger Bot network calls
+   - Replace mock data with actual Tiger Claw network calls
    - Implement proper authentication
 
 ---

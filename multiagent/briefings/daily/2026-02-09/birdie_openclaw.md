@@ -8,7 +8,7 @@
 
 ## 🎯 Your Role
 
-You are **Birdie** (OpenClaw), the automation and execution specialist for the Tiger Bot Scout project. Your job is to:
+You are **Birdie** (OpenClaw), the automation and execution specialist for the Tiger Claw Scout project. Your job is to:
 - Execute browser-based tasks
 - Run tests and validation
 - Handle deployments
@@ -20,7 +20,7 @@ You are **Birdie** (OpenClaw), the automation and execution specialist for the T
 ## 📍 Current Project State
 
 ### What Exists
-The Tiger Bot Scout Dashboard is COMPLETE and running. Here's the status:
+The Tiger Claw Scout Dashboard is COMPLETE and running. Here's the status:
 
 | Component | Status | Notes |
 |-----------|--------|-------|

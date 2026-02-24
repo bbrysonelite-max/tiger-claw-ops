@@ -1,4 +1,4 @@
-# Tiger Bot Scout — Provisioning System
+# Tiger Claw Scout — Provisioning System
 
 ## CURRENT STATE vs WHAT'S NEEDED
 
@@ -9,7 +9,7 @@
 | API Server | Running | Port 4000, Express + PostgreSQL |
 | Dashboard | Live | botcraftwrks.ai/dashboard.html |
 | Database | Running | leads, script_feedback, hive_learnings tables |
-| Telegram Bot | Running | @TigerBotScout_bot (single shared bot) |
+| Telegram Bot | Running | @TigerClawScout_bot (single shared bot) |
 | Provisioning Code | Written | provisioning.ts exists but NOT wired up |
 | Stripe Webhook Handler | Written | In provisioning.ts but NOT connected |
 | 7 Customers | Listed | In dashboard, "Pending Setup" |
@@ -158,7 +158,7 @@ ssh ubuntu@208.113.131.83 "cd tiger-bot-api && git pull && pm2 restart all"
 - Create `/provisioning/trial` endpoint
 - Accept just email
 - Create tenant with `status: 'trial'`
-- Use shared @TigerBotScout_bot (not per-customer bot)
+- Use shared @TigerClawScout_bot (not per-customer bot)
 - Cron job checks `trial_ends_at`, sends "trial ended" message
 
 ### Option B: Promo Codes
@@ -184,7 +184,7 @@ ssh ubuntu@208.113.131.83 "cd tiger-bot-api && git pull && pm2 restart all"
 ┌────────────────────────────────────────────┐
 │  DEMO MODE                                 │
 │                                            │
-│  1. Public demo bot: @TigerBotDemo_bot     │
+│  1. Public demo bot: @TigerClawDemo_bot     │
 │  2. Pre-loaded with 10 sample prospects    │
 │  3. Scripts generated from samples         │
 │  4. Limited: 3 scripts per day             │
@@ -237,7 +237,7 @@ curl -X POST https://api.botcraftwrks.ai/provisioning/provision \
 4. They start using the shared bot
 
 ### OR: Quick Manual Setup
-1. Ask each customer to message @TigerBotScout_bot with /start
+1. Ask each customer to message @TigerClawScout_bot with /start
 2. Bot logs their chat_id
 3. Add their chat_id to the tenants table
 4. They're set up

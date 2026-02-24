@@ -1,7 +1,7 @@
 # Anti-Pattern: No Initiative
 
 **Date:** February 14, 2026  
-**Source:** Live Telegram conversation between Brent and Tiger Bot  
+**Source:** Live Telegram conversation between Brent and Tiger Claw  
 **Screenshots:** `charts/anti_pattern_no_initiative.png`, `charts/anti_pattern_no_tools.png`
 
 ---
@@ -35,7 +35,7 @@ When asked about tools, the bot listed its capabilities and marked most of them 
 
 ---
 
-## The Rule for Tiger Bot Brain
+## The Rule for Tiger Claw Brain
 
 1. **Never ask the customer where to look.** The Lead Source Intelligence Map (document 10) provides hardwired knowledge of where every gig economy role's leads live. The bot loads this at deployment.
 

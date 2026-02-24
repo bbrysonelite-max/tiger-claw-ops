@@ -7,7 +7,7 @@
 ---
 
 ## 📊 Current Focus
-Tiger Bot Scout v3.1.0 "Virtual Fleet" architecture - transitioning from per-customer processes to shared worker cluster.
+Tiger Claw Scout v3.1.0 "Virtual Fleet" architecture - transitioning from per-customer processes to shared worker cluster.
 
 ---
 

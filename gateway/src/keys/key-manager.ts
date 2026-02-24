@@ -18,8 +18,8 @@ export interface KeyConfig {
     consecutive_failures: number;
   };
   fallback: {
-    provider: 'gemini';
-    model: 'gemini-2.0-flash';
+    provider: 'anthropic';
+    model: 'claude-3-5-haiku-20241022';
     status: 'active' | 'dormant';
   };
   trial: {
@@ -59,16 +59,16 @@ export function getActiveKey(
   keyConfig: KeyConfig
 ): { key: string; provider: string; model: string; source: 'fallback' | 'primary' } {
   
-  // Fallback states always use the Gemini key
+  // Fallback states always use the Anthropic Claude key
   if (FALLBACK_STATES.includes(state)) {
     return {
       key: getFallbackKey(),
-      provider: 'gemini',
-      model: 'gemini-2.0-flash',
+      provider: 'anthropic',
+      model: 'claude-3-5-haiku-20241022',
       source: 'fallback'
     };
   }
-  
+
   // ACTIVE state uses the primary key
   if (state === 'ACTIVE' && keyConfig.primary.key_encrypted) {
     return {
@@ -78,26 +78,26 @@ export function getActiveKey(
       source: 'primary'
     };
   }
-  
+
   // If ACTIVE but no primary key (shouldn't happen, but safety net)
   return {
     key: getFallbackKey(),
-    provider: 'gemini',
-    model: 'gemini-2.0-flash',
+    provider: 'anthropic',
+    model: 'claude-3-5-haiku-20241022',
     source: 'fallback'
   };
 }
 
 /**
- * Gets the fallback Gemini key from environment.
+ * Gets the fallback Anthropic Claude key from environment.
  * This key is set once on the server and never changes.
  */
 function getFallbackKey(): string {
-  const key = process.env.FALLBACK_GEMINI_KEY;
+  const key = process.env.ANTHROPIC_API_KEY;
   if (!key) {
     throw new Error(
-      'FALLBACK_GEMINI_KEY not set in environment. ' +
-      'This is the hardwired Gemini key that must always be present.'
+      'ANTHROPIC_API_KEY not set in environment. ' +
+      'This is the hardwired Anthropic key that must always be present.'
     );
   }
   return key;
@@ -267,8 +267,8 @@ export function createInitialKeyConfig(): KeyConfig {
 
   return {
     primary: {
-      provider: 'gemini',
-      model: 'gemini-2.0-flash',
+      provider: 'anthropic',
+      model: 'claude-3-5-haiku-20241022',
       key_encrypted: null,
       validated_at: null,
       last_error: null,
@@ -276,8 +276,8 @@ export function createInitialKeyConfig(): KeyConfig {
       consecutive_failures: 0
     },
     fallback: {
-      provider: 'gemini',
-      model: 'gemini-2.0-flash',
+      provider: 'anthropic',
+      model: 'claude-3-5-haiku-20241022',
       status: 'active'
     },
     trial: {
@@ -298,7 +298,7 @@ export function checkTrialReminder(keyConfig: KeyConfig): {
   message: string;
   hour: number;
 } | null {
-  if (keyConfig.primary.key_encrypted && keyConfig.primary.provider !== 'gemini') {
+  if (keyConfig.primary.key_encrypted !== null) {
     return null;
   }
   
@@ -338,7 +338,7 @@ export function checkTrialReminder(keyConfig: KeyConfig): {
  * Checks if the trial has expired and the customer hasn't rotated.
  */
 export function isTrialExpired(keyConfig: KeyConfig): boolean {
-  if (keyConfig.primary.key_encrypted && keyConfig.primary.provider !== 'gemini') {
+  if (keyConfig.primary.key_encrypted !== null) {
     return false;
   }
   

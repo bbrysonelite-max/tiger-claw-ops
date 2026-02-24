@@ -1,4 +1,4 @@
-// Mock data for Tiger Bot Scout API tests
+// Mock data for Tiger Claw Scout API tests
 
 export const mockLeads = [
   {
@@ -149,7 +149,7 @@ export const mockAnalyticsTimeline = {
 
 export const mockSettings = {
   tenant_id: 'tenant-001',
-  bot_name: 'Tiger Bot Scout',
+  bot_name: 'Tiger Claw Scout',
   default_language: 'th',
   timezone: 'Asia/Bangkok',
   notifications: {

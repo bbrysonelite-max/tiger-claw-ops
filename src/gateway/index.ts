@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Scout - Gateway Server
+ * Tiger Claw Scout - Gateway Server
  * Lightweight Express server that receives webhooks and pushes to Redis queues
  * NO business logic - just queue and respond
  */
@@ -267,7 +267,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 
 // --- Start Server ---
 const server = app.listen(PORT, () => {
-  console.log(`[gateway] Tiger Bot Gateway running on port ${PORT}`);
+  console.log(`[gateway] Tiger Claw Gateway running on port ${PORT}`);
   console.log(`[gateway] Redis: ${REDIS_URL}`);
   console.log(`[gateway] Endpoints:`);
   console.log(`[gateway]   POST /webhooks/:token_hash - Telegram webhooks`);

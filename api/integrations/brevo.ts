@@ -25,7 +25,7 @@ export class BrevoClient {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        sender: params.sender || { email: 'noreply@botcraftwrks.ai', name: 'Tiger Bot Scout' },
+        sender: params.sender || { email: 'noreply@botcraftwrks.ai', name: 'Tiger Claw Scout' },
         to: params.to,
         subject: params.subject,
         htmlContent: params.htmlContent,

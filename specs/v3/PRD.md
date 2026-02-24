@@ -1,11 +1,11 @@
 # Product Requirements Document (PRD)
-**Project:** Tiger Bot Scout — Virtual Fleet Refactor
+**Project:** Tiger Claw Scout — Virtual Fleet Refactor
 **Version:** 3.1.0 (The "Trash Can Cluster" Edition)
 **Date:** 2026-02-10
 **Status:** APPROVED FOR BUILD
 
 ## 1. EXECUTIVE SUMMARY
-Tiger Bot Scout is a prospecting tool for network marketers. The current architecture (process-per-customer) is non-viable. We are refactoring to a **Hybrid Virtual Fleet**.
+Tiger Claw Scout is a prospecting tool for network marketers. The current architecture (process-per-customer) is non-viable. We are refactoring to a **Hybrid Virtual Fleet**.
 - **The Shift:** From "One Process per Customer" to "One Worker Cluster managing thousands of Bot Identities."
 - **The Hardware:** We leverage a Cloud Gateway for reliability and a cluster of existing Mac Pro "Trash Cans" for heavy compute (AI/Scraping).
 

@@ -1,4 +1,4 @@
-// telegram-bot.ts — Tiger Bot Scout Telegram delivery service
+// telegram-bot.ts — Tiger Claw Scout Telegram delivery service
 import TelegramBot from 'node-telegram-bot-api';
 import cron from 'node-cron';
 import Anthropic from '@anthropic-ai/sdk';
@@ -69,7 +69,7 @@ export function startTelegramBot(db: Pool) {
     })
     .catch((e: Error) => console.error(`${TIGER_EMOJI} Failed to register admin bot webhook:`, e.message));
 
-  console.log(`${TIGER_EMOJI} Tiger Bot Scout Telegram connected (webhook mode)`);
+  console.log(`${TIGER_EMOJI} Tiger Claw Scout Telegram connected (webhook mode)`);
 
   function isAllowed(chatId: number): boolean {
     if (allowedUsers.length === 0) return true; // no whitelist = allow all
@@ -80,7 +80,7 @@ export function startTelegramBot(db: Pool) {
   bot.onText(/\/start/, (msg) => {
     if (!isAllowed(msg.chat.id)) return;
     bot.sendMessage(msg.chat.id,
-      `${TIGER_EMOJI} *Tiger Bot Scout* — Your AI Recruiting Partner\n\n` +
+      `${TIGER_EMOJI} *Tiger Claw Scout* — Your AI Recruiting Partner\n\n` +
       `I find prospects while you sleep and deliver them with personalized approach scripts.\n\n` +
       `*Commands:*\n` +
       `/report — Today's prospect report\n` +
@@ -96,7 +96,7 @@ export function startTelegramBot(db: Pool) {
   bot.onText(/\/help/, (msg) => {
     if (!isAllowed(msg.chat.id)) return;
     bot.sendMessage(msg.chat.id,
-      `${TIGER_EMOJI} *Tiger Bot Scout Commands*\n\n` +
+      `${TIGER_EMOJI} *Tiger Claw Scout Commands*\n\n` +
       `/report — Get today's prospect report\n` +
       `/pipeline — Pipeline overview (new/contacted/qualified)\n` +
       `/script <name> — AI approach script for a prospect\n` +
@@ -409,7 +409,7 @@ Keep it conversational, 2-4 sentences max. Like texting a friend, not a sales pi
       const response = await anthropic.messages.create({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 400,
-        system: `You are Tiger Bot Scout, an AI recruiting assistant for Nu Skin network marketing. You help the user manage prospects, create approach scripts, handle objections, and strategize. You have access to these recent prospects:\n\n${prospectContext}\n\nBe concise, practical, and conversational.`,
+        system: `You are Tiger Claw Scout, an AI recruiting assistant for Nu Skin network marketing. You help the user manage prospects, create approach scripts, handle objections, and strategize. You have access to these recent prospects:\n\n${prospectContext}\n\nBe concise, practical, and conversational.`,
         messages: [{ role: 'user', content: msg.text || '' }]
       });
 
@@ -473,7 +473,7 @@ async function generateDailyReport(db: Pool, anthropic: Anthropic | null): Promi
     weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
   });
 
-  let report = `${TIGER_EMOJI} *Tiger Bot Daily Report*\n${today}\n\n`;
+  let report = `${TIGER_EMOJI} *Tiger Claw Daily Report*\n${today}\n\n`;
 
   if (newProspects.rows.length === 0) {
     report += `_No new prospects in the last 24 hours._\n`;

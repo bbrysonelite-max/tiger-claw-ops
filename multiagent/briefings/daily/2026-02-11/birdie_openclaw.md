@@ -18,31 +18,31 @@ Send personalized emails to all 9 customers:
 #### Thailand Customers (7) - Send in Thai time-appropriate window
 | Name | Email | Bot Username |
 |------|-------|------|
-| Nancy Lim | nancy.lim@example.com | @TigerBot_Nancy_bot |
-| Chana Lohasaptawee | chana@example.com | @TigerBot_Chana_bot |
-| Phaitoon S. | phaitoon@example.com | @TigerBot_Phaitoon_bot |
-| Tarida Sukavanich | tarida@example.com | @TigerBot_Tarida_bot |
-| Lily Vergara | lily@example.com | @TigerBot_Lily_bot |
-| Theera Phetmalaigul | theera@example.com | @TigerBot_Theera_bot |
-| John & Noon | johnnoon@example.com | @TigerBot_JohnNoon_bot |
+| Nancy Lim | nancy.lim@example.com | @TigerClaw_Nancy_bot |
+| Chana Lohasaptawee | chana@example.com | @TigerClaw_Chana_bot |
+| Phaitoon S. | phaitoon@example.com | @TigerClaw_Phaitoon_bot |
+| Tarida Sukavanich | tarida@example.com | @TigerClaw_Tarida_bot |
+| Lily Vergara | lily@example.com | @TigerClaw_Lily_bot |
+| Theera Phetmalaigul | theera@example.com | @TigerClaw_Theera_bot |
+| John & Noon | johnnoon@example.com | @TigerClaw_JohnNoon_bot |
 
 #### Spain Customer (1)
 | Name | Email | Bot Username |
 |------|-------|------|
-| Debbie Cameron | justagreatdirector@outlook.com | @TigerBot_Debbie_bot |
+| Debbie Cameron | justagreatdirector@outlook.com | @TigerClaw_Debbie_bot |
 
 #### USA Customer (1 - Owner)
 | Name | Email | Bot Username |
 |------|-------|------|
-| Owner | TBD | @TigerBot_Owner_bot |
+| Owner | TBD | @TigerClaw_Owner_bot |
 
 ### Email Template
 ```
-Subject: Your Tiger Bot Scout is LIVE! 🐯
+Subject: Your Tiger Claw Scout is LIVE! 🐯
 
 Hi [Name],
 
-Your personal Tiger Bot Scout is ready and waiting for you!
+Your personal Tiger Claw Scout is ready and waiting for you!
 
 👉 Click here to start: https://t.me/[BOT_USERNAME]
 
@@ -59,7 +59,7 @@ We apologize for the delay in getting this to you. Your patience means everythin
 Questions? Reply to this email anytime.
 
 To your success,
-Tiger Bot Scout Team
+Tiger Claw Scout Team
 ```
 
 ### Task B-002: Monitor Customer Responses

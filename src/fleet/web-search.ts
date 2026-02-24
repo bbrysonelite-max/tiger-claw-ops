@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Scout - Web Search Module
+ * Tiger Claw Scout - Web Search Module
  * Tools for hunting prospects across the web
  *
  * This module provides actual search capabilities:

@@ -1,4 +1,4 @@
-# Tiger Bot Scout — Actual Current State (Feb 14, 2026)
+# Tiger Claw Scout — Actual Current State (Feb 14, 2026)
 
 ## What Actually Exists and Works
 

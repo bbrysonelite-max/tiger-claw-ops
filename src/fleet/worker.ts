@@ -791,7 +791,7 @@ async function processInboundJob(job: Job<InboundJobData>): Promise<void> {
         const bot = getOrCreateBot(decryptedToken, tenant.id);
         await bot.sendMessage(
           tenant.chat_id,
-          `Your Tiger Bot trial has ended. 🐯\n\nTo keep your bot running, visit *botcraftwrks.ai* to upgrade.`,
+          `Your Tiger Claw trial has ended. 🐯\n\nTo keep your bot running, visit *botcraftwrks.ai* to upgrade.`,
           { parse_mode: 'Markdown' }
         );
       } catch (e) {

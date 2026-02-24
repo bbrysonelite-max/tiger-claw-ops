@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Scout - Vitest Configuration
+ * Tiger Claw Scout - Vitest Configuration
  */
 
 import { defineConfig } from 'vitest/config';

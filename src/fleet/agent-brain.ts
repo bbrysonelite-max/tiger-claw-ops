@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Scout - Agent Brain
+ * Tiger Claw Scout - Agent Brain
  * The proactive hunting behavior for ACTIVE state
  *
  * RULES (from anti-pattern docs):
@@ -217,7 +217,7 @@ export async function handleActiveMessage(
   }
 
   // General question - use AI
-  const response = await generateAI(`You are Tiger Bot, an AI prospecting assistant.
+  const response = await generateAI(`You are Tiger Claw, an AI prospecting assistant.
 The user (${ctx.interviewData.interview1?.full_name || "a customer"}) said: "${userMessage}"
 
 Their business: ${ctx.interviewData.interview1?.business_type || "unknown"}

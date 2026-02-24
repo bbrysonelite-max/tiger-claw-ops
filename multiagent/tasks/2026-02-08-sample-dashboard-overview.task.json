@@ -1,7 +1,7 @@
 {
   "id": "2026-02-08-sample-dashboard-overview",
   "title": "Implement basic Dashboard Overview page skeleton",
-  "description": "Create the React route and minimal components for the Tiger Bot Dashboard overview page, wiring it to the /dashboard/overview API with typed props.",
+  "description": "Create the React route and minimal components for the Tiger Claw Dashboard overview page, wiring it to the /dashboard/overview API with typed props.",
   "priority": "normal",
   "labels": [
     "frontend",

@@ -1,9 +1,9 @@
 #!/bin/bash
-# Tiger Bot Scout - One-Click Agent Setup
+# Tiger Claw Scout - One-Click Agent Setup
 # Run this on your Mac Pro
 
 set -e
-echo "🐯 Tiger Bot Scout - Agent Setup"
+echo "🐯 Tiger Claw Scout - Agent Setup"
 echo "================================"
 
 # Find the repo

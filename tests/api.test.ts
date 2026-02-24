@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Scout API Integration Tests
+ * Tiger Claw Scout API Integration Tests
  * Comprehensive test suite for all API endpoints
  * Run with: npm test
  */
@@ -465,12 +465,12 @@ describe('PATCH /settings', () => {
   it('updates settings partially', async () => {
     const response = await request(API_BASE)
       .patch('/settings')
-      .send({ bot_name: 'Tiger Bot Scout Test' });
+      .send({ bot_name: 'Tiger Claw Scout Test' });
     expect(response.status).toBe(200);
     // Restore original
     await request(API_BASE)
       .patch('/settings')
-      .send({ bot_name: 'Tiger Bot Scout' });
+      .send({ bot_name: 'Tiger Claw Scout' });
   });
 
   it('updates nested notification settings', async () => {

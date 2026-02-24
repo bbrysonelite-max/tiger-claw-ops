@@ -1,4 +1,4 @@
-// Tiger Bot Scout Dashboard Tests
+// Tiger Claw Scout Dashboard Tests
 // Run with: npm test
 // Framework: Jest + React Testing Library
 

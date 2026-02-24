@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Scout - Multi-Channel Router
+ * Tiger Claw Scout - Multi-Channel Router
  * Handles SMS, Web Chat alongside Telegram
  */
 

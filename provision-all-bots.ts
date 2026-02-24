@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Scout - Provision Remaining Customer Bots
+ * Tiger Claw Scout - Provision Remaining Customer Bots
  * Creates dedicated Telegram bots for 7 remaining customers
  * 
  * RATE LIMIT FIX: 30 second delays between bots to avoid Telegram throttling
@@ -31,7 +31,7 @@ function sleep(seconds: number): Promise<void> {
 
 async function main() {
   console.log('='.repeat(60));
-  console.log('Tiger Bot Scout - Provisioning Remaining Customer Bots');
+  console.log('Tiger Claw Scout - Provisioning Remaining Customer Bots');
   console.log('='.repeat(60));
   console.log(`Customers to process: ${CUSTOMERS.length}`);
   console.log(`Delay between bots: ${DELAY_SECONDS} seconds`);

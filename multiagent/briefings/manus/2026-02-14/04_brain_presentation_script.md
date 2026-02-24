@@ -1,4 +1,4 @@
-# Tiger Bot Brain: Presentation Script
+# Tiger Claw Brain: Presentation Script
 
 **Duration:** 18–22 minutes  
 **Audience:** Investors, team members, agent developers, or customers  
@@ -10,7 +10,7 @@
 
 > "Let me tell you what happened on a live Zoom call with my first nine customers.
 >
-> I was demonstrating Tiger Bot — the AI prospecting system I've been building for gig economy workers. Network marketers, hair stylists, rideshare drivers, freelancers — people who need customers but don't have a marketing department.
+> I was demonstrating Tiger Claw — the AI prospecting system I've been building for gig economy workers. Network marketers, hair stylists, rideshare drivers, freelancers — people who need customers but don't have a marketing department.
 >
 > In the middle of the demo, my API key died. The bot went brain-dead. On camera. In front of the people who had already paid me.
 >
@@ -24,7 +24,7 @@
 
 ## SECTION 1 — The Two-Key Architecture (3 minutes)
 
-> "Every Tiger Bot now ships with two brains. Not one. Two.
+> "Every Tiger Claw now ships with two brains. Not one. Two.
 >
 > The first is a fallback key — that's mine. It's a Google Gemini key hardwired into every bot. It costs me two-tenths of a cent per customer to run an entire onboarding. At a hundred customers, my total cost is twenty cents. It is always present. It never gets removed.
 >
@@ -66,11 +66,11 @@
 
 > "Let me walk you through what the customer actually experiences.
 >
-> They buy Tiger Bot on Stan Store. Payment goes through Stripe. Within seconds, a Telegram bot is created just for them — their own dedicated bot, not a shared one. They get a welcome email with a link.
+> They buy Tiger Claw on Stan Store. Payment goes through Stripe. Within seconds, a Telegram bot is created just for them — their own dedicated bot, not a shared one. They get a welcome email with a link.
 >
 > They click the link, open Telegram, and tap START.
 >
-> The bot says: 'Hey Nancy! I'm your Tiger Bot — your personal AI prospecting machine. I'm going to help you find customers, nurture them, and close deals while you focus on what you do best. But first, I need to learn about you. It'll take about five minutes. Ready to get started?'
+> The bot says: 'Hey Nancy! I'm your Tiger Claw — your personal AI prospecting machine. I'm going to help you find customers, nurture them, and close deals while you focus on what you do best. But first, I need to learn about you. It'll take about five minutes. Ready to get started?'
 >
 > Nancy says yes.
 >
@@ -156,7 +156,7 @@
 
 ## CLOSING — What This Means (2 minutes)
 
-> "Right now, nine people have Tiger Bots that do nothing. They tapped START and got silence. That changes with this build.
+> "Right now, nine people have Tiger Claws that do nothing. They tapped START and got silence. That changes with this build.
 >
 > After three days of development, those same nine people will tap START and get a bot that greets them by name, interviews them about their business, learns who their ideal customer is, helps them set up their own AI key, and starts prospecting for them.
 >
@@ -164,7 +164,7 @@
 >
 > The bot is never silent again.
 >
-> That's the Tiger Bot brain."
+> That's the Tiger Claw brain."
 
 **[End.]**
 

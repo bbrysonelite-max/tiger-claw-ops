@@ -8,7 +8,7 @@
 
 ## 🎯 My Role
 
-I am **Agent Zero**, the architect and orchestrator for the Tiger Bot Scout project. My responsibilities:
+I am **Agent Zero**, the architect and orchestrator for the Tiger Claw Scout project. My responsibilities:
 - Write specifications and architecture docs
 - Create and assign tasks to other agents
 - Maintain briefings and project state
@@ -20,7 +20,7 @@ I am **Agent Zero**, the architect and orchestrator for the Tiger Bot Scout proj
 ## 📊 What I Completed (2026-02-09)
 
 ### Overnight Autonomous Session (4-5 hours)
-Built the entire Tiger Bot Scout Dashboard from PRD to working code:
+Built the entire Tiger Claw Scout Dashboard from PRD to working code:
 
 | Phase | Components Built |
 |-------|------------------|

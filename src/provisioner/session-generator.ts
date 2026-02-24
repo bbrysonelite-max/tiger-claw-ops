@@ -1,6 +1,6 @@
 #!/usr/bin/env npx tsx
 /**
- * Tiger Bot Scout - Telegram Session Generator
+ * Tiger Claw Scout - Telegram Session Generator
  * CLI script to generate MTProto session string for BotFather automation
  *
  * Usage: npm run generate-session

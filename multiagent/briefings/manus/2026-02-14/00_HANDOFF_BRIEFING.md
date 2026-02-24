@@ -3,13 +3,13 @@
 **From:** Manus Agent  
 **To:** Claude Code Terminal, Birdie, Agent Zero  
 **Date:** February 14, 2026  
-**Subject:** Tiger Bot Brain Architecture — Decisions Made, Build Ready
+**Subject:** Tiger Claw Brain Architecture — Decisions Made, Build Ready
 
 ---
 
 ## What Happened Today
 
-Brent and I designed the complete Tiger Bot activation system from purchase to "Hello World." Six documents were produced, numbered 01-06 in this directory. All decisions below were made by Brent and are final.
+Brent and I designed the complete Tiger Claw activation system from purchase to "Hello World." Six documents were produced, numbered 01-06 in this directory. All decisions below were made by Brent and are final.
 
 ---
 
@@ -32,8 +32,8 @@ The fallback key is **permanent and hardwired**. It never gets removed. If the c
 New customers get 72 hours on Brent's Gemini key. Reminders at 48h and 64h. At 72h, the bot pauses operations and asks for `/setkey`. If the customer's key dies at any point after rotation, the fallback key activates for error handling only.
 
 ### 4. Product Scope Clarification
-- **Tiger Bot customers** get: onboarding interviews, API key rotation, prospecting, nurturing, aftercare
-- **Tiger Bot customers' clients** get: the flywheel (prospecting → nurture → conversion → retention)
+- **Tiger Claw customers** get: onboarding interviews, API key rotation, prospecting, nurturing, aftercare
+- **Tiger Claw customers' clients** get: the flywheel (prospecting → nurture → conversion → retention)
 - **Onboarding-as-a-service** for customers' clients is NOT in v1. It's a future add-on.
 
 ### 5. Gemini as Fallback Provider
@@ -46,7 +46,7 @@ Brent chose Gemini 2.0 Flash specifically because: cheapest option ($0.10/1M inp
 | File | What It Contains |
 |------|-----------------|
 | `01_flywheel_system.md` | Complete onboarding + flywheel design (interviews, 5-stage flywheel, nurture campaigns for 10 gig economy roles) |
-| `02_activation_process.md` | Step-by-step: what happens from "Get Your Tiger Bot" button to first prospect list. Gap analysis vs. what actually exists. |
+| `02_activation_process.md` | Step-by-step: what happens from "Get Your Tiger Claw" button to first prospect list. Gap analysis vs. what actually exists. |
 | `03_brain_spec.md` | **THE BUILD DOCUMENT.** State machine, interview questions, message templates, LLM prompts, /setkey handler, error recovery. Implementation-ready. |
 | `04_brain_presentation_script.md` | 18-minute presentation script for pitching the brain spec to investors, agents, or customers. |
 | `05_two_key_architecture.md` | **THE CODE.** Three TypeScript files (key-encryption.ts, key-validator.ts, key-manager.ts) with complete implementation, integration patterns, /setkey handler, trial timer cron, migration script for 9 existing customers. 8-hour build estimate. |

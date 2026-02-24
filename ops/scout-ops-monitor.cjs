@@ -1,12 +1,12 @@
 /**
  * Scout Ops Monitor - Enterprise-grade health checking
- * Runs every 5 minutes to keep Tiger Bot Scout healthy
+ * Runs every 5 minutes to keep Tiger Claw Scout healthy
  *
  * Checks:
  * 1. API Gateway health
  * 2. Worker health (Redis queue)
  * 3. OpenAI API key validity
- * 4. Gemini API key validity
+ * 4. Anthropic API key validity
  * 5. All customer bot webhooks
  * 6. Database connectivity
  *
@@ -31,7 +31,7 @@ const CONFIG = {
 
   // API Keys to validate
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-  GEMINI_API_KEY: process.env.FALLBACK_GEMINI_KEY,
+  ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
 
   // Thresholds
   MAX_RESPONSE_TIME_MS: 5000,
@@ -153,19 +153,23 @@ async function checkOpenAIKey() {
   }
 }
 
-// Check 3: Gemini API Key
-async function checkGeminiKey() {
-  log('INFO', 'Checking Gemini API key...');
-  if (!CONFIG.GEMINI_API_KEY) {
-    return { healthy: true, note: 'No Gemini key configured (optional fallback)' };
+// Check 3: Anthropic API Key
+async function checkAnthropicKey() {
+  log('INFO', 'Checking Anthropic API key...');
+  if (!CONFIG.ANTHROPIC_API_KEY) {
+    return { healthy: false, error: 'No ANTHROPIC_API_KEY configured — required for fallback brain' };
   }
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${CONFIG.GEMINI_API_KEY}`;
-    const response = await fetch(url);
+    const response = await fetch('https://api.anthropic.com/v1/models', {
+      headers: {
+        'x-api-key': CONFIG.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      }
+    });
 
-    if (response.status === 400 || response.status === 403) {
-      return { healthy: false, error: 'Invalid Gemini API key' };
+    if (response.status === 401 || response.status === 403) {
+      return { healthy: false, error: 'Invalid Anthropic API key' };
     }
     if (response.status !== 200) {
       return { healthy: false, error: `HTTP ${response.status}` };
@@ -205,14 +209,14 @@ async function runHealthChecks() {
   // Run all checks
   results.checks.gateway = await checkGatewayHealth();
   results.checks.openai = await checkOpenAIKey();
-  results.checks.gemini = await checkGeminiKey();
+  results.checks.anthropic = await checkAnthropicKey();
   results.checks.webhooks = await checkBotWebhooks();
 
   // Evaluate results
   for (const [name, check] of Object.entries(results.checks)) {
     if (!check.healthy) {
       results.overall = false;
-      if (name === 'gateway' || name === 'openai') {
+      if (name === 'gateway' || name === 'anthropic') {
         results.criticalIssues.push(`${name}: ${check.error}`);
       } else {
         results.warnings.push(`${name}: ${check.error || check.note}`);

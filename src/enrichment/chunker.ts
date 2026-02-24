@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Scout - Text Chunker
+ * Tiger Claw Scout - Text Chunker
  * Splits text into chunks suitable for vector embeddings
  * Preserves paragraph boundaries and sentence integrity
  */

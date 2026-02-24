@@ -1,4 +1,4 @@
-# Tiger Bot Scout — Enhanced Bot Specification
+# Tiger Claw Scout — Enhanced Bot Specification
 
 ## Overview
 
@@ -366,7 +366,7 @@ INSERT INTO script_library (category, name, content_en, content_th, source, cont
 
 When ready for Spanish market:
 
-1. **Same bot, different language setting** — OR create separate `@TigerBotScout_es`
+1. **Same bot, different language setting** — OR create separate `@TigerClawScout_es`
 2. **Cultural adaptation**:
    - More relationship-focused messaging
    - "Usted" vs "Tú" (formal vs informal)

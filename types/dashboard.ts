@@ -1,4 +1,4 @@
-// Tiger Bot Scout Dashboard Type Definitions
+// Tiger Claw Scout Dashboard Type Definitions
 // Version: 1.0
 
 // ==================== CORE ENTITIES ====================

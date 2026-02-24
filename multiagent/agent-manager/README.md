@@ -1,4 +1,4 @@
-# 🐯 Tiger Bot Scout - Multi-Agent Manager
+# 🐯 Tiger Claw Scout - Multi-Agent Manager
 
 Enterprise-grade multi-agent management system for running 70-80 OpenClaw agents on a single Mac Pro.
 
@@ -174,7 +174,7 @@ rm -rf /Users/Shared/openclaw/pids/*
 
 ## Integration with Dashboard
 
-The agent registry (`agent-registry.json`) can be read by the Tiger Bot Scout Dashboard to display agent status in the UI. Future dashboard updates will include:
+The agent registry (`agent-registry.json`) can be read by the Tiger Claw Scout Dashboard to display agent status in the UI. Future dashboard updates will include:
 
 - Agent Manager panel
 - Create/Start/Stop agents from UI
@@ -183,4 +183,4 @@ The agent registry (`agent-registry.json`) can be read by the Tiger Bot Scout Da
 
 ---
 
-**Built for Tiger Bot Scout** | Supports 80 agents | Enterprise Ready
+**Built for Tiger Claw Scout** | Supports 80 agents | Enterprise Ready

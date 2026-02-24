@@ -1,5 +1,5 @@
 #!/bin/bash
-# Tiger Bot Scout - One-Click Deploy Script
+# Tiger Claw Scout - One-Click Deploy Script
 # Paste your Telegram Bot Token below (from @BotFather)
 TELEGRAM_TOKEN="__PASTE_YOUR_TOKEN_HERE__"
 
@@ -11,7 +11,7 @@ SERVER="208.113.131.83"
 KEY="$HOME/Desktop/botcraft key pair.pem"
 REMOTE_PATH="/home/ubuntu/tiger-bot-api"
 
-echo "🐯 Tiger Bot Scout - One-Click Deploy"
+echo "🐯 Tiger Claw Scout - One-Click Deploy"
 echo "====================================="
 
 # Check if token was set
@@ -23,7 +23,7 @@ if [ "$TELEGRAM_TOKEN" = "__PASTE_YOUR_TOKEN_HERE__" ]; then
     echo "1. Open Telegram"
     echo "2. Search for @BotFather"
     echo "3. Send /mybots"
-    echo "4. Select @TigerBotScout_bot"
+    echo "4. Select @TigerClawScout_bot"
     echo "5. Click API Token"
     echo "6. Copy the token"
     echo ""
@@ -72,7 +72,7 @@ mv .env.tmp .env
 echo "✅ Telegram token configured"
 
 echo ""
-echo "🔄 Restarting Tiger Bot API..."
+echo "🔄 Restarting Tiger Claw API..."
 pm2 restart tiger-bot 2>/dev/null || pm2 start dist/api/server.js --name tiger-bot
 
 echo ""
@@ -107,7 +107,7 @@ echo "🎉 DEPLOYMENT COMPLETE!"
 echo "====================================="
 echo ""
 echo "✅ API running on port 4001"
-echo "✅ Telegram bot connected to @TigerBotScout_bot"
+echo "✅ Telegram bot connected to @TigerClawScout_bot"
 echo "✅ 7 customers provisioned"
 echo ""
 echo "Customers can now message the bot on Telegram!"
@@ -115,4 +115,4 @@ echo "Customers can now message the bot on Telegram!"
 ENDSSH
 
 echo ""
-echo "🐯 Done! Tiger Bot Scout is live."
+echo "🐯 Done! Tiger Claw Scout is live."

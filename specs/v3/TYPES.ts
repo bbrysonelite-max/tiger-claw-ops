@@ -92,7 +92,7 @@ export const SUPPORT_CONTACTS = {
   hotline: '+1-801-369-5488',
   email: 'support@botcraftwrks.ai',
   helpDocs: 'https://help.botcraftwrks.ai',
-  adminBot: '@TigerBotHQ_bot',
+  adminBot: '@TigerClawHQ_bot',
 } as const;
 
 // --- OPENCLAW UPDATE TRACKING (F-06) ---

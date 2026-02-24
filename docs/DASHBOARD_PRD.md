@@ -1,19 +1,19 @@
-# Tiger Bot Scout Dashboard — Product Design Requirements
+# Tiger Claw Scout Dashboard — Product Design Requirements
 
 ## Overview
 
-**Product**: Tiger Bot Command Center Dashboard
+**Product**: Tiger Claw Command Center Dashboard
 **Version**: 1.0
 **Author**: Brent Bryson / BotCraftWrks.ai
 **Status**: Design Phase
 
-The Tiger Bot Dashboard is the central command center for network marketing distributors using Tiger Bot Scout. It provides real-time visibility into prospect discovery, script performance, and hive learnings from the collective Tiger Bot network.
+The Tiger Claw Dashboard is the central command center for network marketing distributors using Tiger Claw Scout. It provides real-time visibility into prospect discovery, script performance, and hive learnings from the collective Tiger Claw network.
 
 ---
 
 ## User Stories
 
-### As a Tiger Bot subscriber, I want to:
+### As a Tiger Claw subscriber, I want to:
 1. **See my daily prospects** at a glance so I know who to contact today
 2. **Track script performance** to know which approaches are working
 3. **Learn from the hive** by seeing what scripts work for other users (anonymized)
@@ -23,7 +23,7 @@ The Tiger Bot Dashboard is the central command center for network marketing dist
 
 ### As Brent (admin), I want to:
 1. **See all tenant performance** to identify who needs help
-2. **Monitor system health** across all Tiger Bots
+2. **Monitor system health** across all Tiger Claws
 3. **Track API costs** per tenant
 4. **See aggregate conversion rates** for the entire hive
 5. **Identify top-performing scripts** to feature or promote
@@ -705,7 +705,7 @@ describe('API: /ai-crm/hive/leaderboard', () => {
 - **Telegram Bot API** — Bot delivery
 
 ### Internal Dependencies
-- Tiger Bot API (server.ts) — Backend
+- Tiger Claw API (server.ts) — Backend
 - Agent Zero — Prospect discovery
 - Hive learnings system — Knowledge base
 

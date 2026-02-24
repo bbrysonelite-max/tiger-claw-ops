@@ -1,4 +1,4 @@
-# Tiger Bot Scout - Master Handoff Document
+# Tiger Claw Scout - Master Handoff Document
 > **Last Updated:** 2026-02-09 11:52 MST  
 > **Updated By:** Agent Zero  
 > **Status:** Phase 1-5 COMPLETE, Testing/Validation In Progress
@@ -7,7 +7,7 @@
 
 ## 🎯 Project Overview
 
-**Tiger Bot Scout** is an AI-powered recruiting assistant for network marketing distributors. The dashboard provides real-time visibility into prospect discovery, script performance tracking, and collective learning from the Tiger Bot network ("The Hive").
+**Tiger Claw Scout** is an AI-powered recruiting assistant for network marketing distributors. The dashboard provides real-time visibility into prospect discovery, script performance tracking, and collective learning from the Tiger Claw network ("The Hive").
 
 ### Repository Information
 | Item | Value |
@@ -150,7 +150,7 @@ All 9 customers have tapped /start on their bots. All 9 experienced brain-dead b
 2. **Two-key architecture:** Every bot gets a permanent fallback Gemini key (Brent's, ~$0.002/customer) + customer's primary key. Bot is never silent again.
 3. **72-hour free trial** on Brent's Gemini key, then forced rotation via `/setkey`.
 4. **Gemini 2.0 Flash** chosen as fallback provider (cheapest, most reliable, free tier available).
-5. **Product scope:** Tiger Bot customers get onboarding + prospecting + nurturing. Their clients get the flywheel. Onboarding-as-a-service for clients is NOT in v1.
+5. **Product scope:** Tiger Claw customers get onboarding + prospecting + nurturing. Their clients get the flywheel. Onboarding-as-a-service for clients is NOT in v1.
 
 ### Build Documents (in `multiagent/briefings/manus/2026-02-14/`)
 
@@ -168,4 +168,4 @@ All 9 customers have tapped /start on their bots. All 9 experienced brain-dead b
 Whoever picks this up: start with `03_brain_spec.md` (the conversation logic) and `05_two_key_architecture.md` (the key management code). Test on Tiger_Brent_bot first.
 
 ### Webpage Built
-Tiger Bot Onboarding & Flywheel System webpage is live on Manus hosting. Features: onboarding interviews, 5-stage flywheel, 10 gig economy nurture campaigns (10 touches each, principle-tagged), sales statistics, 10 psychological principles, API key rotation with LLM provider selector, visual walkthroughs, aftercare/retention section with tier cards, and CTA.
+Tiger Claw Onboarding & Flywheel System webpage is live on Manus hosting. Features: onboarding interviews, 5-stage flywheel, 10 gig economy nurture campaigns (10 touches each, principle-tagged), sales statistics, 10 psychological principles, API key rotation with LLM provider selector, visual walkthroughs, aftercare/retention section with tier cards, and CTA.

@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Scout - Gateway Router Tests
+ * Tiger Claw Scout - Gateway Router Tests
  * Tests for the Virtual Fleet Router (Gateway)
  */
 

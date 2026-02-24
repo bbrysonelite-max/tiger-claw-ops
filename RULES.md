@@ -1,4 +1,4 @@
-# Tiger Bot Scout — Engineering Rules
+# Tiger Claw Scout — Engineering Rules
 
 **The mission is 100% uptime. Not 99%. 100%.**
 

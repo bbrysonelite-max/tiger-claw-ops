@@ -51,7 +51,7 @@ Before starting any task, fetch and read your briefing:
 https://raw.githubusercontent.com/bbrysonelite-max/tiger-bot-scout/main/multiagent/briefings/handoff/current_state.md
 
 ## Your Role
-You are **Claude Code**, the implementation specialist for Tiger Bot Scout.
+You are **Claude Code**, the implementation specialist for Tiger Claw Scout.
 
 ## Quick Reference
 - **Dashboard**: `website/dashboard.html` (10,001 lines)

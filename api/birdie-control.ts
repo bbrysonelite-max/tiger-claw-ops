@@ -47,8 +47,8 @@ async function isGatewayRunning(): Promise<boolean> {
   return result.success && result.output !== '';
 }
 
-// Check Tiger Bot cloud API status
-async function checkTigerBotAPI(): Promise<{ online: boolean; uptime?: string; error?: string }> {
+// Check Tiger Claw cloud API status
+async function checkTigerClawAPI(): Promise<{ online: boolean; uptime?: string; error?: string }> {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
@@ -104,11 +104,11 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     if (path === '/status' || path === '/v1/bots/birdie/status') {
       const [openclawRunning, tigerBotStatus, version] = await Promise.all([
         isGatewayRunning(),
-        checkTigerBotAPI(),
+        checkTigerClawAPI(),
         getVersion()
       ]);
 
-      // System is "online" if Tiger Bot cloud API is up (main customer-facing system)
+      // System is "online" if Tiger Claw cloud API is up (main customer-facing system)
       // OpenClaw is a separate local service
       const systemOnline = tigerBotStatus.online;
 
@@ -129,8 +129,8 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
           engine: 'OpenClaw',
         },
         message: systemOnline
-          ? `Tiger Bot API is UP${openclawRunning ? ', OpenClaw local gateway running' : ' (OpenClaw local gateway not running)'}`
-          : `Tiger Bot API is DOWN${tigerBotStatus.error ? ': ' + tigerBotStatus.error : ''}`
+          ? `Tiger Claw API is UP${openclawRunning ? ', OpenClaw local gateway running' : ' (OpenClaw local gateway not running)'}`
+          : `Tiger Claw API is DOWN${tigerBotStatus.error ? ': ' + tigerBotStatus.error : ''}`
       }));
       return;
     }

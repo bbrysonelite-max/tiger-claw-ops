@@ -1,4 +1,4 @@
-# Tiger Bot Activation: What Happens When Someone Pushes the Button
+# Tiger Claw Activation: What Happens When Someone Pushes the Button
 
 **Date:** February 14, 2026  
 **Based on:** tiger-bot-scout repo as of Feb 13, 2026  
@@ -17,7 +17,7 @@ This document describes what the activation process *should* be, what *actually 
 
 **What should happen:**
 
-A customer buys Tiger Bot on Stan Store. Stripe processes the payment and fires a `checkout.session.completed` webhook to `https://api.botcraftwrks.ai/stripe/webhook`. The gateway receives it, creates a provision job in Redis, and the automation begins.
+A customer buys Tiger Claw on Stan Store. Stripe processes the payment and fires a `checkout.session.completed` webhook to `https://api.botcraftwrks.ai/stripe/webhook`. The gateway receives it, creates a provision job in Redis, and the automation begins.
 
 **What actually exists:**
 
@@ -71,7 +71,7 @@ A welcome email template exists in `birdie_onboarding.md`. It is simple and clea
 
 > Hi [FIRST_NAME],
 >
-> Your personal Tiger Bot Scout is now live and ready to help you find prospects.
+> Your personal Tiger Claw Scout is now live and ready to help you find prospects.
 >
 > Click here to start: [BOT_LINK]
 >
@@ -192,7 +192,7 @@ No bot is currently prospecting. No nurture sequences are running. No prospect l
 
 ## The Critical Path
 
-If you want a customer to push a button and have a working Tiger Bot, these things need to be built in this order:
+If you want a customer to push a button and have a working Tiger Claw, these things need to be built in this order:
 
 **Priority 1 — The Bot's Brain (without this, nothing else matters):**
 

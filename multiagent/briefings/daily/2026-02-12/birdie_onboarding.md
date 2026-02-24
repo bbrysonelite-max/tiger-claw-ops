@@ -2,7 +2,7 @@
 
 ## URGENT: Send Welcome Emails to All 9 Customers
 
-All 9 Tiger Bot Scout customers now have live Telegram bots. Your task is to send personalized welcome emails to each customer with their bot link.
+All 9 Tiger Claw Scout customers now have live Telegram bots. Your task is to send personalized welcome emails to each customer with their bot link.
 
 ---
 
@@ -36,13 +36,13 @@ All 9 Tiger Bot Scout customers now have live Telegram bots. Your task is to sen
 
 ## Email Template
 
-**Subject:** 🐯 Your Tiger Bot Scout is Ready!
+**Subject:** 🐯 Your Tiger Claw Scout is Ready!
 
 **Body:**
 ```
 Hi [FIRST_NAME],
 
-Great news! Your personal Tiger Bot Scout is now live and ready to help you find prospects.
+Great news! Your personal Tiger Claw Scout is now live and ready to help you find prospects.
 
 👉 Click here to start: [BOT_LINK]
 
@@ -52,7 +52,7 @@ Once you open the link:
 
 If you have any questions, just reply to this email.
 
-Welcome to Tiger Bot Scout!
+Welcome to Tiger Claw Scout!
 
 - Pebo
 Tiger Topup Team

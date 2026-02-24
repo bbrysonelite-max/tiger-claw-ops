@@ -1,6 +1,6 @@
 # Scout Ops - Customer Service Layer
 
-**Purpose:** Keep Tiger Bot Scout running 24/7 so Brent can focus on sales.
+**Purpose:** Keep Tiger Claw Scout running 24/7 so Brent can focus on sales.
 
 ---
 
@@ -127,4 +127,4 @@ Agent Zero can request Scout Ops to:
 
 ---
 
-*Scout Ops: The silent guardian of Tiger Bot Scout.*
+*Scout Ops: The silent guardian of Tiger Claw Scout.*

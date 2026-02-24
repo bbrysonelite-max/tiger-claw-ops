@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Scout — Health Monitor
+ * Tiger Claw Scout — Health Monitor
  * Runs every 60 seconds. Checks Redis, DB, and all bot webhooks.
  * Sends Telegram alert to admin when anything fails.
  * Self-heals what it can (re-register broken webhooks).
@@ -215,4 +215,4 @@ setInterval(runChecks, CHECK_INTERVAL_MS);
 process.on('SIGTERM', () => { console.log('[monitor] Shutting down'); process.exit(0); });
 process.on('SIGINT', () => { console.log('[monitor] Shutting down'); process.exit(0); });
 
-console.log(`[monitor] Tiger Bot Health Monitor started — checking every ${CHECK_INTERVAL_MS / 1000}s`);
+console.log(`[monitor] Tiger Claw Health Monitor started — checking every ${CHECK_INTERVAL_MS / 1000}s`);

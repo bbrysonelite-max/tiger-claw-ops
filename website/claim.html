@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Claim Your Tiger Bot</title>
+  <title>Claim Your Tiger Claw</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -308,7 +308,7 @@
   <div class="screen active" id="screen-loading">
     <div class="logo">
       <span class="logo-icon">🐯</span>
-      <span class="logo-text">Tiger Bot Scout</span>
+      <span class="logo-text">Tiger Claw Scout</span>
     </div>
     <div class="loading-dots">
       <span></span><span></span><span></span>
@@ -319,12 +319,12 @@
   <div class="screen" id="screen-form">
     <div class="logo">
       <span class="logo-icon">🐯</span>
-      <span class="logo-text">Tiger Bot Scout</span>
+      <span class="logo-text">Tiger Claw Scout</span>
     </div>
     <div class="invite-header">
       <div class="from-line">Personal invitation from</div>
       <div class="invite-title">
-        <span id="from-name">Brent Bryson</span> has set you up with Tiger Bot Scout
+        <span id="from-name">Brent Bryson</span> has set you up with Tiger Claw Scout
       </div>
       <div id="trial-badge" class="trial-badge" style="display:none">
         ⏱ <span id="trial-text">14-day free trial</span>
@@ -336,7 +336,7 @@
       <input type="text" id="input-name" placeholder="Phil Hillibrand" autocomplete="name" required />
       <label for="input-email">Your Email</label>
       <input type="email" id="input-email" placeholder="phil@example.com" autocomplete="email" required />
-      <button type="submit" class="btn" id="submit-btn">Claim My Tiger Bot</button>
+      <button type="submit" class="btn" id="submit-btn">Claim My Tiger Claw</button>
       <div class="error-msg" id="error-msg"></div>
     </form>
   </div>
@@ -346,7 +346,7 @@
     <div class="success-icon">✓</div>
     <div class="success-title">Your bot is being set up!</div>
     <div class="success-subtitle">
-      You'll receive a message on Telegram from your personal Tiger Bot within about 60 seconds.
+      You'll receive a message on Telegram from your personal Tiger Claw within about 60 seconds.
     </div>
     <div class="next-steps">
       <h3>What to do next</h3>
@@ -356,7 +356,7 @@
       </div>
       <div class="step">
         <div class="step-num">2</div>
-        <div>Search for <strong id="bot-username-display">your Tiger Bot</strong> or wait for it to message you</div>
+        <div>Search for <strong id="bot-username-display">your Tiger Claw</strong> or wait for it to message you</div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
@@ -484,7 +484,7 @@
         errEl.textContent = data.error || 'Something went wrong. Please try again.';
         errEl.style.display = 'block';
         btn.disabled = false;
-        btn.textContent = 'Claim My Tiger Bot';
+        btn.textContent = 'Claim My Tiger Claw';
         return;
       }
 
@@ -493,7 +493,7 @@
       errEl.textContent = 'Network error. Please check your connection and try again.';
       errEl.style.display = 'block';
       btn.disabled = false;
-      btn.textContent = 'Claim My Tiger Bot';
+      btn.textContent = 'Claim My Tiger Claw';
     }
   });
 

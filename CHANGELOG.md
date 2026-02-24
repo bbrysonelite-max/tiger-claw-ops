@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Tiger Bot Scout Dashboard.
+All notable changes to Tiger Claw Scout Dashboard.
 
 ## [1.1.0] - 2026-02-09
 
@@ -91,7 +91,7 @@ This release adds enterprise-grade features including admin dashboard, AI insigh
 
 ### 🎉 Initial Release - Complete Dashboard Implementation
 
-This release implements the full Tiger Bot Scout Dashboard per PRD specifications.
+This release implements the full Tiger Claw Scout Dashboard per PRD specifications.
 
 ### ✨ Features
 

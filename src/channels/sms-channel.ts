@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Scout - SMS Channel via Twilio
+ * Tiger Claw Scout - SMS Channel via Twilio
  * For customers who don't have Telegram
  */
 

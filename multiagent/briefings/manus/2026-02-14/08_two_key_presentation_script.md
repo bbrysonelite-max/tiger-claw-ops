@@ -13,7 +13,7 @@
 
 Here is what happened two weeks ago.
 
-I was on a live Zoom call. Nine people watching. I was demonstrating Tiger Bot — our AI-powered prospecting agent for gig economy workers. I said, "Watch this. The bot is going to find you three qualified leads right now."
+I was on a live Zoom call. Nine people watching. I was demonstrating Tiger Claw — our AI-powered prospecting agent for gig economy workers. I said, "Watch this. The bot is going to find you three qualified leads right now."
 
 The bot went silent.
 
@@ -33,9 +33,9 @@ The principle is simple. Say it out loud and it sounds obvious:
 
 > **A bot should never go silent.**
 
-If a human employee's phone dies, they borrow someone else's phone and call you back. They do not stand in the corner staring at the wall until someone notices. The two-key architecture gives Tiger Bot a second phone.
+If a human employee's phone dies, they borrow someone else's phone and call you back. They do not stand in the corner staring at the wall until someone notices. The two-key architecture gives Tiger Claw a second phone.
 
-Every Tiger Bot ships with two LLM connections. Not one. Two. They are not interchangeable — each has a specific job, a specific cost, and specific rules for when it activates.
+Every Tiger Claw ships with two LLM connections. Not one. Two. They are not interchangeable — each has a specific job, a specific cost, and specific rules for when it activates.
 
 | | Fallback Key | Primary Key |
 |---|---|---|
@@ -55,7 +55,7 @@ The fallback key does exactly three things. Not four. Not "whatever is needed." 
 
 **Job 1: Onboarding.**
 
-When a new customer taps START on their Tiger Bot for the first time, the bot needs a brain to conduct the interview. It asks six questions about the customer, six questions about their ideal client, generates two briefing documents, and sets up the prospecting configuration. All of this runs on the fallback Gemini key. The customer has not set up their own key yet — they do not even know what an API key is at this point. The fallback handles it.
+When a new customer taps START on their Tiger Claw for the first time, the bot needs a brain to conduct the interview. It asks six questions about the customer, six questions about their ideal client, generates two briefing documents, and sets up the prospecting configuration. All of this runs on the fallback Gemini key. The customer has not set up their own key yet — they do not even know what an API key is at this point. The fallback handles it.
 
 Cost per onboarding: two-tenths of one cent. At a thousand customers, that is three dollars a month. Total.
 
@@ -99,9 +99,9 @@ There is no scenario where the bot is silent. There is no scenario where the cus
 
 Let me walk you through what the customer actually sees. Not the code. The experience.
 
-**Minute 0:** They purchase Tiger Bot. Payment processes. Within five seconds, their Telegram bot is live.
+**Minute 0:** They purchase Tiger Claw. Payment processes. Within five seconds, their Telegram bot is live.
 
-**Minute 1:** They tap START. The bot says hello. It knows their name from the purchase. It says: "I'm your Tiger Bot. Before I start working for you, I need to understand your business and who you're looking for. This takes about five minutes. Ready?"
+**Minute 1:** They tap START. The bot says hello. It knows their name from the purchase. It says: "I'm your Tiger Claw. Before I start working for you, I need to understand your business and who you're looking for. This takes about five minutes. Ready?"
 
 **Minutes 2–5:** The bot conducts two interviews. Conversational, not a form. "What business are you in?" "Tell me about your ideal customer." "What words would they use to describe their biggest problem?" The bot listens, acknowledges, asks follow-ups. All running on the fallback Gemini key. Cost: two-tenths of a cent.
 
@@ -137,7 +137,7 @@ The two-key architecture is not a feature. It is the foundation. Every other sys
 
 Two weeks ago, I watched a bot die on a live call. Nine people saw it happen. It was the most embarrassing moment of my professional life.
 
-Today, that failure is structurally impossible. Not because we added a retry loop. Not because we added a monitoring dashboard. Because every Tiger Bot now carries two brains — one that belongs to the customer, and one that belongs to us. And ours never sleeps.
+Today, that failure is structurally impossible. Not because we added a retry loop. Not because we added a monitoring dashboard. Because every Tiger Claw now carries two brains — one that belongs to the customer, and one that belongs to us. And ours never sleeps.
 
 The bot is never silent again.
 

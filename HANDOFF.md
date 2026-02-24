@@ -58,7 +58,7 @@ npm run birdie-control:watch  # Run with auto-reload
 
 ### What I Built Earlier (Feb 7-8, 2026)
 
-#### Tiger Bot Scout v1.0.0-beta "Command Center"
+#### Tiger Claw Scout v1.0.0-beta "Command Center"
 
 **Database Schema (PostgreSQL)**
 Created enterprise multi-tenant schema with auto-migration on server startup:
@@ -238,7 +238,7 @@ This starts a tiny HTTP server on port 3001 that:
               ┌───────────────┼───────────────┐
               ▼               ▼               ▼
 ┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐
-│   Dashboard      │ │   Tiger Bot      │ │   Birdie Bot     │
+│   Dashboard      │ │   Tiger Claw      │ │   Birdie Bot     │
 │   (website)      │ │   (Telegram)     │ │   (Telegram)     │
 │   - Stats        │ │   - Daily Report │ │   - Support      │
 │   - Customers    │ │   - Scripts      │ │   - Monitoring   │

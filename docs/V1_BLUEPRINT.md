@@ -1,4 +1,4 @@
-# Tiger Bot Scout v1.0.0 — Enterprise Blueprint
+# Tiger Claw Scout v1.0.0 — Enterprise Blueprint
 
 ## Document Control
 | Field | Value |
@@ -69,10 +69,10 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ PROJECT: Tiger Bot Scout                                        │
+│ PROJECT: Tiger Claw Scout                                        │
 ├─────────────────────────────────────────────────────────────────┤
 │ • Customers: 7                                                  │
-│ • Bots: TigerBotScout_bot                                       │
+│ • Bots: TigerClawScout_bot                                       │
 │ • Prospects: 47                                                 │
 │ • Messages: 234                                                 │
 │ • Scripts: 89                                                   │
@@ -82,7 +82,7 @@
 │ PROJECT: Spanish Bot Launch                                     │
 ├─────────────────────────────────────────────────────────────────┤
 │ • Customers: 0                                                  │
-│ • Bots: TigerBot_es (pending)                                   │
+│ • Bots: TigerClaw_es (pending)                                   │
 │ • Prospects: 0                                                  │
 │ • Messages: 12                                                  │
 │ • Scripts: 15                                                   │
@@ -116,9 +116,9 @@ ALTER TABLE bots ADD COLUMN project_id UUID REFERENCES projects(id);
 **UI: Project Switcher**
 ```
 ┌──────────────────────────────────────┐
-│ 🐯 Tiger Bot Scout          ▼       │
+│ 🐯 Tiger Claw Scout          ▼       │
 ├──────────────────────────────────────┤
-│ 🐯 Tiger Bot Scout       ✓          │
+│ 🐯 Tiger Claw Scout       ✓          │
 │ 🇪🇸 Spanish Bot Launch              │
 │ 🧪 Testing Sandbox                  │
 │ ─────────────────────────           │
@@ -367,8 +367,8 @@ CREATE TABLE bot_logs (
 **UI: Bot Card**
 ```
 ┌────────────────────────────────────────────────────────────────┐
-│ 🐯 Tiger Bot Scout                              ● Online       │
-│ @TigerBotScout_bot                                            │
+│ 🐯 Tiger Claw Scout                              ● Online       │
+│ @TigerClawScout_bot                                            │
 ├────────────────────────────────────────────────────────────────┤
 │ Type: Scout           Platform: Telegram                      │
 │ Uptime: 3 days        Last ping: 2s ago                       │
@@ -857,7 +857,7 @@ This blueprint is designed to be executed by Claude or Agent Zero.
 
 **Handoff command:**
 ```
-"Build Tiger Bot Scout v1.0.0 following the V1_BLUEPRINT.md specification.
+"Build Tiger Claw Scout v1.0.0 following the V1_BLUEPRINT.md specification.
 Start with Phase 1: Foundation. Create the project structure and database schema."
 ```
 

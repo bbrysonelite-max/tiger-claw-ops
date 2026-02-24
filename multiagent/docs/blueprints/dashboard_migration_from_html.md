@@ -1,4 +1,4 @@
-# Tiger Bot Scout Dashboard Migration Blueprint
+# Tiger Claw Scout Dashboard Migration Blueprint
 
 **Source (legacy):**
 - Repo root (assumed): `/usr/projects/tiger-bot-scout`
@@ -24,7 +24,7 @@ This blueprint describes *how* to migrate from the legacy `dashboard.html` to th
    - Conversion funnel
    - Hive/network pulse
    - Prospects table and detail view
-4. **Wire** v2 to backend APIs defined in the Tiger Bot PRDs (e.g. `/dashboard/overview`, `/ai-crm/leads`).
+4. **Wire** v2 to backend APIs defined in the Tiger Claw PRDs (e.g. `/dashboard/overview`, `/ai-crm/leads`).
 5. **Retire** `website/dashboard.html` once v2 reaches feature parity (optional, can remain as a fallback).
 
 ---

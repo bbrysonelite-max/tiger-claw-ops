@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Scout - Provision Worker
+ * Tiger Claw Scout - Provision Worker
  * Processes provision jobs from Stripe webhooks
  * Creates new bots for customers automatically
  */
@@ -70,7 +70,7 @@ async function sendWelcomeEmail(email: string, name: string, botUsername: string
   const displayName = name || 'there';
   const html = `
 <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#1a1a1a">
-  <h2 style="margin:0 0 8px">Your Tiger Bot is ready 🐯</h2>
+  <h2 style="margin:0 0 8px">Your Tiger Claw is ready 🐯</h2>
   <p style="margin:0 0 24px;color:#555">Hi ${displayName}, your personal prospect-hunting bot has been created.</p>
 
   <div style="background:#f5f5f5;border-radius:8px;padding:20px 24px;margin:0 0 24px">
@@ -99,9 +99,9 @@ async function sendWelcomeEmail(email: string, name: string, botUsername: string
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      sender: { email: 'noreply@botcraftwrks.ai', name: 'Tiger Bot Scout' },
+      sender: { email: 'noreply@botcraftwrks.ai', name: 'Tiger Claw Scout' },
       to: [{ email, name: name || undefined }],
-      subject: `Your Tiger Bot is ready — @${botUsername}`,
+      subject: `Your Tiger Claw is ready — @${botUsername}`,
       htmlContent: html,
     }),
   }).then(async (res) => {
@@ -308,7 +308,7 @@ const shutdown = async () => {
 process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
 
-console.log(`[provision-worker] Tiger Bot Provision Worker started`);
+console.log(`[provision-worker] Tiger Claw Provision Worker started`);
 console.log(`[provision-worker] Redis: ${REDIS_URL}`);
 console.log(`[provision-worker] Listening on queue: ${QUEUE_NAMES.PROVISION}`);
 

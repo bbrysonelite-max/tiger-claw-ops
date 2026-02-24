@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-The two-key architecture is a dual-LLM-connection system that ensures no Tiger Bot ever goes silent. Every bot ships with a hardwired Google Gemini fallback key (owned by the operator) and a primary key (owned by the customer). The fallback handles onboarding, error recovery, and trial management. The primary handles daily operations. If the primary fails, the fallback wakes up, communicates the issue in plain English, and waits for resolution.
+The two-key architecture is a dual-LLM-connection system that ensures no Tiger Claw ever goes silent. Every bot ships with a hardwired Google Gemini fallback key (owned by the operator) and a primary key (owned by the customer). The fallback handles onboarding, error recovery, and trial management. The primary handles daily operations. If the primary fails, the fallback wakes up, communicates the issue in plain English, and waits for resolution.
 
 This document presents the financial case for the architecture. The core argument is straightforward: the fallback key costs less than three cents per customer per month at worst case, while the revenue it protects — by preventing silent bots and the churn they cause — is worth thousands of dollars per month at moderate scale. The return on investment is not marginal. It is structural.
 
@@ -55,7 +55,7 @@ Even without amortization — treating the one-time onboarding and trial costs a
 
 ## 2. Revenue Model
 
-Tiger Bot uses a subscription model with no setup fee. The first month is charged upfront at purchase. Three tiers are projected, though Version 1 launches with a single tier.
+Tiger Claw uses a subscription model with no setup fee. The first month is charged upfront at purchase. Three tiers are projected, though Version 1 launches with a single tier.
 
 | Tier | Monthly Price | What's Included | Target Customer |
 |------|-------------|-----------------|-----------------|
@@ -101,7 +101,7 @@ This is the most important section of the business case. The two-key architectur
 
 ### 3.1 Why Bots Go Silent (Without Two-Key)
 
-In the current architecture (single key, no fallback), a Tiger Bot goes silent when any of the following occurs:
+In the current architecture (single key, no fallback), a Tiger Claw goes silent when any of the following occurs:
 
 | Failure Mode | Frequency | Customer Experience |
 |-------------|-----------|-------------------|
@@ -161,9 +161,9 @@ Most AI bot platforms handle API key management in one of three ways:
 |----------|-------------|-------------------------------|
 | **Customer-provided key only** | Customer enters their key during setup. No fallback. | Bot dies silently. Customer must diagnose and fix. |
 | **Platform-provided key** (usage-based billing) | Platform provides the key and bills per token. | Bot works until platform has issues. Customer has no control. |
-| **Hybrid (Tiger Bot)** | Platform provides fallback + customer provides primary. | Bot never dies. Failures are communicated. Recovery is one command. |
+| **Hybrid (Tiger Claw)** | Platform provides fallback + customer provides primary. | Bot never dies. Failures are communicated. Recovery is one command. |
 
-The first approach (customer-provided only) is the cheapest for the operator but produces the worst customer experience. The second approach (platform-provided) is the most expensive for the operator and creates vendor lock-in risk. The Tiger Bot hybrid approach occupies the middle ground: minimal operator cost, maximum customer experience, and the customer retains control of their primary key.
+The first approach (customer-provided only) is the cheapest for the operator but produces the worst customer experience. The second approach (platform-provided) is the most expensive for the operator and creates vendor lock-in risk. The Tiger Claw hybrid approach occupies the middle ground: minimal operator cost, maximum customer experience, and the customer retains control of their primary key.
 
 ### 4.2 The Moat
 
@@ -171,7 +171,7 @@ The two-key architecture creates three competitive advantages that compound over
 
 **Lower churn means higher lifetime value.** At 5% monthly churn, the average customer lifetime is 20 months ($980 LTV at $49/month). At 15% churn, the average lifetime is 6.7 months ($327 LTV). The two-key architecture triples customer lifetime value.
 
-**Error recovery builds trust.** When a competitor's bot dies, the customer blames the product. When Tiger Bot's primary key fails and the fallback explains what happened, the customer blames their key provider — not Tiger Bot. The product's reputation is insulated from third-party failures.
+**Error recovery builds trust.** When a competitor's bot dies, the customer blames the product. When Tiger Claw's primary key fails and the fallback explains what happened, the customer blames their key provider — not Tiger Claw. The product's reputation is insulated from third-party failures.
 
 **The 72-hour trial creates activation pressure.** The trial window forces engagement within the first three days. Customers who do not engage within 72 hours are paused, not lost — they can resume at any time by entering their key. This is superior to a traditional free trial that expires and requires re-signup.
 
@@ -199,19 +199,19 @@ At ten thousand customers, the fallback key costs $250 per month. Monthly revenu
 
 The Gemini free tier provides 15 requests per minute and 1,000 requests per day [2]. Each onboarding interview requires approximately 14 API calls (6 questions per interview, plus briefing generation). This means the free tier can handle approximately 71 onboardings per day, or roughly 2,130 per month, without spending a single dollar.
 
-| Free Tier Metric | Limit | Tiger Bot Usage Per Onboarding | Onboardings Per Day |
+| Free Tier Metric | Limit | Tiger Claw Usage Per Onboarding | Onboardings Per Day |
 |-----------------|-------|-------------------------------|-------------------|
 | Requests per minute | 15 | 14 calls (spread over 5 min) | ~71 |
 | Requests per day | 1,000 | 14 calls | ~71 |
 | Tokens per day | 1,500,000 | ~7,000 | ~214 |
 
-The binding constraint is requests per day (1,000 RPD), which supports 71 new customer onboardings per day. At the aggressive growth scenario of 30 new customers per month (approximately 1 per day), the free tier is more than sufficient. The paid tier would only be needed if Tiger Bot were onboarding more than 71 customers in a single day — a scale that implies well over 2,000 new customers per month.
+The binding constraint is requests per day (1,000 RPD), which supports 71 new customer onboardings per day. At the aggressive growth scenario of 30 new customers per month (approximately 1 per day), the free tier is more than sufficient. The paid tier would only be needed if Tiger Claw were onboarding more than 71 customers in a single day — a scale that implies well over 2,000 new customers per month.
 
 ---
 
 ## 6. Margin Analysis
 
-The following table shows the full margin stack for a single Tiger Bot customer at the $49/month Silver tier, including all known costs.
+The following table shows the full margin stack for a single Tiger Claw customer at the $49/month Silver tier, including all known costs.
 
 | Cost Category | Monthly Cost | % of Revenue |
 |--------------|-------------|-------------|
@@ -224,7 +224,7 @@ The following table shows the full margin stack for a single Tiger Bot customer 
 | Payment processing (Stripe via Stan, ~3%) | -$1.47 | 3.00% |
 | **Net margin per customer** | **$44.53** | **90.87%** |
 
-Tiger Bot operates at approximately **91% gross margin** per customer. The fallback key is the smallest line item in the cost stack — smaller than the database cost, smaller than the hosting cost, and two orders of magnitude smaller than the payment processing fees.
+Tiger Claw operates at approximately **91% gross margin** per customer. The fallback key is the smallest line item in the cost stack — smaller than the database cost, smaller than the hosting cost, and two orders of magnitude smaller than the payment processing fees.
 
 ---
 
@@ -260,9 +260,9 @@ The total investment to implement the two-key architecture is **zero dollars** i
 
 ## 9. Conclusion
 
-The two-key architecture is not a feature. It is the financial foundation of the Tiger Bot business. For less than three cents per customer per month, it eliminates the single largest cause of customer churn (silent bot failures), triples customer lifetime value (from $327 to $980), and protects an estimated $16,720 in Year 1 revenue that would otherwise be lost to preventable cancellations.
+The two-key architecture is not a feature. It is the financial foundation of the Tiger Claw business. For less than three cents per customer per month, it eliminates the single largest cause of customer churn (silent bot failures), triples customer lifetime value (from $327 to $980), and protects an estimated $16,720 in Year 1 revenue that would otherwise be lost to preventable cancellations.
 
-The return on investment is not 10x or 100x. It is **1,949x**. There is no line item in the Tiger Bot cost stack with a higher return.
+The return on investment is not 10x or 100x. It is **1,949x**. There is no line item in the Tiger Claw cost stack with a higher return.
 
 Build it first. Build it now.
 

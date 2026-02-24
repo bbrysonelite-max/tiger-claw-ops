@@ -1,4 +1,4 @@
-# Tiger Bot Brain: Build Specification
+# Tiger Claw Brain: Build Specification
 
 **Date:** February 14, 2026  
 **For:** Brent Bryson  
@@ -9,7 +9,7 @@
 
 ## Architecture Decision: Two Keys, One Bot
 
-Every Tiger Bot ships with two LLM connections. This is non-negotiable after the Zoom incident.
+Every Tiger Claw ships with two LLM connections. This is non-negotiable after the Zoom incident.
 
 | Key | Purpose | Model | Cost | Lifespan |
 |-----|---------|-------|------|----------|
@@ -35,7 +35,7 @@ IDLE → WELCOME → INTERVIEW_1 → INTERVIEW_2 → KEY_PROMPT → ACTIVE → E
 | State | Trigger | What the Bot Does | LLM Key Used | Next State |
 |-------|---------|-------------------|--------------|------------|
 | `IDLE` | Bot created, no /start yet | Nothing. Waits. | None | `WELCOME` on /start |
-| `WELCOME` | Customer taps /start | Greets by name, explains what Tiger Bot does, asks if ready to begin | Fallback (Gemini) | `INTERVIEW_1` on "yes" or any affirmative |
+| `WELCOME` | Customer taps /start | Greets by name, explains what Tiger Claw does, asks if ready to begin | Fallback (Gemini) | `INTERVIEW_1` on "yes" or any affirmative |
 | `INTERVIEW_1` | Customer says yes | Asks 6 questions about the customer, one at a time, conversationally | Fallback (Gemini) | `INTERVIEW_2` on completion |
 | `INTERVIEW_2` | Interview 1 complete | Asks 6 questions about their ideal customer, one at a time | Fallback (Gemini) | `KEY_PROMPT` on completion |
 | `KEY_PROMPT` | Interview 2 complete | Explains the 72-hour trial, offers to help set up their own key | Fallback (Gemini) | `ACTIVE` on key rotation or after 72h auto-transition |
@@ -51,7 +51,7 @@ When the customer taps `/start`, the bot sends this message. It is not generated
 ```
 Hey {first_name}! 🐯
 
-I'm your Tiger Bot — your personal AI prospecting machine.
+I'm your Tiger Claw — your personal AI prospecting machine.
 
 I'm going to help you find customers, nurture them, and close deals 
 while you focus on what you do best.
@@ -89,7 +89,7 @@ This is a conversational interview, not a form. The bot asks one question at a t
 The LLM receives this system prompt during Interview 1. It does not change between questions — only the conversation history grows.
 
 ```
-You are Tiger Bot, a friendly and professional AI assistant helping 
+You are Tiger Claw, a friendly and professional AI assistant helping 
 a new customer get set up. You are conducting an onboarding interview.
 
 Your job:

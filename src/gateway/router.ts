@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Scout - Fleet Router
+ * Tiger Claw Scout - Fleet Router
  * Extracted router class for testability
  * Handles webhook routing without business logic
  */

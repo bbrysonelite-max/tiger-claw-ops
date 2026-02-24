@@ -1,4 +1,4 @@
-# Tiger Bot Scout — Product Requirements Document
+# Tiger Claw Scout — Product Requirements Document
 
 **Version:** 2.0.0  
 **Date:** 2026-02-10  
@@ -10,7 +10,7 @@
 ## 1. EXECUTIVE SUMMARY
 
 ### 1.1 Product Vision
-Tiger Bot Scout is an AI-powered prospecting assistant for network marketing distributors. Each paying customer receives their own dedicated Telegram bot that delivers qualified prospects daily with personalized approach scripts.
+Tiger Claw Scout is an AI-powered prospecting assistant for network marketing distributors. Each paying customer receives their own dedicated Telegram bot that delivers qualified prospects daily with personalized approach scripts.
 
 ### 1.2 Target Users
 - Network marketing distributors (primarily Nu Skin)
@@ -75,9 +75,9 @@ STEP 7: Bot greets customer, begins daily reports
 
 | Customer | Bot Username | Bot Token |
 |----------|--------------|----------|
-| Nancy Lim | @TigerBot_NancyL_bot | 7001234567:AAHx... |
-| Chana L. | @TigerBot_ChanaL_bot | 7009876543:BBYz... |
-| Phaitoon S. | @TigerBot_PhaitoonS_bot | 7005551234:CCWa... |
+| Nancy Lim | @TigerClaw_NancyL_bot | 7001234567:AAHx... |
+| Chana L. | @TigerClaw_ChanaL_bot | 7009876543:BBYz... |
+| Phaitoon S. | @TigerClaw_PhaitoonS_bot | 7005551234:CCWa... |
 
 **Why per-customer bots:**
 - **Isolation:** One customer's issues don't affect others
@@ -92,7 +92,7 @@ STEP 7: Bot greets customer, begins daily reports
 
 **Content:**
 ```
-🐯 Tiger Bot Daily Report
+🐯 Tiger Claw Daily Report
 February 10, 2026
 
 Found 5 qualified prospects today:
@@ -192,7 +192,7 @@ Did this script work?
 ### 5.1 Customer Stories
 
 **US-001: Purchase & Onboard**
-> As a network marketer, I want to purchase Tiger Bot and have my personal bot ready within minutes so I can start prospecting immediately.
+> As a network marketer, I want to purchase Tiger Claw and have my personal bot ready within minutes so I can start prospecting immediately.
 
 **Acceptance Criteria:**
 - [ ] Purchase completes on Stan Store

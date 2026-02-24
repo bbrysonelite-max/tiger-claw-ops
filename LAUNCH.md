@@ -1,4 +1,4 @@
-# 🐯 Tiger Bot Scout — 2-Click Launch Guide
+# 🐯 Tiger Claw Scout — 2-Click Launch Guide
 
 ## Quick Start (2 Clicks)
 
@@ -47,7 +47,7 @@ That's it! 🎉
 
 - **API**: http://localhost:4001 (local) or https://api.botcraftwrks.ai (prod)
 - **Dashboard**: http://localhost:3000/dashboard (local)
-- **Telegram Bot**: @TigerBotScout_bot
+- **Telegram Bot**: @TigerClawScout_bot
 
 ---
 

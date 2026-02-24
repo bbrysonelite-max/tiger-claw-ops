@@ -1,4 +1,4 @@
-# BIRDIE BRIEFING — Tiger Bot → Tiger Claw Rebrand
+# BIRDIE BRIEFING — Tiger Claw → Tiger Claw Rebrand
 
 **Date:** 2026-02-19
 **From:** Manus (Frontend Agent)
@@ -9,18 +9,18 @@
 
 ## What Happened
 
-The product has been officially renamed from **Tiger Bot** to **Tiger Claw**. The new domain is **tigerclaw.io**. Manus has completed the rebrand across all website files in `flywheel-website/` (committed and pushed to `main`). Zero "Tiger Bot" references remain in the website code.
+The product has been officially renamed from **Tiger Claw** to **Tiger Claw**. The new domain is **tigerclaw.io**. Manus has completed the rebrand across all website files in `flywheel-website/` (committed and pushed to `main`). Zero "Tiger Claw" references remain in the website code.
 
 ## What Birdie Needs To Do
 
-There are approximately **310 remaining "Tiger Bot" references** across **80+ files** in the broader repo that need updating. These are in backend code, documentation, specs, briefings, tests, and configuration files.
+There are approximately **310 remaining "Tiger Claw" references** across **80+ files** in the broader repo that need updating. These are in backend code, documentation, specs, briefings, tests, and configuration files.
 
 ### Rename Rules
 
 | Old Term | New Term |
 |----------|----------|
-| Tiger Bot | Tiger Claw |
-| TigerBot | TigerClaw |
+| Tiger Claw | Tiger Claw |
+| TigerClaw | TigerClaw |
 | tiger-bot | tiger-claw |
 | tiger_bot | tiger_claw |
 | tigerbot | tigerclaw |
@@ -88,17 +88,17 @@ There are approximately **310 remaining "Tiger Bot" references** across **80+ fi
 2. The `flywheel-website/` directory is ALREADY DONE — do not touch those files.
 3. Bot provisioning code should name new bots with `Claw_` prefix instead of `Tiger_` prefix.
 4. Email templates should reference "Tiger Claw" and "tigerclaw.io".
-5. Any Telegram bot display names should say "Tiger Claw" not "Tiger Bot".
+5. Any Telegram bot display names should say "Tiger Claw" not "Tiger Claw".
 
 ### Suggested Approach
 
 ```bash
 # From repo root, find all remaining references (excluding flywheel-website and node_modules):
-grep -rl "Tiger Bot" --include="*.md" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.cjs" --include="*.html" --include="*.json" . | grep -v node_modules | grep -v flywheel-website
+grep -rl "Tiger Claw" --include="*.md" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.cjs" --include="*.html" --include="*.json" . | grep -v node_modules | grep -v flywheel-website
 
 # Then use sed for bulk rename (test with --dry-run first):
-# sed -i 's/Tiger Bot/Tiger Claw/g' <file>
-# sed -i 's/TigerBot/TigerClaw/g' <file>
+# sed -i 's/Tiger Claw/Tiger Claw/g' <file>
+# sed -i 's/TigerClaw/TigerClaw/g' <file>
 # sed -i 's/tiger-bot/tiger-claw/g' <file>
 # sed -i 's/tiger_bot/tiger_claw/g' <file>
 ```
@@ -107,7 +107,7 @@ grep -rl "Tiger Bot" --include="*.md" --include="*.ts" --include="*.tsx" --inclu
 
 After renaming, run:
 ```bash
-grep -r "Tiger Bot" . --include="*.md" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.cjs" --include="*.html" --include="*.json" | grep -v node_modules | grep -v flywheel-website | wc -l
+grep -r "Tiger Claw" . --include="*.md" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.cjs" --include="*.html" --include="*.json" | grep -v node_modules | grep -v flywheel-website | wc -l
 # Should return 0
 ```
 
@@ -127,4 +127,4 @@ All files in `flywheel-website/` have been rebranded:
 - `index.html` — meta tags, page title, favicon
 - Welcome email template (in templates/)
 
-Commit: `4589aad` on `main` — "rebrand: Tiger Bot → Tiger Claw (tigerclaw.io) across all pages, components, email, provisioning"
+Commit: `4589aad` on `main` — "rebrand: Tiger Claw → Tiger Claw (tigerclaw.io) across all pages, components, email, provisioning"

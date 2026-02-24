@@ -5,7 +5,7 @@
 ## Status: 🟡 STANDBY - After Customer Delivery
 
 ## Context
-Tiger Bot Scout v3.1.0 (Virtual Fleet Architecture). Agent Zero is handling immediate customer delivery (9 customers overdue). Your tasks begin AFTER bots are delivered.
+Tiger Claw Scout v3.1.0 (Virtual Fleet Architecture). Agent Zero is handling immediate customer delivery (9 customers overdue). Your tasks begin AFTER bots are delivered.
 
 ## Current Infrastructure Status
 | Component | Location | Status |

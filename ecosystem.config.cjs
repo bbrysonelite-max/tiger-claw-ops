@@ -1,5 +1,5 @@
 /**
- * Tiger Bot Scout - PM2 Ecosystem Configuration
+ * Tiger Claw Scout - PM2 Ecosystem Configuration
  * Production deployment configuration for worker cluster
  */
 
@@ -69,7 +69,7 @@ module.exports = {
       increment_var: 'WORKER_ID',
     },
 
-    // Tiger Bot API (Express — admin commands, AI CRM, daily reports)
+    // Tiger Claw API (Express — admin commands, AI CRM, daily reports)
     {
       name: 'tiger-bot',
       script: 'api/server.js',

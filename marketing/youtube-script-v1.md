@@ -1,4 +1,4 @@
-# Tiger Bot Scout - YouTube Sales Script
+# Tiger Claw Scout - YouTube Sales Script
 ## "Stop Chasing Prospects. Let AI Hunt For You."
 
 **Duration:** 3-4 minutes
@@ -43,7 +43,7 @@
 
 **[Screen showing Telegram notification]**
 
-"This is Tiger Bot Scout."
+"This is Tiger Claw Scout."
 
 "Every morning, I wake up to THIS..."
 
@@ -69,7 +69,7 @@
 
 **[Screen recording of dashboard]**
 
-"Tiger Bot monitors Facebook, Instagram, LINE groups, even Twitter..."
+"Tiger Claw monitors Facebook, Instagram, LINE groups, even Twitter..."
 
 "It looks for what we call 'buying signals' - people talking about wanting more income, health goals, flexibility..."
 
@@ -93,7 +93,7 @@
 
 "Now here's the magic..."
 
-"Click one button - Tiger Bot writes a PERSONALIZED approach script."
+"Click one button - Tiger Claw writes a PERSONALIZED approach script."
 
 "It knows her interests. It knows her pain points. It writes something that doesn't sound like a copy-paste message."
 
@@ -107,7 +107,7 @@
 
 **[Show hive section]**
 
-"And the best part? Tiger Bot LEARNS."
+"And the best part? Tiger Claw LEARNS."
 
 "Every time a script gets a reply, every time someone converts... the AI remembers."
 
@@ -123,7 +123,7 @@
 
 "Nancy in Bangkok found 12 qualified prospects in her first week."
 
-"Phaitoon closed 3 new team members - using scripts Tiger Bot wrote for him."
+"Phaitoon closed 3 new team members - using scripts Tiger Claw wrote for him."
 
 "Chana said she's saving 3 hours a day that she used to spend scrolling."
 
@@ -145,13 +145,13 @@
 
 **[Show phone with Telegram]**
 
-"Tiger Bot delivers prospects straight to your Telegram. Every. Single. Day."
+"Tiger Claw delivers prospects straight to your Telegram. Every. Single. Day."
 
 "Click the link below to get started. Your AI recruiting partner is waiting."
 
 **[End card with:]**
 - Website: botcraftwrks.ai
-- Telegram: @TigerBotScout_bot
+- Telegram: @TigerClawScout_bot
 - "Start Your Free Trial Today"
 
 ---

@@ -1,12 +1,12 @@
 # 🐦 BIRDIE DEPLOYMENT ORDERS
-## Tiger Bot Scout v3.1.0 - URGENT LAUNCH
+## Tiger Claw Scout v3.1.0 - URGENT LAUNCH
 ## Deadline: 6:00 PM MST (4 hours from now)
 
 ---
 
 ## 🎯 MISSION OBJECTIVE
 
-Deploy Tiger Bot Scout and provision 7 paying customers with dedicated Telegram bots.
+Deploy Tiger Claw Scout and provision 7 paying customers with dedicated Telegram bots.
 
 ---
 
@@ -109,13 +109,13 @@ npx ts-node -e "
 import { TelegramProvisioner } from './src/provisioner/userbot';
 
 const customers = [
-  { email: 'nancylimsk@gmail.com', name: 'Nancy Lim', botUsername: 'TigerBot_Nancy_bot' },
-  { email: 'chana.loh@gmail.com', name: 'Chana Lohasaptawee', botUsername: 'TigerBot_Chana_bot' },
-  { email: 'phaitoon2010@gmail.com', name: 'Phaitoon S.', botUsername: 'TigerBot_Phaitoon_bot' },
-  { email: 'taridadew@gmail.com', name: 'Tarida Sukavanich', botUsername: 'TigerBot_Tarida_bot' },
-  { email: 'lily.vergara@gmail.com', name: 'Lily Vergara', botUsername: 'TigerBot_Lily_bot' },
-  { email: 'phetmalaigul@gmail.com', name: 'Theera Phetmalaigul', botUsername: 'TigerBot_Theera_bot' },
-  { email: 'vijohn@hotmail.com', name: 'John & Noon', botUsername: 'TigerBot_John_bot' }
+  { email: 'nancylimsk@gmail.com', name: 'Nancy Lim', botUsername: 'TigerClaw_Nancy_bot' },
+  { email: 'chana.loh@gmail.com', name: 'Chana Lohasaptawee', botUsername: 'TigerClaw_Chana_bot' },
+  { email: 'phaitoon2010@gmail.com', name: 'Phaitoon S.', botUsername: 'TigerClaw_Phaitoon_bot' },
+  { email: 'taridadew@gmail.com', name: 'Tarida Sukavanich', botUsername: 'TigerClaw_Tarida_bot' },
+  { email: 'lily.vergara@gmail.com', name: 'Lily Vergara', botUsername: 'TigerClaw_Lily_bot' },
+  { email: 'phetmalaigul@gmail.com', name: 'Theera Phetmalaigul', botUsername: 'TigerClaw_Theera_bot' },
+  { email: 'vijohn@hotmail.com', name: 'John & Noon', botUsername: 'TigerClaw_John_bot' }
 ];
 
 (async () => {
@@ -124,7 +124,7 @@ const customers = [
   
   for (const customer of customers) {
     console.log('Creating bot for:', customer.name);
-    const result = await provisioner.createBot(customer.botUsername, 'Tiger Bot ' + customer.name);
+    const result = await provisioner.createBot(customer.botUsername, 'Tiger Claw ' + customer.name);
     console.log('Token:', result.token);
     console.log('---');
   }
@@ -217,7 +217,7 @@ redis-cli ping
 pm2 status
 # Expected: fleet-worker = online
 
-# Test a customer bot (send /start to @TigerBot_Nancy_bot in Telegram)
+# Test a customer bot (send /start to @TigerClaw_Nancy_bot in Telegram)
 ```
 
 ---
