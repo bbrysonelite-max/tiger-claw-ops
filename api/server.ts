@@ -527,7 +527,7 @@ app.use(cors({
 // Rate limiting - general API
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 requests per window
+  max: 500, // 500 requests per window
   message: { error: 'Too many requests, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -536,7 +536,7 @@ const apiLimiter = rateLimit({
 // Stricter rate limit for auth/admin endpoints
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20, // 20 attempts per 15 min
+  max: 200, // 200 attempts per 15 min
   message: { error: 'Too many authentication attempts' },
 });
 
@@ -808,15 +808,15 @@ app.put('/ai-crm/leads/:id', async (req, res) => {
       position, assigned_to, ai_qualification, next_best_action 
     } = req.body;
 
-    if (!name || !source) {
-      res.status(400).json({ error: 'name and source are required' });
-      return;
-    }
-
-    // Check if lead exists
+    // Check if lead exists first (before body validation)
     const existing = await db.query('SELECT id FROM leads WHERE id = $1', [id]);
     if (existing.rows.length === 0) {
       res.status(404).json({ error: 'Lead not found' });
+      return;
+    }
+
+    if (!name || !source) {
+      res.status(400).json({ error: 'name and source are required' });
       return;
     }
 
@@ -1385,6 +1385,7 @@ app.get('/ai-crm/hive/trends', async (req, res) => {
     `);
 
     res.json({
+      trends: scriptTrends.rows,
       script_trends: scriptTrends.rows,
       hive_trends: hiveTrends.rows,
       summary: summary.rows[0]
@@ -1594,7 +1595,9 @@ app.post('/line/push', async (req, res) => {
 
 // Type definitions for Analytics
 interface FunnelStage {
+  stage: string;
   name: string;
+  count: number;
   value: number;
   fill: string;
 }
@@ -1606,7 +1609,8 @@ interface ConversionRate {
 
 interface TimelineDataPoint {
   date: string;
-  new: number;
+  leads?: number;
+  new?: number;
   qualified: number;
   converted: number;
 }
@@ -1654,10 +1658,10 @@ app.get('/analytics/funnel', async (req, res) => {
 
     // Define funnel stages with colors
     const stages: FunnelStage[] = [
-      { name: 'New', value: statusMap['new'] || 0, fill: '#6366f1' },
-      { name: 'Contacted', value: statusMap['contacted'] || 0, fill: '#8b5cf6' },
-      { name: 'Qualified', value: statusMap['qualified'] || 0, fill: '#f97316' },
-      { name: 'Converted', value: statusMap['converted'] || 0, fill: '#22c55e' }
+      { stage: 'New', name: 'New', count: statusMap['new'] || 0, value: statusMap['new'] || 0, fill: '#6366f1' },
+      { stage: 'Contacted', name: 'Contacted', count: statusMap['contacted'] || 0, value: statusMap['contacted'] || 0, fill: '#8b5cf6' },
+      { stage: 'Qualified', name: 'Qualified', count: statusMap['qualified'] || 0, value: statusMap['qualified'] || 0, fill: '#f97316' },
+      { stage: 'Converted', name: 'Converted', count: statusMap['converted'] || 0, value: statusMap['converted'] || 0, fill: '#22c55e' }
     ];
 
     // Calculate stage-to-stage conversion rates
@@ -1683,7 +1687,10 @@ app.get('/analytics/funnel', async (req, res) => {
       rate: overallRate
     });
 
-    res.json({ stages, conversionRates });
+    const overallConversion = stages[0].count > 0
+      ? Math.round((stages[3].count / stages[0].count) * 100 * 10) / 10
+      : 0;
+    res.json({ stages, conversionRates, overallConversion, period: (req.query.period as string) || '30d' });
   } catch (error: any) {
     console.error('Analytics funnel error:', error);
     res.status(500).json({ error: 'Failed to fetch funnel data', details: error.message });
@@ -1735,12 +1742,12 @@ app.get('/analytics/timeline', async (req, res) => {
 
     const timeline: TimelineDataPoint[] = result.rows.map((row: any) => ({
       date: row.date.toISOString().split('T')[0],
-      new: parseInt(row.new) || 0,
+      leads: parseInt(row.new) || 0,
       qualified: parseInt(row.qualified) || 0,
       converted: parseInt(row.converted) || 0
     }));
 
-    res.json(timeline);
+    res.json({ data: timeline, period: (req.query.period as string) || '30d' });
   } catch (error: any) {
     console.error('Analytics timeline error:', error);
     res.status(500).json({ error: 'Failed to fetch timeline data', details: error.message });
@@ -1781,7 +1788,7 @@ app.get('/analytics/response-rates', async (req, res) => {
           : 0,
         sampleSize: parseInt(row.total_scripts)
       }));
-      res.json(responseRates);
+      res.json({ rates: responseRates });
     } else {
       // Generate realistic mock data for empty database
       const mockData: ResponseRateData[] = [];
@@ -1813,7 +1820,7 @@ app.get('/analytics/response-rates', async (req, res) => {
           });
         }
       }
-      res.json(mockData);
+      res.json({ rates: mockData });
     }
   } catch (error: any) {
     console.error('Analytics response-rates error:', error);
@@ -1867,7 +1874,7 @@ app.get('/analytics/roi', async (req, res) => {
       estimatedTimeSaved
     };
     
-    res.json({ ...roi, ...additionalMetrics });
+    res.json({ ...roi, ...additionalMetrics, roi: additionalMetrics.conversionRate });
   } catch (error: any) {
     console.error('Analytics ROI error:', error);
     res.status(500).json({ error: 'Failed to fetch ROI data', details: error.message });
@@ -1889,6 +1896,11 @@ interface DiscoverySource {
 }
 
 interface UserSettings {
+  tenant_id?: string;
+  bot_name?: string;
+  default_language?: string;
+  notifications?: Record<string, boolean>;
+  scoring?: Record<string, number>;
   discoverySchedule: string;
   notificationPreferences: NotificationPreferences;
   sources: DiscoverySource[];
@@ -1903,6 +1915,18 @@ interface IntegrationStatus {
 // In-memory settings store (would be database in production)
 const settingsStore: Record<string, UserSettings> = {
   default: {
+    tenant_id: 'default',
+    bot_name: 'Tiger Claw Scout',
+    default_language: 'en',
+    notifications: {
+      new_lead: true,
+      daily_report: true,
+      weekly_digest: true
+    },
+    scoring: {
+      min_score: 50,
+      auto_qualify: 70
+    },
     discoverySchedule: '0 9 * * *', // Daily at 9 AM
     notificationPreferences: {
       dailyReport: true,
@@ -2059,7 +2083,15 @@ app.get('/settings/integrations', async (req, res) => {
       lastChecked: now
     });
     
-    res.json(integrations);
+    // Convert array to object keyed by service name, with connected boolean
+    const integrationsObj: Record<string, any> = {};
+    integrations.forEach(i => {
+      integrationsObj[i.service] = {
+        ...i,
+        connected: i.status === 'connected'
+      };
+    });
+    res.json(integrationsObj);
   } catch (error: any) {
     console.error('Get integrations error:', error);
     res.status(500).json({ error: 'Failed to fetch integration status', details: error.message });
@@ -2632,10 +2664,12 @@ app.get('/admin/tenants', async (req, res) => {
         email: t.email || '',
         botUsername: t.botUsername,
         plan: 'Scout', // All current bots are Scout plan
-        prospects,
-        scripts: Math.floor(prospects * 0.6), // Estimate based on prospects
-        conversions,
-        convRate: Math.round(convRate * 10) / 10,
+        stats: {
+          prospects,
+          scripts: Math.floor(prospects * 0.6),
+          conversions,
+          convRate: Math.round(convRate * 10) / 10
+        },
         lastActive,
         health: botHealth,
         status: t.status
@@ -2670,12 +2704,12 @@ app.get('/admin/tenants', async (req, res) => {
         : 0
     };
 
-    res.json({ tenants, summary });
+    res.json(tenants);
   } catch (error: any) {
     console.error('Admin tenants error:', error);
     // Fallback to mock data if DB fails
     const tenants = generateMockTenants();
-    res.json({ tenants, summary: { total: tenants.length, note: 'Using fallback mock data' } });
+    res.json(tenants);
   }
 });
 
@@ -2704,19 +2738,16 @@ app.get('/admin/tenants/:id', (req, res) => {
     const tenant = tenants.find(t => t.id === id);
     if (!tenant) { res.status(404).json({ error: 'Tenant not found' }); return; }
 
-    const extendedTenant = {
-      ...tenant,
-      activity: {
-        last7Days: { prospectsAdded: Math.floor(Math.random() * 30) + 5, scriptsGenerated: Math.floor(Math.random() * 20) + 3, feedbackSubmitted: Math.floor(Math.random() * 15) + 2 },
-        last30Days: { prospectsAdded: tenant.stats.prospects, scriptsGenerated: tenant.stats.scripts, feedbackSubmitted: Math.floor(tenant.stats.scripts * 0.7) }
-      },
-      billing: {
-        currentPeriodStart: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-        currentPeriodEnd: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
-        apiCosts: Math.round((tenant.stats.scripts * 0.02 + tenant.stats.prospects * 0.005) * 100) / 100
-      }
+    const recentActivity = {
+      last7Days: { prospectsAdded: Math.floor(Math.random() * 30) + 5, scriptsGenerated: Math.floor(Math.random() * 20) + 3, feedbackSubmitted: Math.floor(Math.random() * 15) + 2 },
+      last30Days: { prospectsAdded: tenant.stats.prospects, scriptsGenerated: tenant.stats.scripts, feedbackSubmitted: Math.floor(tenant.stats.scripts * 0.7) }
     };
-    res.json(extendedTenant);
+    const billing = {
+      currentPeriodStart: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+      currentPeriodEnd: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+      apiCosts: Math.round((tenant.stats.scripts * 0.02 + tenant.stats.prospects * 0.005) * 100) / 100
+    };
+    res.json({ tenant, recentActivity, billing });
   } catch (error: any) {
     console.error('Admin tenant detail error:', error);
     res.status(500).json({ error: 'Failed to fetch tenant', details: error.message });
@@ -3286,6 +3317,148 @@ app.post('/ops/webhooks/generic', async (req, res) => {
     res.json({ success: true });
   } catch (error: any) {
     res.status(500).json({ error: 'Webhook failed', details: error.message });
+  }
+});
+
+// ==================== STAN STORE WEBHOOK ====================
+// POST /webhooks/stanstore
+// Stan Store calls this when a customer completes a purchase.
+// Creates an InviteToken, sends claim email, notifies Brent.
+
+app.post('/webhooks/stanstore', async (req, res) => {
+  // Always return 200 immediately — Stan Store retries on non-2xx
+  res.json({ received: true });
+
+  try {
+    const body = req.body || {};
+
+    // Verify secret if configured (Stan Store can send a custom header)
+    const secret = process.env.STANSTORE_WEBHOOK_SECRET;
+    if (secret) {
+      const provided = req.headers['x-webhook-secret'] || req.headers['authorization']?.replace('Bearer ', '');
+      if (provided !== secret) {
+        console.warn('[stanstore] Webhook rejected — bad secret');
+        return;
+      }
+    }
+
+    // Extract customer email and name — Stan Store field names vary by plan
+    const email: string | undefined =
+      body.customer?.email ||
+      body.email ||
+      body.buyer_email ||
+      body.purchaser_email ||
+      body.data?.customer?.email ||
+      body.data?.email;
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      console.warn('[stanstore] Webhook missing valid email — skipping:', JSON.stringify(body).slice(0, 200));
+      return;
+    }
+
+    const rawName: string =
+      body.customer?.name ||
+      body.customer_name ||
+      `${body.customer?.first_name || ''} ${body.customer?.last_name || ''}`.trim() ||
+      body.name ||
+      body.buyer_name ||
+      body.data?.customer?.name ||
+      '';
+    const name = rawName || email.split('@')[0];
+
+    const productName: string =
+      body.product?.name || body.product_name || body.product_title ||
+      body.data?.product?.name || 'Tiger Claw Scout';
+
+    // Create InviteToken — 14-day trial, 30-day link expiry
+    const { randomBytes } = await import('crypto');
+    const token = randomBytes(16).toString('hex');
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+    await prisma.inviteToken.create({
+      data: {
+        token,
+        label: `Stan Store — ${productName}`,
+        fromName: 'Brent Bryson',
+        recipientEmail: email,
+        recipientName: name,
+        trialDays: 14,
+        expiresAt,
+      },
+    });
+
+    const claimUrl = `${CLAIM_BASE}/claim.html?token=${token}`;
+    console.log(`[stanstore] Created invite for ${email}: ${claimUrl}`);
+
+    // Send welcome email via Resend (if API key is configured)
+    const resendKey = process.env.RESEND_API_KEY;
+    if (resendKey) {
+      const emailHtml = `
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#0a0a0f;color:#e8e8f0;border-radius:12px;">
+  <h2 style="color:#f59e0b;margin-top:0;">🐯 Your Tiger Claw Scout is ready!</h2>
+  <p>Hi ${name},</p>
+  <p>You're one click away from your personal AI prospecting assistant. Tap the button below to set it up.</p>
+  <p style="text-align:center;margin:28px 0;">
+    <a href="${claimUrl}" style="display:inline-block;background:#f59e0b;color:#0a0a0f;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;">
+      Claim My Tiger Claw →
+    </a>
+  </p>
+  <p style="color:#6b7280;font-size:13px;line-height:1.6;">
+    This link is for you only. It expires in 30 days.<br>
+    After claiming, your personal Tiger Claw bot will message you on Telegram within 60 seconds.
+  </p>
+  <p style="color:#6b7280;font-size:13px;">
+    Questions? Message <strong>@botcraftwrks</strong> on Telegram.
+  </p>
+</div>`;
+
+      const emailRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: 'Tiger Claw <noreply@botcraftwrks.ai>',
+          to: email,
+          subject: '🐯 Your Tiger Claw Scout is ready to claim',
+          html: emailHtml,
+        }),
+      });
+      if (emailRes.ok) {
+        console.log(`[stanstore] Welcome email sent to ${email}`);
+      } else {
+        console.error(`[stanstore] Email send failed: ${emailRes.status}`, await emailRes.text());
+      }
+    }
+
+    // Always notify Brent via Telegram so he knows a purchase happened
+    const adminToken = process.env.ADMIN_TELEGRAM_TOKEN;
+    const adminChatId = process.env.ADMIN_CHAT_ID;
+    if (adminToken && adminChatId) {
+      const msg = `💰 *New Stan Store purchase!*\n\nCustomer: ${name}\nEmail: ${email}\nProduct: ${productName}\n\nClaim link:\n${claimUrl}\n\n_Link expires in 30 days. Email ${resendKey ? 'sent ✅' : 'NOT sent — RESEND_API_KEY not set'}_`;
+      await fetch(`https://api.telegram.org/bot${adminToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: adminChatId, text: msg, parse_mode: 'Markdown' }),
+      });
+    }
+
+    // Post to ops bulletin board
+    await db.query(`
+      INSERT INTO ops_bulletins (agent_id, agent_name, bulletin_type, priority, title, content, expires_at)
+      VALUES ($1, $2, $3, $4, $5, $6, NOW() + INTERVAL '7 days')
+    `, [
+      'stan-store',
+      'Stan Store',
+      'update',
+      'high',
+      `New purchase: ${name} (${email})`,
+      `Product: ${productName}\nClaim URL: ${claimUrl}\nTrial: 14 days\nEmail sent: ${resendKey ? 'yes' : 'no — RESEND_API_KEY not configured'}`,
+    ]);
+
+  } catch (err) {
+    console.error('[stanstore] Webhook processing error:', err);
   }
 });
 
@@ -4101,7 +4274,13 @@ app.get('/dashboard/overview', async (req, res) => {
         noResponse: parseInt(scriptStats.no_response) || 0,
         gotReply,
         converted,
-        successRate
+        successRate,
+        breakdown: {
+          no_response: parseInt(scriptStats.no_response) || 0,
+          got_reply: gotReply,
+          converted,
+          pending: parseInt(scriptStats.pending) || 0
+        }
       },
       conversionFunnel: {
         stages
