@@ -3289,6 +3289,148 @@ app.post('/ops/webhooks/generic', async (req, res) => {
   }
 });
 
+// ==================== STAN STORE WEBHOOK ====================
+// POST /webhooks/stanstore
+// Stan Store calls this when a customer completes a purchase.
+// Creates an InviteToken, sends claim email, notifies Brent.
+
+app.post('/webhooks/stanstore', async (req, res) => {
+  // Always return 200 immediately — Stan Store retries on non-2xx
+  res.json({ received: true });
+
+  try {
+    const body = req.body || {};
+
+    // Verify secret if configured (Stan Store can send a custom header)
+    const secret = process.env.STANSTORE_WEBHOOK_SECRET;
+    if (secret) {
+      const provided = req.headers['x-webhook-secret'] || req.headers['authorization']?.replace('Bearer ', '');
+      if (provided !== secret) {
+        console.warn('[stanstore] Webhook rejected — bad secret');
+        return;
+      }
+    }
+
+    // Extract customer email and name — Stan Store field names vary by plan
+    const email: string | undefined =
+      body.customer?.email ||
+      body.email ||
+      body.buyer_email ||
+      body.purchaser_email ||
+      body.data?.customer?.email ||
+      body.data?.email;
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      console.warn('[stanstore] Webhook missing valid email — skipping:', JSON.stringify(body).slice(0, 200));
+      return;
+    }
+
+    const rawName: string =
+      body.customer?.name ||
+      body.customer_name ||
+      `${body.customer?.first_name || ''} ${body.customer?.last_name || ''}`.trim() ||
+      body.name ||
+      body.buyer_name ||
+      body.data?.customer?.name ||
+      '';
+    const name = rawName || email.split('@')[0];
+
+    const productName: string =
+      body.product?.name || body.product_name || body.product_title ||
+      body.data?.product?.name || 'Tiger Claw Scout';
+
+    // Create InviteToken — 14-day trial, 30-day link expiry
+    const { randomBytes } = await import('crypto');
+    const token = randomBytes(16).toString('hex');
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+    await prisma.inviteToken.create({
+      data: {
+        token,
+        label: `Stan Store — ${productName}`,
+        fromName: 'Brent Bryson',
+        recipientEmail: email,
+        recipientName: name,
+        trialDays: 14,
+        expiresAt,
+      },
+    });
+
+    const claimUrl = `${CLAIM_BASE}/claim.html?token=${token}`;
+    console.log(`[stanstore] Created invite for ${email}: ${claimUrl}`);
+
+    // Send welcome email via Resend (if API key is configured)
+    const resendKey = process.env.RESEND_API_KEY;
+    if (resendKey) {
+      const emailHtml = `
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#0a0a0f;color:#e8e8f0;border-radius:12px;">
+  <h2 style="color:#f59e0b;margin-top:0;">🐯 Your Tiger Claw Scout is ready!</h2>
+  <p>Hi ${name},</p>
+  <p>You're one click away from your personal AI prospecting assistant. Tap the button below to set it up.</p>
+  <p style="text-align:center;margin:28px 0;">
+    <a href="${claimUrl}" style="display:inline-block;background:#f59e0b;color:#0a0a0f;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;">
+      Claim My Tiger Claw →
+    </a>
+  </p>
+  <p style="color:#6b7280;font-size:13px;line-height:1.6;">
+    This link is for you only. It expires in 30 days.<br>
+    After claiming, your personal Tiger Claw bot will message you on Telegram within 60 seconds.
+  </p>
+  <p style="color:#6b7280;font-size:13px;">
+    Questions? Message <strong>@botcraftwrks</strong> on Telegram.
+  </p>
+</div>`;
+
+      const emailRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: 'Tiger Claw <noreply@botcraftwrks.ai>',
+          to: email,
+          subject: '🐯 Your Tiger Claw Scout is ready to claim',
+          html: emailHtml,
+        }),
+      });
+      if (emailRes.ok) {
+        console.log(`[stanstore] Welcome email sent to ${email}`);
+      } else {
+        console.error(`[stanstore] Email send failed: ${emailRes.status}`, await emailRes.text());
+      }
+    }
+
+    // Always notify Brent via Telegram so he knows a purchase happened
+    const adminToken = process.env.ADMIN_TELEGRAM_TOKEN;
+    const adminChatId = process.env.ADMIN_CHAT_ID;
+    if (adminToken && adminChatId) {
+      const msg = `💰 *New Stan Store purchase!*\n\nCustomer: ${name}\nEmail: ${email}\nProduct: ${productName}\n\nClaim link:\n${claimUrl}\n\n_Link expires in 30 days. Email ${resendKey ? 'sent ✅' : 'NOT sent — RESEND_API_KEY not set'}_`;
+      await fetch(`https://api.telegram.org/bot${adminToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: adminChatId, text: msg, parse_mode: 'Markdown' }),
+      });
+    }
+
+    // Post to ops bulletin board
+    await db.query(`
+      INSERT INTO ops_bulletins (agent_id, agent_name, bulletin_type, priority, title, content, expires_at)
+      VALUES ($1, $2, $3, $4, $5, $6, NOW() + INTERVAL '7 days')
+    `, [
+      'stan-store',
+      'Stan Store',
+      'update',
+      'high',
+      `New purchase: ${name} (${email})`,
+      `Product: ${productName}\nClaim URL: ${claimUrl}\nTrial: 14 days\nEmail sent: ${resendKey ? 'yes' : 'no — RESEND_API_KEY not configured'}`,
+    ]);
+
+  } catch (err) {
+    console.error('[stanstore] Webhook processing error:', err);
+  }
+});
+
 // ==================== BOT CONTROL PANEL ====================
 
 // Helper to decrypt bot tokens (uses CryptoJS format)
