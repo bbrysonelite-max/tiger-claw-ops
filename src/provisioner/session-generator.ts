@@ -12,8 +12,8 @@ import { StringSession } from 'telegram/sessions/index.js';
 import * as readline from 'readline';
 
 // --- Configuration ---
-const API_ID = 30733538;  // HARDCODED FOR TESTING
-const API_HASH = 'a99b03e178e6d3e8f9ea6e3ce3a77d4e';  // HARDCODED FOR TESTING
+const API_ID = parseInt(process.env.TELEGRAM_API_ID || '0', 10);
+const API_HASH = process.env.TELEGRAM_API_HASH || '';
 
 // Create readline interface for user input
 const rl = readline.createInterface({
