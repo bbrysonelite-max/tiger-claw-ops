@@ -4,7 +4,7 @@
 ---
 
 ## Last Updated
-2026-02-24 ~03:35 UTC
+2026-02-24 ~03:56 UTC
 Session: Claude Code (claude-sonnet-4-6)
 
 ---
@@ -98,9 +98,9 @@ curl -X POST https://botcraftwrks.ai/webhooks/stanstore \
 ---
 
 ## Open To-Do List (Priority Order)
-1. **Verify reprovision** — after 05:00 UTC, confirm 4 bots (Lily, John&Noon, Pat, Rebecca) are live
+1. **Verify reprovision** — after 05:00 UTC, confirm 4 bots (Lily, John&Noon, Pat, Rebecca) are live (fires ~05:00 UTC — check /home/ubuntu/reprovision-4.log)
 2. **Stan Store webhook env vars** — add RESEND_API_KEY, ADMIN_TELEGRAM_TOKEN, ADMIN_CHAT_ID to server .env (Brent must provide credentials)
-3. **Alien Claw branding in worker** — bot sends Tiger Claw branding on /start regardless of flavor; airbnb/realtor/etc should present as "Alien Claw"
+3. ~~**Alien Claw branding in worker**~~ — ✅ Done PR #16
 4. **MySudo multi-session provisioner** — new feature, not started
 5. **Claim page** (`claim.html`) — verify works end-to-end with InviteToken flow
 
@@ -110,6 +110,7 @@ curl -X POST https://botcraftwrks.ai/webhooks/stanstore \
 - ✅ All 6 flavors updated in production DB (Tiger Claw Scout + 5 Alien Claw variants)
 - ✅ Stan Store webhook built — PR #14 merged, deployed
 - ✅ Tests: 114/114 passing (was 68/102) — zero failures
+- ✅ Alien Claw branding — PR #16 merged, deployed (tiger-worker reloaded 03:56 UTC)
 
 ---
 
