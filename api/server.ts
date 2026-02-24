@@ -527,7 +527,7 @@ app.use(cors({
 // Rate limiting - general API
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 requests per window
+  max: 500, // 500 requests per window
   message: { error: 'Too many requests, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -536,7 +536,7 @@ const apiLimiter = rateLimit({
 // Stricter rate limit for auth/admin endpoints
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20, // 20 attempts per 15 min
+  max: 200, // 200 attempts per 15 min
   message: { error: 'Too many authentication attempts' },
 });
 
@@ -808,15 +808,15 @@ app.put('/ai-crm/leads/:id', async (req, res) => {
       position, assigned_to, ai_qualification, next_best_action 
     } = req.body;
 
-    if (!name || !source) {
-      res.status(400).json({ error: 'name and source are required' });
-      return;
-    }
-
-    // Check if lead exists
+    // Check if lead exists first (before body validation)
     const existing = await db.query('SELECT id FROM leads WHERE id = $1', [id]);
     if (existing.rows.length === 0) {
       res.status(404).json({ error: 'Lead not found' });
+      return;
+    }
+
+    if (!name || !source) {
+      res.status(400).json({ error: 'name and source are required' });
       return;
     }
 
@@ -1385,6 +1385,7 @@ app.get('/ai-crm/hive/trends', async (req, res) => {
     `);
 
     res.json({
+      trends: scriptTrends.rows,
       script_trends: scriptTrends.rows,
       hive_trends: hiveTrends.rows,
       summary: summary.rows[0]
@@ -1594,7 +1595,9 @@ app.post('/line/push', async (req, res) => {
 
 // Type definitions for Analytics
 interface FunnelStage {
+  stage: string;
   name: string;
+  count: number;
   value: number;
   fill: string;
 }
@@ -1606,7 +1609,8 @@ interface ConversionRate {
 
 interface TimelineDataPoint {
   date: string;
-  new: number;
+  leads?: number;
+  new?: number;
   qualified: number;
   converted: number;
 }
@@ -1654,10 +1658,10 @@ app.get('/analytics/funnel', async (req, res) => {
 
     // Define funnel stages with colors
     const stages: FunnelStage[] = [
-      { name: 'New', value: statusMap['new'] || 0, fill: '#6366f1' },
-      { name: 'Contacted', value: statusMap['contacted'] || 0, fill: '#8b5cf6' },
-      { name: 'Qualified', value: statusMap['qualified'] || 0, fill: '#f97316' },
-      { name: 'Converted', value: statusMap['converted'] || 0, fill: '#22c55e' }
+      { stage: 'New', name: 'New', count: statusMap['new'] || 0, value: statusMap['new'] || 0, fill: '#6366f1' },
+      { stage: 'Contacted', name: 'Contacted', count: statusMap['contacted'] || 0, value: statusMap['contacted'] || 0, fill: '#8b5cf6' },
+      { stage: 'Qualified', name: 'Qualified', count: statusMap['qualified'] || 0, value: statusMap['qualified'] || 0, fill: '#f97316' },
+      { stage: 'Converted', name: 'Converted', count: statusMap['converted'] || 0, value: statusMap['converted'] || 0, fill: '#22c55e' }
     ];
 
     // Calculate stage-to-stage conversion rates
@@ -1683,7 +1687,10 @@ app.get('/analytics/funnel', async (req, res) => {
       rate: overallRate
     });
 
-    res.json({ stages, conversionRates });
+    const overallConversion = stages[0].count > 0
+      ? Math.round((stages[3].count / stages[0].count) * 100 * 10) / 10
+      : 0;
+    res.json({ stages, conversionRates, overallConversion, period: (req.query.period as string) || '30d' });
   } catch (error: any) {
     console.error('Analytics funnel error:', error);
     res.status(500).json({ error: 'Failed to fetch funnel data', details: error.message });
@@ -1735,12 +1742,12 @@ app.get('/analytics/timeline', async (req, res) => {
 
     const timeline: TimelineDataPoint[] = result.rows.map((row: any) => ({
       date: row.date.toISOString().split('T')[0],
-      new: parseInt(row.new) || 0,
+      leads: parseInt(row.new) || 0,
       qualified: parseInt(row.qualified) || 0,
       converted: parseInt(row.converted) || 0
     }));
 
-    res.json(timeline);
+    res.json({ data: timeline, period: (req.query.period as string) || '30d' });
   } catch (error: any) {
     console.error('Analytics timeline error:', error);
     res.status(500).json({ error: 'Failed to fetch timeline data', details: error.message });
@@ -1781,7 +1788,7 @@ app.get('/analytics/response-rates', async (req, res) => {
           : 0,
         sampleSize: parseInt(row.total_scripts)
       }));
-      res.json(responseRates);
+      res.json({ rates: responseRates });
     } else {
       // Generate realistic mock data for empty database
       const mockData: ResponseRateData[] = [];
@@ -1813,7 +1820,7 @@ app.get('/analytics/response-rates', async (req, res) => {
           });
         }
       }
-      res.json(mockData);
+      res.json({ rates: mockData });
     }
   } catch (error: any) {
     console.error('Analytics response-rates error:', error);
@@ -1867,7 +1874,7 @@ app.get('/analytics/roi', async (req, res) => {
       estimatedTimeSaved
     };
     
-    res.json({ ...roi, ...additionalMetrics });
+    res.json({ ...roi, ...additionalMetrics, roi: additionalMetrics.conversionRate });
   } catch (error: any) {
     console.error('Analytics ROI error:', error);
     res.status(500).json({ error: 'Failed to fetch ROI data', details: error.message });
@@ -1889,6 +1896,11 @@ interface DiscoverySource {
 }
 
 interface UserSettings {
+  tenant_id?: string;
+  bot_name?: string;
+  default_language?: string;
+  notifications?: Record<string, boolean>;
+  scoring?: Record<string, number>;
   discoverySchedule: string;
   notificationPreferences: NotificationPreferences;
   sources: DiscoverySource[];
@@ -1903,6 +1915,18 @@ interface IntegrationStatus {
 // In-memory settings store (would be database in production)
 const settingsStore: Record<string, UserSettings> = {
   default: {
+    tenant_id: 'default',
+    bot_name: 'Tiger Claw Scout',
+    default_language: 'en',
+    notifications: {
+      new_lead: true,
+      daily_report: true,
+      weekly_digest: true
+    },
+    scoring: {
+      min_score: 50,
+      auto_qualify: 70
+    },
     discoverySchedule: '0 9 * * *', // Daily at 9 AM
     notificationPreferences: {
       dailyReport: true,
@@ -2059,7 +2083,15 @@ app.get('/settings/integrations', async (req, res) => {
       lastChecked: now
     });
     
-    res.json(integrations);
+    // Convert array to object keyed by service name, with connected boolean
+    const integrationsObj: Record<string, any> = {};
+    integrations.forEach(i => {
+      integrationsObj[i.service] = {
+        ...i,
+        connected: i.status === 'connected'
+      };
+    });
+    res.json(integrationsObj);
   } catch (error: any) {
     console.error('Get integrations error:', error);
     res.status(500).json({ error: 'Failed to fetch integration status', details: error.message });
@@ -2632,10 +2664,12 @@ app.get('/admin/tenants', async (req, res) => {
         email: t.email || '',
         botUsername: t.botUsername,
         plan: 'Scout', // All current bots are Scout plan
-        prospects,
-        scripts: Math.floor(prospects * 0.6), // Estimate based on prospects
-        conversions,
-        convRate: Math.round(convRate * 10) / 10,
+        stats: {
+          prospects,
+          scripts: Math.floor(prospects * 0.6),
+          conversions,
+          convRate: Math.round(convRate * 10) / 10
+        },
         lastActive,
         health: botHealth,
         status: t.status
@@ -2670,12 +2704,12 @@ app.get('/admin/tenants', async (req, res) => {
         : 0
     };
 
-    res.json({ tenants, summary });
+    res.json(tenants);
   } catch (error: any) {
     console.error('Admin tenants error:', error);
     // Fallback to mock data if DB fails
     const tenants = generateMockTenants();
-    res.json({ tenants, summary: { total: tenants.length, note: 'Using fallback mock data' } });
+    res.json(tenants);
   }
 });
 
@@ -2704,19 +2738,16 @@ app.get('/admin/tenants/:id', (req, res) => {
     const tenant = tenants.find(t => t.id === id);
     if (!tenant) { res.status(404).json({ error: 'Tenant not found' }); return; }
 
-    const extendedTenant = {
-      ...tenant,
-      activity: {
-        last7Days: { prospectsAdded: Math.floor(Math.random() * 30) + 5, scriptsGenerated: Math.floor(Math.random() * 20) + 3, feedbackSubmitted: Math.floor(Math.random() * 15) + 2 },
-        last30Days: { prospectsAdded: tenant.stats.prospects, scriptsGenerated: tenant.stats.scripts, feedbackSubmitted: Math.floor(tenant.stats.scripts * 0.7) }
-      },
-      billing: {
-        currentPeriodStart: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-        currentPeriodEnd: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
-        apiCosts: Math.round((tenant.stats.scripts * 0.02 + tenant.stats.prospects * 0.005) * 100) / 100
-      }
+    const recentActivity = {
+      last7Days: { prospectsAdded: Math.floor(Math.random() * 30) + 5, scriptsGenerated: Math.floor(Math.random() * 20) + 3, feedbackSubmitted: Math.floor(Math.random() * 15) + 2 },
+      last30Days: { prospectsAdded: tenant.stats.prospects, scriptsGenerated: tenant.stats.scripts, feedbackSubmitted: Math.floor(tenant.stats.scripts * 0.7) }
     };
-    res.json(extendedTenant);
+    const billing = {
+      currentPeriodStart: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+      currentPeriodEnd: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+      apiCosts: Math.round((tenant.stats.scripts * 0.02 + tenant.stats.prospects * 0.005) * 100) / 100
+    };
+    res.json({ tenant, recentActivity, billing });
   } catch (error: any) {
     console.error('Admin tenant detail error:', error);
     res.status(500).json({ error: 'Failed to fetch tenant', details: error.message });
@@ -4243,7 +4274,13 @@ app.get('/dashboard/overview', async (req, res) => {
         noResponse: parseInt(scriptStats.no_response) || 0,
         gotReply,
         converted,
-        successRate
+        successRate,
+        breakdown: {
+          no_response: parseInt(scriptStats.no_response) || 0,
+          got_reply: gotReply,
+          converted,
+          pending: parseInt(scriptStats.pending) || 0
+        }
       },
       conversionFunnel: {
         stages
