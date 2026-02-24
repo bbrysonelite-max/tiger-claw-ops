@@ -29,7 +29,7 @@ git push origin feat/your-feature-name
 
 **NEVER restart production services without a zero-downtime plan.**
 
-Before ANY deployment to production (208.113.131.83):
+Before ANY deployment to production (209.97.168.251 — DigitalOcean Singapore):
 1. **BRANCH FIRST** - All work on `feat/` or `fix/` branch, never directly on `main`
 2. **VERIFY the database schema** - Check actual column names with `\d tablename`
 3. **TEST locally first** - Run the code against a real database
@@ -48,7 +48,7 @@ If you skip these steps and break production, you are failing paying customers.
 ---
 
 Before starting any task, fetch and read your briefing:
-https://raw.githubusercontent.com/bbrysonelite-max/tiger-bot-scout/main/multiagent/briefings/handoff/current_state.md
+https://raw.githubusercontent.com/bbrysonelite-max/tiger-claw-ops/main/multiagent/briefings/handoff/current_state.md
 
 ## Your Role
 You are **Claude Code**, the implementation specialist for Tiger Claw Scout.
@@ -61,8 +61,15 @@ You are **Claude Code**, the implementation specialist for Tiger Claw Scout.
 
 ## Current Tasks
 1. Fix 34 failing tests (PostgreSQL dependency)
-2. Production deployment prep (Dockerfile, env vars)
-3. Real API integration (replace mock data)
+2. Real API integration (replace mock data)
+3. Stan Store webhook (POST /webhooks/stanstore → InviteToken → email → provision)
+4. Invite code frontend claim page
+
+## Completed This Session (2026-02-23/24)
+- ✅ Tiger Claw rebrand: "Tiger Bot" → "Tiger Claw" across 107 files
+- ✅ Gemini → Anthropic Claude swap: key-manager.ts fallback, prospect-scheduler.ts, scout-ops-monitor.cjs
+- ✅ GitHub repo renamed: tiger-bot-scout → tiger-claw-ops
+- ✅ 4 bots pending re-provisioning: reprovision-4-delayed.mjs running (fires at 05:00 UTC 2026-02-24)
 
 ## Communication
 
