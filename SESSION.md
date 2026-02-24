@@ -4,7 +4,7 @@
 ---
 
 ## Last Updated
-2026-02-24 ~03:56 UTC
+2026-02-24 ~05:25 UTC
 Session: Claude Code (claude-sonnet-4-6)
 
 ---
@@ -57,51 +57,38 @@ All 7 processes **online**:
 ---
 
 ## In Progress
-### Stan Store Webhook — PR #14
-- **Code:** Complete and correct in `feat/stanstore-webhook`
-- **PR:** https://github.com/bbrysonelite-max/tiger-claw-ops/pull/14
-- **Blocked on:** 4 env vars not yet added to server `.env`
+### Multi-Session Provisioner — PR pending
+- **Branch:** `feat/multi-session-provisioner`
+- **What changed:**
+  - `userbot.ts`: `provisionNewBot()` accepts optional `sessionString` param; exports `getAvailableSessions()`; reads `TELEGRAM_SESSION_STRING_2` from env
+  - `provision-worker.ts`: `selectAdminSession()` queries DB to count bots per session label; picks 'primary' (incl. NULL legacy bots) up to 18, then falls back to 'secondary'; sets `createdByAdminSession` on every new Tenant
+- **Blocked on:** Brent must generate session string for second phone number and add to server `.env` as `TELEGRAM_SESSION_STRING_2`
+- **To generate:** On local machine, run `npm run generate-session` and follow prompts with second phone number
 
-**Env vars needed before deploy:**
-```
-RESEND_API_KEY=             # Resend.com — for customer welcome emails
-ADMIN_TELEGRAM_TOKEN=       # Brent's personal admin bot token
-ADMIN_CHAT_ID=              # Brent's Telegram chat ID
-STANSTORE_WEBHOOK_SECRET=   # Optional — set to match Stan Store webhook config
-```
-
-**Deploy steps (after env vars are set):**
+**After Brent provides session string:**
 ```bash
 ssh -i ~/.ssh/claude_autonomous root@209.97.168.251
-cd /home/ubuntu/tiger-bot-api
-# Add the 4 env vars to .env
-git pull origin main   # after merging PR #14
-npm run build
-pm2 reload tiger-bot   # RELOAD not restart
-# Verify:
-curl -X POST https://botcraftwrks.ai/webhooks/stanstore \
-  -H "Content-Type: application/json" \
-  -d '{"email":"brent@test.com","name":"Test User"}'
-# Should return: {"received":true}
-# Check DB: SELECT * FROM "InviteToken" ORDER BY "createdAt" DESC LIMIT 1;
+echo "TELEGRAM_SESSION_STRING_2=<paste here>" >> /home/ubuntu/tiger-bot-api/.env
+pm2 reload provision-worker
 ```
 
 ---
 
-### Reprovision 4 Bots — PENDING (fires 05:00 UTC 2026-02-24)
-- Script: `/home/ubuntu/tiger-bot-api/reprovision-4-delayed.mjs` (PID 1949734)
-- Log: `/home/ubuntu/reprovision-4.log`
-- Status: Waiting for BotFather rate limit to clear at 05:00 UTC
-- Bots: Lily, John&Noon, Pat, Rebecca (all had 401 token errors)
-- **After 05:00 UTC:** Check log to confirm all 4 re-provisioned successfully
+## Completed This Session
+- ✅ Reprovision script (PID 1949734) killed — all 12 bots confirmed alive
+- ✅ 8 delete/reprovision scripts removed from server
+- ✅ 6 remaining one-off .mjs scripts removed from server (all clean)
+- ✅ Multi-session provisioner implemented (PR #18) — routes to primary/secondary based on bot count
+- ✅ MySudo ruled out: VoIP numbers blocked by Telegram. Two real SIM numbers is correct approach.
+- ✅ **botTokenHash bug FIXED (critical)**: 5 tenants had 16-char truncated hashes; tiger-poller routes with full 64-char SHA256; messages were silently dropped for those 5 tenants. Fixed in code (PR #18) and backfilled all 12 DB records. All routing now works.
 
 ---
 
 ## Open To-Do List (Priority Order)
-1. **Verify reprovision** — after 05:00 UTC, confirm 4 bots (Lily, John&Noon, Pat, Rebecca) are live (fires ~05:00 UTC — check /home/ubuntu/reprovision-4.log)
+1. **Dev environment** — no `.env.development`, no dev PM2 setup exists. Build it before touching anything in production. See broken windows rule.
 2. **Stan Store webhook env vars** — add RESEND_API_KEY, ADMIN_TELEGRAM_TOKEN, ADMIN_CHAT_ID to server .env (Brent must provide credentials)
-3. ~~**Alien Claw branding in worker**~~ — ✅ Done PR #16
-4. **MySudo multi-session provisioner** — new feature, not started
+3. **Prospect sources for Thai market** — currently r/sidehustle etc (US/English). Thai distributors need SE Asia sources (Line Open Chat, Thai Facebook groups). Wrong data = zero value from morning reports.
+4. **Multi-session provisioner deploy** — code complete in PR #18; Brent must provide `TELEGRAM_SESSION_STRING_2`
 5. **Claim page** (`claim.html`) — verify works end-to-end with InviteToken flow
 
 ## Completed This Session
@@ -123,6 +110,9 @@ curl -X POST https://botcraftwrks.ai/webhooks/stanstore \
 | SSH config is stale | `~/.ssh/config` points to old dead IP (208.113.131.83). Use explicit `-i ~/.ssh/claude_autonomous root@209.97.168.251` |
 | **BotFather rate limit = 5 MINUTES** | `BOTFATHER_MIN_INTERVAL_MS` must be 5 minutes (300,000ms). 90 seconds caused a 24-hour account ban. Brent explicitly specified 5 min. Never reduce without asking Brent first. |
 | **Never delete bots without explicit written approval** | Claude deleted healthy bots (including the 4 being reprovisioned) based on incorrect math. Never delete a Tenant record or BotFather bot without Brent explicitly listing the names to delete. |
+| ~~`botTokenHash` inconsistency~~ | **FIXED 2026-02-24**: All 12 tenants now have full 64-char SHA256 hashes. Code fix in PR #18 (userbot.ts no longer truncates). Data backfill applied directly to production DB. |
+| **Tiger-poller clears webhooks** | `tiger-poller` runs `getUpdates` on all 12 bots continuously. This prevents webhooks from sticking. Current delivery method = long-poll via tiger-poller. Don't try to set webhooks while tiger-poller is running. |
+| **No dev environment** | There is no `.env.development` or dev PM2 config. All testing happens against production. This must be fixed before any new development. |
 | Prisma vs raw SQL for ops_bulletins | No Prisma model for ops_bulletins — use `db.query()` INSERT with columns: `agent_id, agent_name, bulletin_type, priority, title, content, expires_at` |
 | Double-quote escaping in psql via SSH | Write SQL to a `/tmp/file.sql` then `psql -f /tmp/file.sql` instead of heredoc in SSH |
 | Database table names are quoted | `"Flavor"`, `"InviteToken"` — PostgreSQL is case-sensitive with Prisma-generated names |
@@ -142,6 +132,7 @@ curl -X POST https://botcraftwrks.ai/webhooks/stanstore \
 ## Communication
 - **Ops bulletins:** `curl -X POST https://api.botcraftwrks.ai/ops/bulletins -H "Content-Type: application/json" -d '{...}'`
 - **Ops dashboard:** https://botcraftwrks.ai/dashboard.html → Ops Center
+- **Uptime Robot:** External uptime monitoring at https://uptimerobot.com — alerts when API goes down
 - **Birdie posts flavor specs and coordination to ops bulletins** — check bulletins at session start
 
 ---
@@ -149,6 +140,6 @@ curl -X POST https://botcraftwrks.ai/webhooks/stanstore \
 ## Session Discipline Rules
 1. **Commit every 30–60 minutes** — even WIP commits on feature branches
 2. **Update this file** when something significant is done, discovered, or blocked
-3. **Post an ops bulletin** at session start and session end
+3. **Post a Birdie update every 30 minutes** — comprehensive state via ops bulletins: completed, in-progress, pending, blocked, server state, new landmines. Not just session start/end — every 30 minutes.
 4. **Never leave a session mid-task** without committing current state and noting next step here
 5. **Read this file first** — before touching any code, before asking any questions

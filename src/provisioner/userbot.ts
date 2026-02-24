@@ -12,6 +12,7 @@ import { hashToken } from '../shared/crypto.js';
 const API_ID = parseInt(process.env.TELEGRAM_API_ID || '0', 10);
 const API_HASH = process.env.TELEGRAM_API_HASH || '';
 const SESSION_STRING = process.env.TELEGRAM_SESSION_STRING || '';
+const SESSION_STRING_2 = process.env.TELEGRAM_SESSION_STRING_2 || '';
 const GATEWAY_URL = process.env.GATEWAY_URL || 'https://api.botcraftwrks.ai';
 
 // BotFather username
@@ -53,21 +54,32 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Create a new Telegram client with the stored session
+ * Create a new Telegram client with the given session string
  */
-function createClient(): TelegramClient {
+function createClient(sessionString: string): TelegramClient {
   if (!API_ID || !API_HASH) {
     throw new Error('TELEGRAM_API_ID and TELEGRAM_API_HASH must be set');
   }
-  
-  if (!SESSION_STRING) {
-    throw new Error('TELEGRAM_SESSION_STRING must be set. Run generate-session script first.');
+
+  if (!sessionString) {
+    throw new Error('No session string provided. Run generate-session script first.');
   }
-  
-  const session = new StringSession(SESSION_STRING);
+
+  const session = new StringSession(sessionString);
   return new TelegramClient(session, API_ID, API_HASH, {
     connectionRetries: 5,
   });
+}
+
+/**
+ * Get available session strings indexed by label.
+ * 'primary' always exists; 'secondary' only if TELEGRAM_SESSION_STRING_2 is set.
+ */
+export function getAvailableSessions(): Record<string, string> {
+  const sessions: Record<string, string> = {};
+  if (SESSION_STRING) sessions['primary'] = SESSION_STRING;
+  if (SESSION_STRING_2) sessions['secondary'] = SESSION_STRING_2;
+  return sessions;
 }
 
 /**
@@ -208,7 +220,7 @@ async function runBotFatherFlow(
     }
 
     const token = retryMatch[0];
-    const hash = hashToken(token).substring(0, 16);
+    const hash = hashToken(token); // Full SHA-256 — must match tiger-poller routing
     const webhookUrl = `${GATEWAY_URL}/webhooks/${hash}`;
     await setWebhook(token, webhookUrl);
     const botInfo = await getBotInfo(token);
@@ -218,7 +230,7 @@ async function runBotFatherFlow(
   }
 
   const token = tokenMatch[0];
-  const hash = hashToken(token).substring(0, 16);
+  const hash = hashToken(token); // Full SHA-256 — must match tiger-poller routing
   const webhookUrl = `${GATEWAY_URL}/webhooks/${hash}`;
   await setWebhook(token, webhookUrl);
   const botInfo = await getBotInfo(token);
@@ -227,16 +239,29 @@ async function runBotFatherFlow(
   return { token, username: actualUsername, hash, webhookUrl };
 }
 
+/**
+ * Provision a new Telegram bot via BotFather.
+ *
+ * @param customerName - Customer display name
+ * @param email        - Customer email (for logging)
+ * @param sessionString - MTProto session string to use. Defaults to TELEGRAM_SESSION_STRING.
+ */
 export async function provisionNewBot(
   customerName: string,
-  email: string
+  email: string,
+  sessionString?: string
 ): Promise<ProvisionResult> {
   console.log(`[provisioner] Starting bot provision for: ${email}`);
+
+  const session = sessionString || SESSION_STRING;
+  if (!session) {
+    throw new Error('No Telegram session string available. Set TELEGRAM_SESSION_STRING in .env.');
+  }
 
   // Enforce 5-minute minimum between BotFather calls — Brent-specified, do not reduce
   await enforceBotFatherRateLimit();
 
-  const client = createClient();
+  const client = createClient(session);
 
   try {
     await client.connect();
@@ -254,11 +279,11 @@ export async function provisionNewBot(
 export async function deleteBot(botUsername: string): Promise<boolean> {
   console.log(`[provisioner] Deleting bot: @${botUsername}`);
   
-  const client = createClient();
-  
+  const client = createClient(SESSION_STRING);
+
   try {
     await client.connect();
-    
+
     // Send /deletebot command
     await sendToBotFather(client, '/deletebot', 2000);
     
