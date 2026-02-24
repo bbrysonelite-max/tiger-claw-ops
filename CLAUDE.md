@@ -14,6 +14,26 @@ Do not ask Brent what to do. Do not start from scratch. Read SESSION.md and cont
 
 ---
 
+## CRITICAL: NO BROKEN WINDOWS
+
+**Do not leave known defects, inconsistencies, or "we'll fix this later" items in the codebase or infrastructure. A broken window invites more broken windows. Every deferred fix becomes a 4-hour emergency.**
+
+If you find something broken or inconsistent while working on something else:
+1. **Stop and fix it if it takes under 15 minutes** — don't defer it
+2. **If it takes longer**, open a GitHub issue and add it to SESSION.md open tasks with full context — do not just mentally note it and move on
+3. **Never write "TODO", "fix later", or "address this later" in code or comments** without a corresponding SESSION.md entry
+
+**Examples of broken windows that must not be deferred:**
+- Inconsistent data in the DB (e.g., column values with mixed formats)
+- Error logs that fire regularly but "don't seem to cause problems"
+- Env vars referenced in code but not in `.env`
+- Outdated content in CLAUDE.md, SESSION.md, or docs
+- Test failures that are "known" but not fixed
+
+---
+
+---
+
 ## CRITICAL: BRANCH POLICY — NO EXCEPTIONS
 
 **ALL development happens on a feature branch. NEVER commit directly to `main`.**
@@ -118,14 +138,20 @@ You are **Claude Code**, the implementation specialist for Tiger Claw Scout.
 ## Quick Reference
 - **Dashboard**: `website/dashboard.html`
 - **API**: `api/server.ts`
-- **Tests**: `tests/api.test.ts` (68/102 passing — 34 failing due to PostgreSQL dependency)
+- **Tests**: `tests/api.test.ts` — **114/114 passing** as of 2026-02-24
 - **Run**: `npm run dev:all`
 
+## Monitoring
+- **Uptime Robot**: External uptime monitoring — alerts when the API goes down. Check https://uptimerobot.com for current status and alert config.
+- **health-monitor**: PM2 process on server — internal watchdog
+- **PM2 logs**: `pm2 logs --err` for real-time error stream
+
 ## Current Tasks (see SESSION.md for full detail)
-1. Deploy Stan Store webhook — PR #14 open, needs 4 env vars on server
-2. Verify reprovision of 4 bots after 05:00 UTC 2026-02-24
-3. Fix 34 failing tests (PostgreSQL dependency)
+1. Fix `botTokenHash` inconsistency — 1 tenant has 64-char SHA256, 11 have 16-char truncated values
+2. Build dev environment — no `.env.development`, no dev PM2 processes exist yet
+3. Stan Store webhook env vars — RESEND_API_KEY, ADMIN_TELEGRAM_TOKEN, ADMIN_CHAT_ID (Brent must provide)
 4. MySudo multi-session provisioner
+5. Fix prospect sources for Thai market (currently US Reddit sources)
 
 ## Communication
 

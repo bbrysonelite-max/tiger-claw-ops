@@ -99,11 +99,12 @@ curl -X POST https://botcraftwrks.ai/webhooks/stanstore \
 ---
 
 ## Open To-Do List (Priority Order)
-1. **Verify reprovision** — after 05:00 UTC, confirm 4 bots (Lily, John&Noon, Pat, Rebecca) are live (fires ~05:00 UTC — check /home/ubuntu/reprovision-4.log)
-2. **Stan Store webhook env vars** — add RESEND_API_KEY, ADMIN_TELEGRAM_TOKEN, ADMIN_CHAT_ID to server .env (Brent must provide credentials)
-3. ~~**Alien Claw branding in worker**~~ — ✅ Done PR #16
-4. **MySudo multi-session provisioner** — new feature, not started
-5. **Claim page** (`claim.html`) — verify works end-to-end with InviteToken flow
+1. **`botTokenHash` inconsistency** — Debbie Cameron has 64-char SHA256; 11 others have 16-char truncated values. Mixed provisioning code. Verify routing works for both, then standardize. Do not fix by modifying data without testing first.
+2. **Dev environment** — no `.env.development`, no dev PM2 setup exists. Build it before touching anything in production. See broken windows rule.
+3. **Stan Store webhook env vars** — add RESEND_API_KEY, ADMIN_TELEGRAM_TOKEN, ADMIN_CHAT_ID to server .env (Brent must provide credentials)
+4. **Prospect sources for Thai market** — currently r/sidehustle etc (US/English). Thai distributors need SE Asia sources (Line Open Chat, Thai Facebook groups). Wrong data = zero value from morning reports.
+5. **MySudo multi-session provisioner** — new feature, not started
+6. **Claim page** (`claim.html`) — verify works end-to-end with InviteToken flow
 
 ## Completed This Session
 - ✅ SESSION.md created (crash prevention)
@@ -124,6 +125,9 @@ curl -X POST https://botcraftwrks.ai/webhooks/stanstore \
 | SSH config is stale | `~/.ssh/config` points to old dead IP (208.113.131.83). Use explicit `-i ~/.ssh/claude_autonomous root@209.97.168.251` |
 | **BotFather rate limit = 5 MINUTES** | `BOTFATHER_MIN_INTERVAL_MS` must be 5 minutes (300,000ms). 90 seconds caused a 24-hour account ban. Brent explicitly specified 5 min. Never reduce without asking Brent first. |
 | **Never delete bots without explicit written approval** | Claude deleted healthy bots (including the 4 being reprovisioned) based on incorrect math. Never delete a Tenant record or BotFather bot without Brent explicitly listing the names to delete. |
+| **`botTokenHash` values are inconsistent** | Debbie Cameron = 64-char SHA256. All others = 16-char truncated. Different provisioning code ran at different times. Routing works for both currently. Do not "fix" the data without testing first. |
+| **Tiger-poller clears webhooks** | `tiger-poller` runs `getUpdates` on all 12 bots continuously. This prevents webhooks from sticking. Current delivery method = long-poll via tiger-poller. Don't try to set webhooks while tiger-poller is running. |
+| **No dev environment** | There is no `.env.development` or dev PM2 config. All testing happens against production. This must be fixed before any new development. |
 | Prisma vs raw SQL for ops_bulletins | No Prisma model for ops_bulletins — use `db.query()` INSERT with columns: `agent_id, agent_name, bulletin_type, priority, title, content, expires_at` |
 | Double-quote escaping in psql via SSH | Write SQL to a `/tmp/file.sql` then `psql -f /tmp/file.sql` instead of heredoc in SSH |
 | Database table names are quoted | `"Flavor"`, `"InviteToken"` — PostgreSQL is case-sensitive with Prisma-generated names |
@@ -143,6 +147,7 @@ curl -X POST https://botcraftwrks.ai/webhooks/stanstore \
 ## Communication
 - **Ops bulletins:** `curl -X POST https://api.botcraftwrks.ai/ops/bulletins -H "Content-Type: application/json" -d '{...}'`
 - **Ops dashboard:** https://botcraftwrks.ai/dashboard.html → Ops Center
+- **Uptime Robot:** External uptime monitoring at https://uptimerobot.com — alerts when API goes down
 - **Birdie posts flavor specs and coordination to ops bulletins** — check bulletins at session start
 
 ---
