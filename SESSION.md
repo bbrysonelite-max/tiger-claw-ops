@@ -4,7 +4,7 @@
 ---
 
 ## Last Updated
-2026-02-24 ~03:56 UTC
+2026-02-24 ~05:10 UTC
 Session: Claude Code (claude-sonnet-4-6)
 
 ---
@@ -57,44 +57,28 @@ All 7 processes **online**:
 ---
 
 ## In Progress
-### Stan Store Webhook — PR #14
-- **Code:** Complete and correct in `feat/stanstore-webhook`
-- **PR:** https://github.com/bbrysonelite-max/tiger-claw-ops/pull/14
-- **Blocked on:** 4 env vars not yet added to server `.env`
+### Multi-Session Provisioner — PR pending
+- **Branch:** `feat/multi-session-provisioner`
+- **What changed:**
+  - `userbot.ts`: `provisionNewBot()` accepts optional `sessionString` param; exports `getAvailableSessions()`; reads `TELEGRAM_SESSION_STRING_2` from env
+  - `provision-worker.ts`: `selectAdminSession()` queries DB to count bots per session label; picks 'primary' (incl. NULL legacy bots) up to 18, then falls back to 'secondary'; sets `createdByAdminSession` on every new Tenant
+- **Blocked on:** Brent must generate session string for second phone number and add to server `.env` as `TELEGRAM_SESSION_STRING_2`
+- **To generate:** On local machine, run `npm run generate-session` and follow prompts with second phone number
 
-**Env vars needed before deploy:**
-```
-RESEND_API_KEY=             # Resend.com — for customer welcome emails
-ADMIN_TELEGRAM_TOKEN=       # Brent's personal admin bot token
-ADMIN_CHAT_ID=              # Brent's Telegram chat ID
-STANSTORE_WEBHOOK_SECRET=   # Optional — set to match Stan Store webhook config
-```
-
-**Deploy steps (after env vars are set):**
+**After Brent provides session string:**
 ```bash
 ssh -i ~/.ssh/claude_autonomous root@209.97.168.251
-cd /home/ubuntu/tiger-bot-api
-# Add the 4 env vars to .env
-git pull origin main   # after merging PR #14
-npm run build
-pm2 reload tiger-bot   # RELOAD not restart
-# Verify:
-curl -X POST https://botcraftwrks.ai/webhooks/stanstore \
-  -H "Content-Type: application/json" \
-  -d '{"email":"brent@test.com","name":"Test User"}'
-# Should return: {"received":true}
-# Check DB: SELECT * FROM "InviteToken" ORDER BY "createdAt" DESC LIMIT 1;
+echo "TELEGRAM_SESSION_STRING_2=<paste here>" >> /home/ubuntu/tiger-bot-api/.env
+pm2 reload provision-worker
 ```
 
 ---
 
-### Reprovision 4 Bots — ⚠️ MAY NOT BE NEEDED
-- Script: `/home/ubuntu/tiger-bot-api/reprovision-4-delayed.mjs` (PID 1949734)
-- Log: `/home/ubuntu/reprovision-4.log`
-- **NEW FINDING (04:30 UTC):** Tested all 12 bot tokens — ALL 12 ARE ALIVE on Telegram including Lily, John&Noon, Pat, Rebecca.
-- **RISK:** If script runs at 05:00 UTC it will create 4 NEW bots and overwrite currently working tokens. Wastes 4 BotFather slots.
-- **ACTION NEEDED:** Brent must decide — kill PID 1949734 or let it run.
-- To kill: `ssh -i ~/.ssh/claude_autonomous root@209.97.168.251 "kill 1949734"`
+## Completed This Session
+- ✅ Reprovision script (PID 1949734) killed — all 12 bots confirmed alive
+- ✅ 8 delete/reprovision scripts removed from server
+- ✅ Multi-session provisioner implemented in code (PR pending)
+- ✅ MySudo ruled out: VoIP numbers blocked by Telegram. Two real SIM numbers is correct approach.
 
 ---
 
@@ -103,7 +87,7 @@ curl -X POST https://botcraftwrks.ai/webhooks/stanstore \
 2. **Dev environment** — no `.env.development`, no dev PM2 setup exists. Build it before touching anything in production. See broken windows rule.
 3. **Stan Store webhook env vars** — add RESEND_API_KEY, ADMIN_TELEGRAM_TOKEN, ADMIN_CHAT_ID to server .env (Brent must provide credentials)
 4. **Prospect sources for Thai market** — currently r/sidehustle etc (US/English). Thai distributors need SE Asia sources (Line Open Chat, Thai Facebook groups). Wrong data = zero value from morning reports.
-5. **MySudo multi-session provisioner** — new feature, not started
+5. **Multi-session provisioner deploy** — code complete in `feat/multi-session-provisioner`; Brent must provide `TELEGRAM_SESSION_STRING_2`
 6. **Claim page** (`claim.html`) — verify works end-to-end with InviteToken flow
 
 ## Completed This Session

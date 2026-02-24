@@ -11,7 +11,7 @@ import { PrismaClient } from '@prisma/client';
 import CryptoJS from 'crypto-js';
 import crypto from 'crypto';
 import { QUEUE_NAMES, ProvisionJobData } from '../shared/types.js';
-import { provisionNewBot } from './userbot.js';
+import { provisionNewBot, getAvailableSessions } from './userbot.js';
 
 // --- Configuration ---
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
@@ -56,6 +56,44 @@ function encryptToken(token: string): string {
  */
 function hashToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+// BotFather limit per account. Stop at 18 to leave 2 slots as buffer.
+const BOTS_PER_SESSION_LIMIT = 18;
+
+/**
+ * Select which admin session to use for provisioning.
+ * Counts bots already provisioned per session in the DB.
+ * Uses 'primary' unless it has reached BOTS_PER_SESSION_LIMIT, then tries 'secondary'.
+ * Throws if no session has capacity.
+ */
+async function selectAdminSession(): Promise<{ sessionLabel: string; sessionString: string }> {
+  const available = getAvailableSessions();
+
+  for (const label of ['primary', 'secondary']) {
+    const sessionString = available[label];
+    if (!sessionString) continue;
+
+    // For 'primary': include tenants with NULL createdByAdminSession — those were created
+    // before multi-session tracking was added and belong to the primary account.
+    const countWhere =
+      label === 'primary'
+        ? { OR: [{ createdByAdminSession: 'primary' }, { createdByAdminSession: null }] }
+        : { createdByAdminSession: label };
+
+    const count = await prisma.tenant.count({ where: countWhere });
+
+    console.log(`[provision-worker] Session '${label}': ${count} bots provisioned`);
+
+    if (count < BOTS_PER_SESSION_LIMIT) {
+      return { sessionLabel: label, sessionString };
+    }
+  }
+
+  throw new Error(
+    `All admin sessions are at capacity (${BOTS_PER_SESSION_LIMIT} bots each). ` +
+    'Add TELEGRAM_SESSION_STRING_2 or a new session to continue provisioning.'
+  );
 }
 
 /**
@@ -137,8 +175,9 @@ async function processProvisionJob(job: Job<ProvisionJobData>): Promise<any> {
   // Auto-provision a real bot via BotFather using gramjs MTProto
   let tenant;
   try {
-    console.log(`[provision-worker] Starting auto-provision via BotFather for: ${email}`);
-    const result = await provisionNewBot(name || 'New Customer', email);
+    const { sessionLabel, sessionString } = await selectAdminSession();
+    console.log(`[provision-worker] Starting auto-provision via BotFather for: ${email} (session: ${sessionLabel})`);
+    const result = await provisionNewBot(name || 'New Customer', email, sessionString);
 
     const encryptedToken = encryptToken(result.token);
 
@@ -157,6 +196,7 @@ async function processProvisionJob(job: Job<ProvisionJobData>): Promise<any> {
         inviteTokenId: inviteTokenId || null,
         trialEndsAt,
         status: 'active',
+        createdByAdminSession: sessionLabel,
       }
     });
 
