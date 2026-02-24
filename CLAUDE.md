@@ -1,5 +1,13 @@
 # Claude Code Instructions
 
+## STEP ONE — READ THIS BEFORE ANYTHING ELSE
+
+**Read `SESSION.md` in the project root immediately.**
+It contains the current state, active branches, open tasks, known landmines, and exact next steps.
+Do not ask Brent what to do. Do not start from scratch. Read SESSION.md and continue.
+
+---
+
 ## MISSION: 100% UPTIME
 
 **The only acceptable standard is 100% uptime. 99% is not acceptable. Paying customers in Thailand and elsewhere depend on this system around the clock.**
@@ -47,29 +55,41 @@ If you skip these steps and break production, you are failing paying customers.
 
 ---
 
-Before starting any task, fetch and read your briefing:
-https://raw.githubusercontent.com/bbrysonelite-max/tiger-claw-ops/main/multiagent/briefings/handoff/current_state.md
+## CRITICAL: SESSION DISCIPLINE — PREVENTS CONTEXT LOSS
+
+Context window exhaustion causes sessions to auto-summarize. Summaries lose precision.
+Every crash costs Brent hours of recovery and real business consequences.
+
+**These rules are mandatory, not optional:**
+
+1. **Commit every 30–60 minutes** — even WIP commits on a feature branch. Git log = crash recovery.
+2. **Update SESSION.md** after every significant action: task done, blocker found, decision made.
+3. **Post an ops bulletin** at session start ("Starting: X") and session end ("Completed: X / Next: Y").
+4. **Never leave a session mid-task** without: (a) committing current state, (b) noting exact next step in SESSION.md.
+5. **Read SESSION.md first** — always. Before touching code, before asking Brent, before anything.
+
+---
+
+## Production Server
+- **SSH:** `ssh -i ~/.ssh/claude_autonomous root@209.97.168.251`
+- **User is `root`** — `ubuntu` user SSH auth fails
+- **App dir:** `/home/ubuntu/tiger-bot-api`
+- **Note:** `~/.ssh/config` is stale (points to dead IP). Always use the explicit command above.
 
 ## Your Role
 You are **Claude Code**, the implementation specialist for Tiger Claw Scout.
 
 ## Quick Reference
-- **Dashboard**: `website/dashboard.html` (10,001 lines)
-- **API**: `api/server.ts` (2,666 lines)
-- **Tests**: `tests/api.test.ts` (68/102 passing)
+- **Dashboard**: `website/dashboard.html`
+- **API**: `api/server.ts`
+- **Tests**: `tests/api.test.ts` (68/102 passing — 34 failing due to PostgreSQL dependency)
 - **Run**: `npm run dev:all`
 
-## Current Tasks
-1. Fix 34 failing tests (PostgreSQL dependency)
-2. Real API integration (replace mock data)
-3. Stan Store webhook (POST /webhooks/stanstore → InviteToken → email → provision)
-4. Invite code frontend claim page
-
-## Completed This Session (2026-02-23/24)
-- ✅ Tiger Claw rebrand: "Tiger Bot" → "Tiger Claw" across 107 files
-- ✅ Gemini → Anthropic Claude swap: key-manager.ts fallback, prospect-scheduler.ts, scout-ops-monitor.cjs
-- ✅ GitHub repo renamed: tiger-bot-scout → tiger-claw-ops
-- ✅ 4 bots pending re-provisioning: reprovision-4-delayed.mjs running (fires at 05:00 UTC 2026-02-24)
+## Current Tasks (see SESSION.md for full detail)
+1. Deploy Stan Store webhook — PR #14 open, needs 4 env vars on server
+2. Verify reprovision of 4 bots after 05:00 UTC 2026-02-24
+3. Fix 34 failing tests (PostgreSQL dependency)
+4. MySudo multi-session provisioner
 
 ## Communication
 
@@ -77,28 +97,19 @@ You are **Claude Code**, the implementation specialist for Tiger Claw Scout.
 Post updates programmatically to the bulletin board:
 
 ```bash
-# Post an update
 curl -X POST https://api.botcraftwrks.ai/ops/bulletins \
   -H "Content-Type: application/json" \
   -d '{"agent_id":"claude-code","agent_name":"Claude Code","bulletin_type":"update","priority":"normal","title":"Task complete","content":"Description here"}'
-
-# Or use the helper script
-./ops/post-bulletin.sh claude-code "Claude Code" update normal "Title" "Content"
 ```
 
 **When to post automatically:**
 - Starting a work session → post "Starting work on X"
 - Completing a significant task → post "Completed: X"
 - Encountering a blocker → post with priority "urgent"
-- Finishing a session → post summary of what was done
+- Finishing a session → post summary of what was done and exact next step
 
 **Types:** update, task, blocker, question, complete
 **Priorities:** normal, high, urgent
-
-### Briefing Files (Secondary)
-- Read briefings from: `multiagent/briefings/daily/YYYY-MM-DD/claude_code.md`
-- Write status updates to same file
-- Escalate blockers with `URGENT:` prefix
 
 ### Dashboard
 View Ops Center at: https://botcraftwrks.ai/dashboard.html → Ops Center
