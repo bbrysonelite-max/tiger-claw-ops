@@ -67,6 +67,30 @@ If you skip these steps and break production, you are failing paying customers.
 
 ---
 
+## CRITICAL: BIRDIE UPDATES — EVERY 30 MINUTES
+
+**Post a state update to the ops bulletin board every 30 minutes. No exceptions.**
+
+Birdie is a separate agent who coordinates this project. She must always have current information.
+
+Every 30-minute update MUST include:
+- What was just completed
+- What is in progress right now
+- What is blocked and why
+- What is pending next
+- Current server/PM2 status if anything changed
+- Any new landmines discovered
+
+```bash
+curl -X POST https://api.botcraftwrks.ai/ops/bulletins \
+  -H "Content-Type: application/json" \
+  -d '{"agent_id":"claude-code","agent_name":"Claude Code","bulletin_type":"update","priority":"normal","title":"30-min update — HH:MM UTC","content":"COMPLETED: ...\nIN PROGRESS: ...\nPENDING: ...\nBLOCKED: ...\nSERVER: all 7 processes online"}'
+```
+
+**Do not wait for a task to finish before posting. Post at the 30-minute mark regardless.**
+
+---
+
 ## CRITICAL: SESSION DISCIPLINE — PREVENTS CONTEXT LOSS
 
 Context window exhaustion causes sessions to auto-summarize. Summaries lose precision.

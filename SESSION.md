@@ -88,12 +88,13 @@ curl -X POST https://botcraftwrks.ai/webhooks/stanstore \
 
 ---
 
-### Reprovision 4 Bots — PENDING (fires 05:00 UTC 2026-02-24)
+### Reprovision 4 Bots — ⚠️ MAY NOT BE NEEDED
 - Script: `/home/ubuntu/tiger-bot-api/reprovision-4-delayed.mjs` (PID 1949734)
 - Log: `/home/ubuntu/reprovision-4.log`
-- Status: Waiting for BotFather rate limit to clear at 05:00 UTC
-- Bots: Lily, John&Noon, Pat, Rebecca (all had 401 token errors)
-- **After 05:00 UTC:** Check log to confirm all 4 re-provisioned successfully
+- **NEW FINDING (04:30 UTC):** Tested all 12 bot tokens — ALL 12 ARE ALIVE on Telegram including Lily, John&Noon, Pat, Rebecca.
+- **RISK:** If script runs at 05:00 UTC it will create 4 NEW bots and overwrite currently working tokens. Wastes 4 BotFather slots.
+- **ACTION NEEDED:** Brent must decide — kill PID 1949734 or let it run.
+- To kill: `ssh -i ~/.ssh/claude_autonomous root@209.97.168.251 "kill 1949734"`
 
 ---
 
@@ -149,6 +150,6 @@ curl -X POST https://botcraftwrks.ai/webhooks/stanstore \
 ## Session Discipline Rules
 1. **Commit every 30–60 minutes** — even WIP commits on feature branches
 2. **Update this file** when something significant is done, discovered, or blocked
-3. **Post an ops bulletin** at session start and session end
+3. **Post a Birdie update every 30 minutes** — comprehensive state via ops bulletins: completed, in-progress, pending, blocked, server state, new landmines. Not just session start/end — every 30 minutes.
 4. **Never leave a session mid-task** without committing current state and noting next step here
 5. **Read this file first** — before touching any code, before asking any questions
