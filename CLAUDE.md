@@ -31,6 +31,18 @@ git push origin feat/your-feature-name
 
 ---
 
+## CRITICAL: BOTFATHER RULES — NO EXCEPTIONS
+
+**On 2026-02-23, Claude Code used 90-second intervals between bot creation calls. Brent explicitly said 5 minutes. The account was banned for 24 hours.**
+
+**On 2026-02-23, Claude Code calculated there were too many bots and deleted bots without authorization. The math was wrong. Healthy bots were deleted, including the 4 that were queued for reprovisioning.**
+
+1. **BotFather rate limit = 5 MINUTES minimum.** `BOTFATHER_MIN_INTERVAL_MS = 300_000`. Never change this without Brent explicitly approving a new value.
+2. **Never delete a bot or Tenant record.** Not ever. Not for any reason. Not to "clean up." Not to get under a limit. If you think something needs to be deleted, STOP and ask Brent. List exactly what you think should be deleted and wait for written confirmation of each item by name.
+3. **Never run bot math without showing your work.** If you think there are N bots or you're approaching a limit, query the DB, show the count, and ask before acting.
+
+---
+
 ## CRITICAL: PRODUCTION DEPLOYMENT RULES
 
 **THIS IS A LIVE COMMERCIAL SYSTEM WITH PAYING CUSTOMERS.**
