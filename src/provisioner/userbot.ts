@@ -220,7 +220,7 @@ async function runBotFatherFlow(
     }
 
     const token = retryMatch[0];
-    const hash = hashToken(token).substring(0, 16);
+    const hash = hashToken(token); // Full SHA-256 — must match tiger-poller routing
     const webhookUrl = `${GATEWAY_URL}/webhooks/${hash}`;
     await setWebhook(token, webhookUrl);
     const botInfo = await getBotInfo(token);
@@ -230,7 +230,7 @@ async function runBotFatherFlow(
   }
 
   const token = tokenMatch[0];
-  const hash = hashToken(token).substring(0, 16);
+  const hash = hashToken(token); // Full SHA-256 — must match tiger-poller routing
   const webhookUrl = `${GATEWAY_URL}/webhooks/${hash}`;
   await setWebhook(token, webhookUrl);
   const botInfo = await getBotInfo(token);
