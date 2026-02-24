@@ -89,19 +89,43 @@ function cleanupBotCache(): void {
 // Run cache cleanup every 5 minutes
 setInterval(cleanupBotCache, 5 * 60 * 1000);
 
+// --- Brand Identity ---
+
+interface BrandIdentity {
+  name: string;
+  emoji: string;
+  tagline: string;
+}
+
+function getBrandForFlavor(flavorSlug: string): BrandIdentity {
+  if (flavorSlug === 'network-marketer') {
+    return {
+      name: 'Tiger Claw Scout',
+      emoji: '🐯',
+      tagline: 'Your AI prospecting engine for network marketing',
+    };
+  }
+  return {
+    name: 'Alien Claw',
+    emoji: '👽',
+    tagline: 'Your AI business operations assistant',
+  };
+}
+
 // --- Command Handlers ---
 
 async function handleStartCommand(
   ctx: VirtualBotContext,
-  message: TelegramMessage
+  message: TelegramMessage,
+  brand: BrandIdentity
 ): Promise<void> {
   const chatId = message.chat.id;
   const firstName = message.from?.first_name || 'there';
-  
-  const welcomeText = `
-🐯 *Welcome to Tiger Claw Scout, ${firstName}!*
 
-I find qualified prospects every morning and write personalized outreach scripts for you.
+  const welcomeText = `
+${brand.emoji} *Welcome to ${brand.name}, ${firstName}!*
+
+${brand.tagline}.
 
 *Commands:*
 • /today — See today's prospects
@@ -111,18 +135,19 @@ I find qualified prospects every morning and write personalized outreach scripts
 Your daily report arrives at 7 AM Bangkok time.
 Ready? Let's go. 🚀
   `.trim();
-  
+
   await ctx.bot.sendMessage(chatId, welcomeText, { parse_mode: 'Markdown' });
 }
 
 async function handleHelpCommand(
   ctx: VirtualBotContext,
-  message: TelegramMessage
+  message: TelegramMessage,
+  brand: BrandIdentity
 ): Promise<void> {
   const chatId = message.chat.id;
-  
+
   const helpText = `
-🐯 *Tiger Claw Scout Commands*
+${brand.emoji} *${brand.name} Commands*
 
 /today — Today's top prospects
 /script [name] — Get a personalized outreach script
@@ -141,7 +166,7 @@ After seeing Nancy in your report → type:
 • After using a script, let me know: 👎 /fb\\_no · 👍 /fb\\_replied · 🎯 /fb\\_converted
 • Use /capabilities flavor list to see all industry profiles
   `.trim();
-  
+
   await ctx.bot.sendMessage(chatId, helpText, { parse_mode: 'Markdown' });
 }
 
@@ -201,10 +226,11 @@ async function handleTodayCommand(
 
 async function handleFeedbackCommand(
   ctx: VirtualBotContext,
-  message: TelegramMessage
+  message: TelegramMessage,
+  brand: BrandIdentity
 ): Promise<void> {
   const chatId = message.chat.id;
-  
+
   const feedbackText = `
 ⭐ *We'd love your feedback!*
 
@@ -215,9 +241,9 @@ What would you like to tell us?
 • What could be improved?
 • Any feature requests?
 
-_Your feedback helps make Tiger Claw Scout better for everyone!_
+_Your feedback helps make ${brand.name} better for everyone!_
   `.trim();
-  
+
   await ctx.bot.sendMessage(chatId, feedbackText, { parse_mode: 'Markdown' });
 }
 
@@ -457,8 +483,9 @@ async function handleCapabilitiesCommand(
       toolList += `• *${t}* — ${desc}\n`;
     }
 
+    const brand = getBrandForFlavor(flavorSlug);
     const reply = [
-      `🧰 *Tiger Claw Capabilities*`,
+      `🧰 *${brand.name} Capabilities*`,
       ``,
       `Flavor: *${flavorName}* (\`${flavorSlug}\`)`,
       `Aggression: ${aggression} | Channels: ${channels}`,
@@ -569,16 +596,17 @@ async function handleUnknownMessage(
     return;
   }
 
+  const flavorSlug: string = tenant?.flavorSlug ?? 'network-marketer';
+  const brand = getBrandForFlavor(flavorSlug);
+
   if (!anthropic) {
     await ctx.bot.sendMessage(
       chatId,
-      `Hey ${firstName}! 🐯 Try /today to see your prospects or /help for commands.`,
+      `Hey ${firstName}! ${brand.emoji} Try /today to see your prospects or /help for commands.`,
       { parse_mode: 'Markdown' }
     );
     return;
   }
-
-  const flavorSlug: string = tenant?.flavorSlug ?? 'network-marketer';
 
   // Load flavor from DB for dynamic system prompt + tool set
   let flavorSystemPrompt: string | null = null;
@@ -692,7 +720,7 @@ The user's first name is: ${firstName}`;
     console.error(`[worker] Anthropic error for tenant ${ctx.tenantId}:`, error);
     await ctx.bot.sendMessage(
       chatId,
-      `Hey ${firstName}! 🐯 I'm here to help. Try /today to see your prospects or /help for commands.`,
+      `Hey ${firstName}! ${brand.emoji} I'm here to help. Try /today to see your prospects or /help for commands.`,
       { parse_mode: 'Markdown' }
     );
   }
@@ -715,10 +743,13 @@ async function handleTelegramUpdate(
   
   const text = message.text.trim();
   const command = text.split(' ')[0].toLowerCase();
-  
+
   // Remove @botusername suffix if present
   const cleanCommand = command.split('@')[0];
-  
+
+  // Compute brand once for this update
+  const brand = getBrandForFlavor(tenant?.flavorSlug ?? 'network-marketer');
+
   // Feedback outcome commands: /fb_{shortId}_{outcome}
   if (/^\/fb_[a-z0-9]+_(no|replied|converted)$/i.test(cleanCommand)) {
     await handleFeedbackOutcome(ctx, message);
@@ -727,10 +758,10 @@ async function handleTelegramUpdate(
 
   switch (cleanCommand) {
     case '/start':
-      await handleStartCommand(ctx, message);
+      await handleStartCommand(ctx, message, brand);
       break;
     case '/help':
-      await handleHelpCommand(ctx, message);
+      await handleHelpCommand(ctx, message, brand);
       break;
     case '/today':
     case '/report':
@@ -740,7 +771,7 @@ async function handleTelegramUpdate(
       await handleScriptCommand(ctx, message);
       break;
     case '/feedback':
-      await handleFeedbackCommand(ctx, message);
+      await handleFeedbackCommand(ctx, message, brand);
       break;
     case '/capabilities':
       await handleCapabilitiesCommand(ctx, message, tenant);
@@ -789,9 +820,10 @@ async function processInboundJob(job: Job<InboundJobData>): Promise<void> {
       try {
         decryptedToken = decrypt(tenant.botToken);
         const bot = getOrCreateBot(decryptedToken, tenant.id);
+        const trialBrand = getBrandForFlavor(tenant.flavorSlug ?? 'network-marketer');
         await bot.sendMessage(
           tenant.chat_id,
-          `Your Tiger Claw trial has ended. 🐯\n\nTo keep your bot running, visit *botcraftwrks.ai* to upgrade.`,
+          `Your ${trialBrand.name} trial has ended. ${trialBrand.emoji}\n\nTo keep your bot running, visit *botcraftwrks.ai* to upgrade.`,
           { parse_mode: 'Markdown' }
         );
       } catch (e) {

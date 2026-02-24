@@ -4,7 +4,7 @@
 ---
 
 ## Last Updated
-2026-02-24 ~02:30 UTC
+2026-02-24 ~03:35 UTC
 Session: Claude Code (claude-sonnet-4-6)
 
 ---
@@ -98,11 +98,18 @@ curl -X POST https://botcraftwrks.ai/webhooks/stanstore \
 ---
 
 ## Open To-Do List (Priority Order)
-1. **Stan Store webhook deploy** — merge PR #14, add env vars, `pm2 reload`
-2. **Verify reprovision** — after 05:00 UTC, confirm 4 bots are live
-3. **Fix 34 failing tests** — PostgreSQL dependency issue (`tests/api.test.ts`, 68/102 passing)
+1. **Verify reprovision** — after 05:00 UTC, confirm 4 bots (Lily, John&Noon, Pat, Rebecca) are live
+2. **Stan Store webhook env vars** — add RESEND_API_KEY, ADMIN_TELEGRAM_TOKEN, ADMIN_CHAT_ID to server .env (Brent must provide credentials)
+3. **Alien Claw branding in worker** — bot sends Tiger Claw branding on /start regardless of flavor; airbnb/realtor/etc should present as "Alien Claw"
 4. **MySudo multi-session provisioner** — new feature, not started
-5. **Claim page** (`claim.html`) — verify it works end-to-end with new InviteToken flow
+5. **Claim page** (`claim.html`) — verify works end-to-end with InviteToken flow
+
+## Completed This Session
+- ✅ SESSION.md created (crash prevention)
+- ✅ CLAUDE.md hardened with mandatory session discipline rules
+- ✅ All 6 flavors updated in production DB (Tiger Claw Scout + 5 Alien Claw variants)
+- ✅ Stan Store webhook built — PR #14 merged, deployed
+- ✅ Tests: 114/114 passing (was 68/102) — zero failures
 
 ---
 
